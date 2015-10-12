@@ -1,9 +1,9 @@
 # QM Works - workflow engine
 
 Current requirements for running the prototype are:
-    * Python 3
-    * GraphViz
-    * pygraphviz
+*   Python 3
+*   GraphViz
+*   pygraphviz
 
 ## The prototype
 The prototype is very simple. It should support the definition of function
@@ -46,4 +46,3 @@ The user then uses these in a workflow:
     r4 = add(r2, r3)
 
     compute(r4)
-
