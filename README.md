@@ -45,5 +45,9 @@ The user then uses these in a workflow:
     r3 = min(44, r1)
     r4 = add(r2, r3)
 
+<<<<<<< HEAD
     compute(r4)
 
+=======
+    compute(r4)
+>>>>>>> f26a9470c4e4e44074c5dd564ac3cfde7e8ba59c
