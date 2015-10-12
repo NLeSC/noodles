@@ -72,6 +72,16 @@ def simplify_runner(r):
 #------------------------------------------------------------------------------+
 from pygraphviz import AGraph
 
+def computer():
+    n = 0
+    
+    def f(r):
+        nonlocal n
+        n += 1
+        draw_runner("graph-{0}.svg".format(n), r)
+        
+    return f
+
 def draw_runner(fn, runner):
     sr = simplify_runner(runner)
     dot = AGraph(directed=True) #(comment="Computing scheme")
@@ -85,6 +95,7 @@ def draw_runner(fn, runner):
 
     dot.draw(fn)
 
+compute = computer()
 
 ################################################################################
 # Boiler plate                                                                 |
@@ -152,7 +163,7 @@ r4 = add(r2, r3)
 
 # draw the execution graph
 #-------------------------
-draw_runner("graph1.svg", r4)
+compute(r4)
 
 # a bit more complicated example
 #-------------------------------
@@ -166,7 +177,7 @@ for i in range(10):
 
 r5 = sum(bind(*multiples))
 
-draw_runner("graph2.svg", r5)
+compute(r5)
 
 # Chemistry example
 #------------------
@@ -193,7 +204,7 @@ tjobs=[]
 for j in jobs:
     tjobs.append(Frequency(j, package='turbomole'))
 
-draw_runner("graph-chem-1.svg", bind(*tjobs))
+compute(bind(*tjobs))
 
 # alternative now
 
@@ -202,7 +213,7 @@ mollist = (ReadMolecule(m) for m in ['[OH2]', 'c1ccccc1', 'CCC'])
 jobs=[Frequency(Optimize({'basis' : 'DZP'}, 'adf', m), package='turbomole')
     for m in mollist]
 
-bind(*jobs).run()
+compute(bind(*jobs))
 
 #draw_runner("graph-chem-2.svg", bind(*jobs))
 

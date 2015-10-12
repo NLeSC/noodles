@@ -1,9 +1,9 @@
 # QM Works - workflow engine
 
 Current requirements for running the prototype are:
-    * Python 3
-    * GraphViz
-    * pygraphviz
+*   Python 3
+*   GraphViz
+*   pygraphviz
 
 ## The prototype
 The prototype is very simple. It should support the definition of function
