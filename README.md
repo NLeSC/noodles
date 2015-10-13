@@ -46,4 +46,9 @@ The user then uses these in a workflow:
     r4 = add(r2, r3)
 
     compute(r4)
+    
+Resulting in the graph:
+
+![Graph showing the flow diagram for this arithmetic](static/graph-example.svg "Example graph")
+
 
