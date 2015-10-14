@@ -45,10 +45,11 @@ The user then uses these in a workflow:
     r3 = min(44, r1)
     r4 = add(r2, r3)
 
-    compute(r4)
+    draw_graph("graph-example1.svg", r4)
     
 Resulting in the graph:
 
-![Graph showing the flow diagram for this arithmetic](static/graph-example.svg "Example graph")
+![Graph showing the flow diagram for this arithmetic](example/graph-example1.svg "Example graph")
+
 
 
