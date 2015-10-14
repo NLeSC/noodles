@@ -18,15 +18,6 @@ passing a dictionary. Even then we will want to be able to merge two dicts
 selectively.
 """
 
-#import logging
-
-#logger = logging.getLogger(__name__)
-#_ch = logging.StreamHandler()
-#_ch.setLevel(logging.INFO)
-#_formatter = logging.Formatter("{asctime} - {levelname}: {message}", style="{")
-#_ch.setFormatter(_formatter)
-#logger.addHandler(_ch)
-
 class NodeTemplate:
 #    input_vars = []
 #    output_vars = []
@@ -56,7 +47,7 @@ class Node:
         
         Possibilities:
             - list-selector:    "A" | "B" | "C"
-            - dictionary:       { name: type, ...}
+            - dictionary:       { name: type, ... }
             - list:             [ type ]
             - tuple:            ( type, ... )
             - named-tuple?      ( name: type, ... )

@@ -1,3 +1,7 @@
 */__pycache__/*
 *.pyc
+tmp
+trash
+cover
+.coverage
 
