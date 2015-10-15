@@ -30,4 +30,30 @@ def test_merge_workflow():
     assert C.nodes[C.top].args == [Empty, Empty]
     assert (C.top, ArgumentType.regular, 'a') in C.links[A.top]
     assert (C.top, ArgumentType.regular, 'b') in C.links[B.top]
+
+def test_binder():
+    A = value(1)
+    B = value(2)
+    C = bind(A, B)
     
+    assert is_workflow(C)
+    assert C.nodes[C.top].varargs == [Empty, Empty]
+    assert (C.top, ArgumentType.variadic, 0) in C.links[A.top]
+    assert (C.top, ArgumentType.variadic, 1) in C.links[B.top]
+
+@schedule
+def takes_keywords(s, **kwargs):
+    pass
+
+def test_with_keywords():
+    A = value(1)
+    B = value(2)
+    C = takes_keywords(a = A, b = B, s = "regular!")
+    
+    assert is_workflow(C)
+    assert C.nodes[C.top].args     == ["regular!"]
+    assert C.nodes[C.top].varargs  == []
+    assert C.nodes[C.top].keywords == {'a': Empty, 'b': Empty}
+    assert (C.top, ArgumentType.keyword, 'a') in C.links[A.top]
+    assert (C.top, ArgumentType.keyword, 'b') in C.links[B.top]
+
