@@ -72,10 +72,8 @@ def merge_workflow(f, args, vargs, kwargs):
                   zip(link_kwargs.keys(), 
                       link_kwargs.values(),
                       repeat(ArgumentType.keyword)))
-    
-    i1, i2 = tee(items)
-    
-    for name, workflow, argument_type in i1:
+        
+    for name, workflow, argument_type in items:
         if workflow == Empty:
             continue
         
