@@ -17,11 +17,8 @@ def mul(a, b):
     return a*b
 
 @schedule
-def sum(a):
-    b = 0
-    for i in a:
-        b += i
-    return b
+def sum(a, buildin_sum = sum):
+    return buildin_sum(a)
         
 def test_runner_01():
     A = value(1)
@@ -38,4 +35,13 @@ def test_runner_02():
     C = sum(bind(*multiples))
     
     assert run(C) == 42
+
+def test_parellel_runner_01():
+    A = add(1, 1)
+    B = sub(3, A)
+
+    multiples = [mul(add(i, B), A) for i in range(6)]
+    C = sum(bind(*multiples))
+    
+    assert run_parallel(C, 4) == 42
     
