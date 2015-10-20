@@ -27,116 +27,95 @@
 """
 
 import inspect
+from inspect import signature, Parameter
 
 from collections import namedtuple
 from itertools import tee, filterfalse, chain, repeat, count
 from enum import Enum
 
-ArgumentType = Enum('ArgumentType', 
+ArgumentKind = Enum('ArgumentKind', 
     ['regular', 'variadic', 'keyword'])
 
-FunctionNode = namedtuple('FunctionNode', 
-    ['foo', 'args', 'varargs', 'keywords'])
+ArgumentAddress = namedtuple('ArgumentAddress',
+    ['kind', 'name', 'key'])
+
+FunctionNode = namedtuple('FunctionNode',
+    ['foo', 'bound_args'])
 
 Workflow = namedtuple('Workflow', 
     ['top', 'nodes', 'links'])
 
-# links: Mapping[NodeId, (NodeId, ArgumentType, [int|str])]
-
-class EmptyType:
-    def __str__(self):
-        return u"\u2015"
-
-Empty = EmptyType()
+Empty = Parameter.empty
+# links: Mapping[NodeId, (NodeId, ArgumentAddress)]
 
 def is_workflow(x):
     return isinstance(x, Workflow)
     
-def splice_list(pred, lst):
-    """
-    Splices a list based on predicate. Returns two lists where values have been
-    replaced with `Empty` depending on the predicate's verdict.
-    
-    @param pred:
-        predicate
-    @type pred: Callable[[Any], bool]
-    
-    @param lst:
-        input list
-    @type lst: Sequence[Any]
-    
-    @returns:
-        two lists, the first one containing items for which `pred` returns 
-        `False`, the second one with items for which `pred` returns `True`.
-    @rtype: Sequence[Any], Sequence[Any]
-    """
-    if lst == None: 
-        return [], []
-    return [Empty if pred(i) else i for i in lst], \
-            [i if pred(i) else Empty for i in lst]
-            
-def splice_dict(pred, dct):
-    """
-    Splices a dictionary based on predicate. Returns two dictionaries with
-    identical keys. The values are either the original value or `Empty`, based
-    on the predicate's verdict.
-    
-    @param pred:
-        predicate
-    @type pred: Callable[[Any], bool]
-    
-    @param dct:
-        dictionary
-    @type dct: Mapping[KeyType, Any]
-    
-    @returns:
-        two dicts, the first one containing items for which `pred` returns 
-        `False`, the second one with items for which `pred` returns `True`.
-    @rtype: Mapping[KeyType, Any], Mapping[KeyType, Any]
-    """
-    if dct == None:
-        return {}, {}
-    return dict((k, Empty if pred(v) else v) for k, v in dct.items()), \
-            dict((k, v if pred(v) else Empty) for k, v in dct.items())
+def serialize_arguments(bound_args):
+    for p in bound_args.signature.parameters.values():
+        if p.kind == Parameter.VAR_POSITIONAL:
+            for i, v in enumerate(bound_args.arguments[p.name]):
+                yield ArgumentAddress(ArgumentKind.variadic, p.name, i)
+            continue
+        
+        if p.kind == Parameter.VAR_KEYWORD:
+            for k, v in bound_args.arguments[p.name].items():
+                yield ArgumentAddress(ArgumentKind.keyword, p.name, k)
+            continue
+        
+        yield ArgumentAddress(ArgumentKind.regular, p.name, None)
 
-def merge_workflow(f, args, vargs, kwargs):
-    """
-    Arguments: the new root node (to be added) and a list of graphs.
-    Returns: a new graph with the original list of graphs merged into
-    one, detecting identical nodes by their Python object id.
+def ref_argument(bound_args, address):
+    if address.kind == ArgumentKind.regular:
+        return bound_args.arguments[address.name]
+            
+    return bound_args.arguments[address.name][address.key]
+
+def set_argument(bound_args, address, value):
+    if address.kind == ArgumentKind.regular:
+        bound_args.arguments[address.name] = value
+        return
+            
+    bound_args.arguments[address.name][address.key] = value
+
+def format_address(address):
+    if address.kind == ArgumentKind.regular:
+        return address.name
+        
+    return "{0}[{1}]".format(address.name, address.key)
+
+def insert_result(node, address, value):
+    a = ref_argument(node.bound_args, address)
+    if a != Parameter.empty:
+        raise RuntimeError("Noodle panic. Argument {arg} in " \
+                             "{name} already given."            \
+                .format(arg=format_address(address), name=node.foo.__name__))
     
-    Typically the node is a function to be called, and the list of graphs
-    represents the computations that had to be performed to get the
-    arguments for the function application.
-    """
+    set_argument(node.bound_args, address, value)
+  
+def merge_workflow(f, bound_args):    
+    variadic = next((x.name for x in bound_args.signature.parameters.values()
+        if x.kind == Parameter.VAR_POSITIONAL), None)
+
+    # *UGLY HACK*
+    # the BoundArguments class uses a tuple to store the
+    # variadic arguments. Since we need to modify them,
+    # we have to replace the tuple with a list. This works, for now...
+    if variadic:
+        bound_args.arguments[variadic] = list(bound_args.arguments[variadic])
     
-    fixed_args,   link_args   = splice_list(is_workflow, args)
-    fixed_vargs,  link_vargs  = splice_list(is_workflow, vargs)
-    fixed_kwargs, link_kwargs = splice_dict(is_workflow, kwargs)
-    
-    node = FunctionNode(f, fixed_args, fixed_vargs, fixed_kwargs)
-    arg_spec = inspect.getargspec(f)
+    node = FunctionNode(f, bound_args)
     
     idx = id(node)
     nodes = {idx: node}
     links = {idx: set()}
-        
-    items = chain(zip(arg_spec.args,
-                      link_args,            
-                      repeat(ArgumentType.regular)),
-                      
-                  zip(count(),
-                      link_vargs,
-                      repeat(ArgumentType.variadic)),
-                      
-                  zip(link_kwargs.keys(), 
-                      link_kwargs.values(),
-                      repeat(ArgumentType.keyword)))
-        
-    for name, workflow, argument_type in items:
-        if workflow == Empty:
+
+    for address in serialize_arguments(bound_args):
+        workflow = ref_argument(bound_args, address)
+        if not is_workflow(workflow):
             continue
         
+        set_argument(bound_args, address, Parameter.empty)
         for n in workflow.nodes:
             if n not in nodes:
                 nodes[n] = workflow.nodes[n]
@@ -144,10 +123,11 @@ def merge_workflow(f, args, vargs, kwargs):
             
             links[n].update(workflow.links[n])
             
-        links[workflow.top].add((idx, argument_type, name))
-                            
+        links[workflow.top].add((idx, address))
+        
     return Workflow(id(node), nodes, links)
-
+            
+    
 def _all_valid(links):
     """
     Iterates over all links, forgetting emtpy registers.
@@ -169,15 +149,15 @@ def invert_links(links):
         inverted graph, giving dependency of jobs.
     @rtype: Mapping[NodeId, Mapping[(ArgumentType, [int|str]), NodeId]]
     """
-    return dict((node, dict(((arg_type, kw), src) 
-                    for src, (tgt, arg_type, kw) in _all_valid(links)
-                    if tgt == node)) 
+    return dict((node, dict((address, src) 
+                    for src, (tgt, address) in _all_valid(links)
+                    if tgt == node))
                 for node in links)
 
 def is_node_ready(node):
     """
     Returns True if none of the argument holders contain any `Empty` object.
     """
-    return all(a != Empty for a in chain(
-        node.args, node.varargs, node.keywords.values()))
+    return all(ref_argument(node.bound_args, a) != Parameter.empty 
+        for a in serialize_arguments(node.bound_args))
 

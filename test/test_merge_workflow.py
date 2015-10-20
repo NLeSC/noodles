@@ -8,11 +8,6 @@ def dummy(a, b, c, *args, **kwargs):
 def test_is_workflow():
     assert is_workflow(Workflow(top=None, nodes={}, links={}))
     
-def test_splice_list():
-    odd = lambda x: x % 2 == 1
-    assert splice_list(odd, range(6)) == ([0, Empty, 2, Empty, 4, Empty],
-                                           [Empty, 1, Empty, 3, Empty, 5])
-
 @schedule
 def value(a):
     return a
@@ -27,9 +22,9 @@ def test_merge_workflow():
     C = add(A, B)
     
     assert is_workflow(C)
-    assert C.nodes[C.top].args == [Empty, Empty]
-    assert (C.top, ArgumentType.regular, 'a') in C.links[A.top]
-    assert (C.top, ArgumentType.regular, 'b') in C.links[B.top]
+    assert C.nodes[C.top].bound_args.args == (Empty, Empty)
+    assert (C.top, ArgumentAddress(ArgumentKind.regular, 'a', None)) in C.links[A.top]
+    assert (C.top, ArgumentAddress(ArgumentKind.regular, 'b', None)) in C.links[B.top]
 
 def test_binder():
     A = value(1)
@@ -37,9 +32,9 @@ def test_binder():
     C = bind(A, B)
     
     assert is_workflow(C)
-    assert C.nodes[C.top].varargs == [Empty, Empty]
-    assert (C.top, ArgumentType.variadic, 0) in C.links[A.top]
-    assert (C.top, ArgumentType.variadic, 1) in C.links[B.top]
+    assert C.nodes[C.top].bound_args.args == (Empty, Empty)
+    assert (C.top, ArgumentAddress(ArgumentKind.variadic, 'args', 0)) in C.links[A.top]
+    assert (C.top, ArgumentAddress(ArgumentKind.variadic, 'args', 1)) in C.links[B.top]
 
 @schedule
 def takes_keywords(s, **kwargs):
@@ -51,9 +46,6 @@ def test_with_keywords():
     C = takes_keywords(a = A, b = B, s = "regular!")
     
     assert is_workflow(C)
-    assert C.nodes[C.top].args     == ["regular!"]
-    assert C.nodes[C.top].varargs  == []
-    assert C.nodes[C.top].keywords == {'a': Empty, 'b': Empty}
-    assert (C.top, ArgumentType.keyword, 'a') in C.links[A.top]
-    assert (C.top, ArgumentType.keyword, 'b') in C.links[B.top]
+    assert C.nodes[C.top].bound_args.args     == ("regular!",)
+    assert C.nodes[C.top].bound_args.kwargs   == {'a': Empty, 'b': Empty}
 

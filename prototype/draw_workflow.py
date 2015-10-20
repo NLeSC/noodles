@@ -25,7 +25,7 @@ def draw_workflow(fn, workflow):
     dot = AGraph(directed=True) #(comment="Computing scheme")
     for i,n in sr.nodes.items():
         dot.add_node(i, label="{0} \n {1}".format(n.foo.__name__, 
-            _format_arg_list(n.args, n.varargs)))
+            _format_arg_list(n.bound_args.args, None)))
         
     for i in sr.links:
         for j in sr.links[i]:

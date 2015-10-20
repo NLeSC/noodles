@@ -14,15 +14,15 @@ def test_invert_links():
     C = add(A, B)
     
     assert is_workflow(C)
-    assert C.nodes[C.top].args == [Empty, Empty]
-    assert (C.top, ArgumentType.regular, 'a') in C.links[A.top]
-    assert (C.top, ArgumentType.regular, 'b') in C.links[B.top]
+    assert C.nodes[C.top].bound_args.args == (Empty, Empty)
+    assert (C.top, ArgumentAddress(ArgumentKind.regular, 'a', None)) in C.links[A.top]
+    assert (C.top, ArgumentAddress(ArgumentKind.regular, 'b', None)) in C.links[B.top]
     
     deps = invert_links(C.links)
     assert deps == {A.top: {},
                      B.top: {},
-                     C.top: {(ArgumentType.regular, 'a'): A.top,
-                             (ArgumentType.regular, 'b'): B.top}}
+                     C.top: {ArgumentAddress(ArgumentKind.regular, 'a', None): A.top,
+                             ArgumentAddress(ArgumentKind.regular, 'b', None): B.top}}
 
 def test_is_node_ready():
     A = value(1)
