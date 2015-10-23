@@ -22,6 +22,9 @@ def schedule(f):
 
 @schedule
 def _getattr(obj, attr):
+    if not (attr in dir(obj)):
+        raise AttributeError("{0} not in {1}.".format(attr, obj))
+        
     return obj.__getattribute__(attr)
     
 @schedule

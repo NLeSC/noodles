@@ -1,4 +1,5 @@
 from engine import *
+from nose.tools import raises
 
 @schedule
 class A:
@@ -16,4 +17,10 @@ def test_class_decorator():
     assert result.value == 50
     assert result.second == 7
 
-
+@raises(AttributeError)
+def test_class_decorator2():
+    a = A(6).multiply(7)
+    b = a.divide(0)
+    result = run(b)
+    print(dir(result))
+    
