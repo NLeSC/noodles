@@ -12,6 +12,9 @@ def test_invert_links():
     A = value(1)
     B = value(2)
     C = add(A, B)
+    C = get_workflow(C)
+    A = get_workflow(A)
+    B = get_workflow(B)
     
     assert is_workflow(C)
     assert C.nodes[C.top].bound_args.args == (Empty, Empty)
@@ -27,6 +30,9 @@ def test_invert_links():
 def test_is_node_ready():
     A = value(1)
     B = add(1, A)
+    A = get_workflow(A)
+    B = get_workflow(B)
+
     assert is_node_ready(A.nodes[A.top])
     assert not is_node_ready(B.nodes[B.top])
     

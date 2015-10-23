@@ -48,9 +48,19 @@ Workflow = namedtuple('Workflow',
 Empty = Parameter.empty
 # links: Mapping[NodeId, (NodeId, ArgumentAddress)]
 
+
 def is_workflow(x):
-    return isinstance(x, Workflow)
+    return isinstance(x, Workflow) or ('_workflow' in dir(x))
+
+def get_workflow(x):
+    if isinstance(x, Workflow):
+        return x
+        
+    if '_workflow' in dir(x):
+        return x._workflow
     
+    return None
+
 def serialize_arguments(bound_args):
     for p in bound_args.signature.parameters.values():
         if p.kind == Parameter.VAR_POSITIONAL:
@@ -111,8 +121,10 @@ def merge_workflow(f, bound_args):
     links = {idx: set()}
 
     for address in serialize_arguments(bound_args):
-        workflow = ref_argument(bound_args, address)
-        if not is_workflow(workflow):
+        workflow = get_workflow(
+            ref_argument(bound_args, address))
+        
+        if not workflow:
             continue
         
         set_argument(bound_args, address, Parameter.empty)

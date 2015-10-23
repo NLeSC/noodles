@@ -22,6 +22,9 @@ def test_merge_workflow():
     C = add(A, B)
     
     assert is_workflow(C)
+    C = get_workflow(C)
+    A = get_workflow(A)
+    B = get_workflow(B)
     assert C.nodes[C.top].bound_args.args == (Empty, Empty)
     assert (C.top, ArgumentAddress(ArgumentKind.regular, 'a', None)) in C.links[A.top]
     assert (C.top, ArgumentAddress(ArgumentKind.regular, 'b', None)) in C.links[B.top]
@@ -30,6 +33,10 @@ def test_binder():
     A = value(1)
     B = value(2)
     C = bind(A, B)
+
+    C = get_workflow(C)
+    A = get_workflow(A)
+    B = get_workflow(B)
     
     assert is_workflow(C)
     assert C.nodes[C.top].bound_args.args == (Empty, Empty)
@@ -44,7 +51,10 @@ def test_with_keywords():
     A = value(1)
     B = value(2)
     C = takes_keywords(a = A, b = B, s = "regular!")
-    
+    C = get_workflow(C)
+    A = get_workflow(A)
+    B = get_workflow(B)
+
     assert is_workflow(C)
     assert C.nodes[C.top].bound_args.args     == ("regular!",)
     assert C.nodes[C.top].bound_args.kwargs   == {'a': Empty, 'b': Empty}

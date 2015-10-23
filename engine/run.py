@@ -6,6 +6,10 @@ def run_node(node):
 from queue import Queue
                 
 def run(workflow):
+    workflow = get_workflow(workflow)
+    if not workflow:
+        raise RuntimeError("Argument is not a workflow.")
+    
     results = dict((n, Empty) for n in workflow.nodes)
     depends = invert_links(workflow.links)
     
@@ -54,6 +58,10 @@ def run_parallel(workflow, n_threads):
     @returns: output of workflow
     @rtype: Any
     """
+    workflow = get_workflow(workflow)
+    if not workflow:
+        raise RuntimeError("Argument is not a workflow.")
+
     locks   = dict((n, threading.Lock()) for n in workflow.nodes)
     results = dict((n, Empty) for n in workflow.nodes)
     depends = invert_links(workflow.links)
