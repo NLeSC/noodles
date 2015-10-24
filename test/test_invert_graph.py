@@ -12,6 +12,7 @@ def test_invert_links():
     A = value(1)
     B = value(2)
     C = add(A, B)
+    
     C = get_workflow(C)
     A = get_workflow(A)
     B = get_workflow(B)
