@@ -1,4 +1,4 @@
-from inspect import getargspec, signature
+from inspect import signature
 from itertools import tee, filterfalse, repeat, chain
 
 from lib import *

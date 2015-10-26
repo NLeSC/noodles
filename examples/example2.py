@@ -22,7 +22,10 @@ def sum(a, buildin_sum = sum):
 r1 = add(1, 1)
 r2 = sub(3, r1)
 
-multiples = [mul(add(i, r2), r1) for i in range(6)]
+def foo(a, b, c):
+    return mul(add(a, b), c)
+
+multiples = [foo(i, r2, r1) for i in range(6)]
 
 r5 = sum(bind(*multiples))
 
