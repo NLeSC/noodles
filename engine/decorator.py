@@ -1,5 +1,6 @@
 from inspect import signature
 from itertools import tee, filterfalse, repeat, chain
+from functools import wraps
 
 from lib import *
 
@@ -12,12 +13,12 @@ def schedule(f):
     scheduler in order to be run on any architecture supporting the current
     python environment.    
     """
+    @wraps(f)
     def wrapped(*args, **kwargs):
         bound_args = signature(f).bind(*args, **kwargs)
         bound_args.apply_defaults()
         return PromisedObject(merge_workflow(f, bound_args))        
 
-    wrapped.__doc__ = f.__doc__
     return wrapped
 
 @schedule
