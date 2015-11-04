@@ -1,5 +1,6 @@
 from engine import *
 from prototype import draw_workflow
+import time
 
 @schedule
 def value(a):
@@ -19,6 +20,7 @@ def mul(a, b):
 
 @schedule
 def sqr(a):
+    time.sleep(0.01)
     return a*a
 
 @schedule
@@ -34,6 +36,7 @@ def num_range(a, b):
     return range(a, b)
 
 
-w = sum(map(sqr, num_range(0, 10)))
+w = sum(map(sqr, num_range(0, 1000)))
 draw_workflow("test.png", w)
-print(run(w))
+#print(run(w))
+print(run_parallel(w, 16))

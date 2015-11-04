@@ -18,4 +18,4 @@ def num_range(a, b):
 
 def test_higher_order():
     w = sum(map(sqr, num_range(0, 10)))
-    assert run(w) == 285
+    assert run_parallel(w, 4) == 285

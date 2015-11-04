@@ -1,8 +1,5 @@
+from .run_common import *
 import threading
-from queue import Queue
-
-from .datamodel import *
-from .run import run_node
 
 def run_parallel(workflow, n_threads):
     """
@@ -26,44 +23,76 @@ def run_parallel(workflow, n_threads):
     @returns: output of workflow
     @rtype: Any
     """
-    workflow = get_workflow(workflow)
-    if not workflow:
+    master = get_workflow(workflow)
+    if not master:
         raise RuntimeError("Argument is not a workflow.")
 
-    locks   = dict((n, threading.Lock()) for n in workflow.nodes)
-    results = dict((n, Empty) for n in workflow.nodes)
-    depends = invert_links(workflow.links)
+    global_lock = threading.Lock()
 
-    q = Queue()
-    for n in workflow.nodes:
-        if depends[n] == {}:
-            q.put(n)
+    locks   = {
+        id(master):
+            dict((n, threading.Lock()) for n in master.nodes)
+    }
 
-    if q.empty():
+    dynamic_links = {
+        id(master):
+            DynamicLink(source = master, target = master, node = master.top)
+    }
+
+    results = {
+        id(master):
+            dict((n, Empty) for n in master.nodes)
+    }
+
+    Q = Queue()
+    queue_workflow(Q, master)
+
+    if Q.empty():
         raise RuntimeError("No node is ready for execution, " \
                            "emtpy workflow or circular dependency.")
 
     def worker():
         while True:
-            n = q.get()
-            v = run_node(workflow.nodes[n])
-            results[n] = v
+            w, n = Q.get()
+            v = run_node(w.nodes[n])
 
-            for (tgt, address) in workflow.links[n]:
-                insert_result(workflow.nodes[tgt], address, v)
+            if is_workflow(v):
+                v = get_workflow(v)
 
-                locks[tgt].acquire()
-                if is_node_ready(workflow.nodes[tgt]):
-                    q.put(tgt)
-                locks[tgt].release()
+                with global_lock:
+                    locks[id(v)] = dict((n, threading.Lock())
+                        for n in v.nodes)
 
-            q.task_done()
+                    dynamic_links[id(v)] = DynamicLink(
+                        source = v, target = w, node = n)
+
+                    results[id(v)] = dict((n, Empty)
+                        for n in v.nodes)
+
+                queue_workflow(Q, v) # Queue is already thread-safe
+
+                Q.task_done()
+                continue
+
+            if n == w.top:
+                _, w, n = dynamic_links[id(w)]
+
+            results[id(w)][n] = v
+
+            for (tgt, address) in w.links[n]:
+                with locks[id(w)][tgt]:
+                    insert_result(w.nodes[tgt], address, v)
+                    
+                    if is_node_ready(w.nodes[tgt]):
+                        Q.put(Job(workflow = w, node = tgt))
+
+            Q.task_done()
 
     for i in range(n_threads):
         t = threading.Thread(target = worker)
         t.daemon = True
         t.start()
 
-    q.join()
+    Q.join()
 
-    return results[workflow.top]
+    return results[id(master)][master.top]
