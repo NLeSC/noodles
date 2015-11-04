@@ -49,4 +49,4 @@ The user then uses these in a workflow:
 
 Resulting in the graph:
 
-![Graph showing the flow diagram for this arithmetic](example/graph-example1.svg?raw=true "Example graph")
+![Graph showing the flow diagram for this arithmetic](examples/graph-example1.svg?raw=true "Example graph")
