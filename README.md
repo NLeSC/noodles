@@ -31,22 +31,26 @@ give here some examples of how the user would use the workflow engine.
 The developer has prepared some nice functions for the user:
 
     @schedule
-    def add(a, b):
+    def f(a, b):
         return a+b
 
     @schedule
-    def min(a, b):
+    def g(a, b):
         return a-b
+
+    @schedule
+    def h(a, b):
+        return a*b
 
 The user then uses these in a workflow:
 
-    r1 = add(42, 43)
-    r2 = add(41, r1)
-    r3 = min(44, r1)
-    r4 = add(r2, r3)
+    u = f(5, 4)
+    v = g(u, 3)
+    w = g(u, 2)
+    x = h(v, w)
 
-    draw_graph("graph-example1.svg", r4)
+    draw_graph("graph-example1.svg", x)
 
 Resulting in the graph:
 
-![Graph showing the flow diagram for this arithmetic](examples/graph-example1.svg?raw=true "Example graph")
+![Graph showing the flow diagram for this arithmetic](examples/callgraph.png?raw=true "Example graph")

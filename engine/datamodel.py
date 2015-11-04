@@ -222,7 +222,11 @@ def merge_workflow(f, bound_args):
 
     return Workflow(id(node), nodes, links)
 
-
+def find_links_to(links, node):
+    return dict((address, src)
+            for src, (tgt, address) in _all_valid(links)
+            if tgt == node)
+    
 def _all_valid(links):
     """
     Iterates over all links, forgetting emtpy registers.

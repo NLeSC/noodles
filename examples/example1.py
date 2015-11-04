@@ -15,7 +15,7 @@ def g(a, b):
 @schedule
 def h(a, b):
     return a*b
-    
+
 # run example program
 #---------------------
 u = f(5, 4)
@@ -25,5 +25,4 @@ x = h(v, w)
 
 # draw the execution graph
 #-------------------------
-draw_workflow("callgraph.pdf", x)
-
+draw_workflow("callgraph.png", x)
