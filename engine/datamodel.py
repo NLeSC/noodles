@@ -14,7 +14,8 @@
     very fancy form of partial application. The original order of the arguments
     should be preserved in reconstructing the call to the function. To support
     this there are _splice_ functions, that replace items in the arguments with
-    markers signifying that these arguments should be got at through the workflow.
+    markers signifying that these arguments should be got at through the
+    workflow.
 
     ### Memoization
     The user needs not
