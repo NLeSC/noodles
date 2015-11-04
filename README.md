@@ -16,14 +16,14 @@ in this context are: workflow, node, link.
 ## Developers interface
 
 Questions:
-*   What does a developer adding functionality to the workflow engine need to 
+*   What does a developer adding functionality to the workflow engine need to
     know?
-*   How do we specify the surrounding context of functions in terms of types 
+*   How do we specify the surrounding context of functions in terms of types
     and monadic context?
 
 ## User interface
 
-The user should have it easy. From the spirit of wishful programming, we may 
+The user should have it easy. From the spirit of wishful programming, we may
 give here some examples of how the user would use the workflow engine.
 
 ## Prototype example
@@ -46,10 +46,7 @@ The user then uses these in a workflow:
     r4 = add(r2, r3)
 
     draw_graph("graph-example1.svg", r4)
-    
+
 Resulting in the graph:
 
-![Graph showing the flow diagram for this arithmetic](example/graph-example1.svg "Example graph")
-
-
-
+![Graph showing the flow diagram for this arithmetic](example/graph-example1.svg?raw=true "Example graph")
