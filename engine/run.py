@@ -5,35 +5,52 @@ def run_node(node):
 
 from queue import Queue
 
-def run(workflow):
-    workflow = get_workflow(workflow)
-    if not workflow:
-        raise RuntimeError("Argument is not a workflow.")
+Job = namedtuple('Job', ['workflow', 'node'])
 
-    results = dict((n, Empty) for n in workflow.nodes)
+DynamicLink = namedtuple('DynamicLink', ['source', 'target', 'node'])
+
+def queue_workflow(Q, workflow):
     depends = invert_links(workflow.links)
 
-    q = Queue()
     for n in workflow.nodes:
         if depends[n] == {}:
-            q.put(n)
+            Q.put(Job(workflow = workflow, node = n))
 
-    if q.empty():
+def run(workflow):
+    master = get_workflow(workflow)
+    if not master:
+        raise RuntimeError("Argument is not a workflow.")
+
+    results = dict((n, Empty) for n in master.nodes)
+    dynamic_links = { id(master): DynamicLink(
+        source = master, target = master, node = master.top) }
+
+    Q = Queue()
+    queue_workflow(Q, master)
+
+    if Q.empty():
         raise RuntimeError("No node is ready for execution, " \
-                             "emtpy workflow or circular dependency.")
+                           "emtpy workflow or circular dependency.")
 
-    while not q.empty():
-        n = q.get()
-        v = run_node(workflow.nodes[n])
+    while not Q.empty():
+        w, n = Q.get()
+        v = run_node(w.nodes[n])
 
         if is_workflow(v):
-            substitute_node(workflow, n, v)
+            v = get_workflow(v)
+            dynamic_links[id(v)] = DynamicLink(
+                source = v, target = w, node = n)
+            queue_workflow(Q, v)
+            continue
+
+        if n == w.top:
+            _, w, n = dynamic_links[id(w)]
 
         results[n] = v
 
-        for (tgt, address) in workflow.links[n]:
-            insert_result(workflow.nodes[tgt], address, v)
-            if is_node_ready(workflow.nodes[tgt]):
-                q.put(tgt)
+        for (tgt, address) in w.links[n]:
+            insert_result(w.nodes[tgt], address, v)
+            if is_node_ready(w.nodes[tgt]):
+                Q.put(Job(workflow = w, node = tgt))
 
-    return results[workflow.top]
+    return results[master.top]

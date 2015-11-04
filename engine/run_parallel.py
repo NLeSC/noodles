@@ -41,7 +41,7 @@ def run_parallel(workflow, n_threads):
 
     if q.empty():
         raise RuntimeError("No node is ready for execution, " \
-                             "emtpy workflow or circular dependency.")
+                           "emtpy workflow or circular dependency.")
 
     def worker():
         while True:
