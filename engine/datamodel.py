@@ -223,10 +223,25 @@ def merge_workflow(f, bound_args):
     return Workflow(id(node), nodes, links)
 
 def find_links_to(links, node):
+    """
+    Find links to a node.
+
+    @param links:
+        forward links of a workflow
+    @type links: Mapping[NodeId, Set[(NodeId, ArgumentType, [int|str]])]
+
+    @param node:
+        index to a node
+    @type node: int
+
+    @returns:
+        dictionary of sources for each argument
+    @rtype: Mapping[(ArgumentType, [int|str]), NodeId]
+    """
     return dict((address, src)
             for src, (tgt, address) in _all_valid(links)
             if tgt == node)
-    
+
 def _all_valid(links):
     """
     Iterates over all links, forgetting emtpy registers.
@@ -248,10 +263,7 @@ def invert_links(links):
         inverted graph, giving dependency of jobs.
     @rtype: Mapping[NodeId, Mapping[(ArgumentType, [int|str]), NodeId]]
     """
-    return dict((node, dict((address, src)
-                    for src, (tgt, address) in _all_valid(links)
-                    if tgt == node))
-                for node in links)
+    return dict((node, find_links_to(links, node)) for node in links)
 
 def is_node_ready(node):
     """

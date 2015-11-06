@@ -39,9 +39,11 @@ class NoodlesTask(FireTaskBase):
     Runs a task.
     """
     def run_task(self, fw_spec):
+        argkeys      = fw_spec['args']
         imports_spec = fw_spec['import_spec']
         foo          = fw_spec['function']
+        args = dict((name, fw_spec[key]) for key, name in argkeys.values())
+
 
         env = load_environment(import_spec)
         result = env.apply_function(foo, args)
-        

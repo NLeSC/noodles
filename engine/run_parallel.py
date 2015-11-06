@@ -3,7 +3,7 @@ import threading
 
 def run_parallel(workflow, n_threads):
     """
-    Runs a workflow in parallel using a simple Queue scheme. Each node that
+    Runs a workflow in parallel using a Queue scheme. Each node that
     is ready for computation is added to the queue. When a worker finishes
     it puts the answer into the target nodes, and checks each of these nodes
     for readiness. If the workflow doesn't contain any bugs (a dangerous
@@ -60,6 +60,8 @@ def run_parallel(workflow, n_threads):
                 v = get_workflow(v)
 
                 with global_lock:
+                    # if a lot of workers get nodes that evaluate to nested
+                    # workflows, this may become a bottleneck
                     locks[id(v)] = dict((n, threading.Lock())
                         for n in v.nodes)
 
@@ -81,8 +83,11 @@ def run_parallel(workflow, n_threads):
 
             for (tgt, address) in w.links[n]:
                 with locks[id(w)][tgt]:
+                    # even though we're writing to unique locations, the
+                    # insert_result function is not thread safe.
+                    # I don't know why.
                     insert_result(w.nodes[tgt], address, v)
-                    
+
                     if is_node_ready(w.nodes[tgt]):
                         Q.put(Job(workflow = w, node = tgt))
 
