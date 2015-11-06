@@ -2,17 +2,17 @@ def find_links_to(links, node):
     """
     Find links to a node.
 
-    @param links:
+    :param links:
         forward links of a workflow
-    @type links: Mapping[NodeId, Set[(NodeId, ArgumentType, [int|str]])]
+    :type links: Mapping[NodeId, Set[(NodeId, ArgumentType, [int|str]])]
 
-    @param node:
+    :param node:
         index to a node
-    @type node: int
+    :type node: int
 
-    @returns:
+    :returns:
         dictionary of sources for each argument
-    @rtype: Mapping[(ArgumentType, [int|str]), NodeId]
+    :rtype: Mapping[(ArgumentType, [int|str]), NodeId]
     """
     return dict((address, src)
             for src, (tgt, address) in _all_valid(links)
@@ -31,12 +31,12 @@ def invert_links(links):
     Inverts the call-graph to get a dependency graph. Possibly slow,
     short version.
 
-    @param links:
+    :param links:
         forward links of a call-graph.
-    @type links: Mapping[NodeId, Set[(NodeId, ArgumentType, [int|str]])]
+    :type links: Mapping[NodeId, Set[(NodeId, ArgumentType, [int|str]])]
 
-    @returns:
+    :returns:
         inverted graph, giving dependency of jobs.
-    @rtype: Mapping[NodeId, Mapping[(ArgumentType, [int|str]), NodeId]]
+    :rtype: Mapping[NodeId, Mapping[(ArgumentType, [int|str]), NodeId]]
     """
     return dict((node, find_links_to(links, node)) for node in links)

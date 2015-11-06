@@ -1,6 +1,12 @@
 from .run_common import *
 
 def run(workflow):
+    """
+    Returns the result of evaluting the worflow
+    :param workflow:  Workflow to compute
+    :type  workflow: namedTuple |Workflow| or |PromisedObject| 
+    
+    """
     master = get_workflow(workflow)
     if not master:
         raise RuntimeError("Argument is not a workflow.")
