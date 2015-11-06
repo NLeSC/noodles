@@ -1,0 +1,68 @@
+from .data_types import *
+from inspect import Parameter
+
+def serialize_arguments(bound_args):
+    """
+    Generator that takes the bound_args output of signature().bind and iterates
+    over all the arguments, returning reproducable addresses of each
+    argument.
+
+    An address is stored in an `ArgumentAddress` object (a
+    named tuple), containing the kind of argument (regular, variadic or keyword),
+    the name of the argument, and, if not a regular argument, a key.
+    In the case of a variadic argument this is an integer index into the
+    variadic arguments list, in the case of a keyword argument it is a
+    string. For regular arguments the key is set to `None`.
+
+    @param bound_args:
+        Bound arguments structure, as described in the documentation of the
+        `inspect` module.
+    @type bound_args: BoundArguments
+
+    @returns:
+        Generates (kind, name, key)-tuples representing an address into the
+        argument structure.
+    @rtype: Iterator[ArgumentAddress]
+    """
+    for p in bound_args.signature.parameters.values():
+        if p.kind == Parameter.VAR_POSITIONAL:
+            for i, v in enumerate(bound_args.arguments[p.name]):
+                yield ArgumentAddress(ArgumentKind.variadic, p.name, i)
+            continue
+
+        if p.kind == Parameter.VAR_KEYWORD:
+            for k, v in bound_args.arguments[p.name].items():
+                yield ArgumentAddress(ArgumentKind.keyword, p.name, k)
+            continue
+
+        yield ArgumentAddress(ArgumentKind.regular, p.name, None)
+
+def ref_argument(bound_args, address):
+    """
+    Taking a bound_args object, and an ArgumentAddress, retrieves the data
+    currently stored in bound_args for this particular address.
+    """
+    if address.kind == ArgumentKind.regular:
+        return bound_args.arguments[address.name]
+
+    return bound_args.arguments[address.name][address.key]
+
+def set_argument(bound_args, address, value):
+    """
+    Taking a bound_args object, and  an ArgumentAddress and a value,
+    sets the value pointed to by the address to `value`.
+    """
+    if address.kind == ArgumentKind.regular:
+        bound_args.arguments[address.name] = value
+        return
+
+    bound_args.arguments[address.name][address.key] = value
+
+def format_address(address):
+    """
+    Formats an ArgumentAddress for human reading.
+    """
+    if address.kind == ArgumentKind.regular:
+        return address.name
+
+    return "{0}[{1}]".format(address.name, address.key)

@@ -28,28 +28,15 @@
 """
 
 import inspect
-from inspect import signature, Parameter
+from inspect import signature
 
-from collections import namedtuple
 from itertools import tee, filterfalse, chain, repeat, count
-from enum import Enum
 
-ArgumentKind = Enum('ArgumentKind',
-    ['regular', 'variadic', 'keyword'])
+from .data_types import *
+from .data_graph import *
+from .data_arguments import *
 
-ArgumentAddress = namedtuple('ArgumentAddress',
-    ['kind', 'name', 'key'])
-
-FunctionNode = namedtuple('FunctionNode',
-    ['foo', 'bound_args'])
-
-Workflow = namedtuple('Workflow',
-    ['top', 'nodes', 'links'])
-
-Empty = Parameter.empty
-# links: Mapping[NodeId, (NodeId, ArgumentAddress)]
-
-
+#==============================================================================#
 def is_workflow(x):
     return isinstance(x, Workflow) or ('_workflow' in dir(x))
 
@@ -61,72 +48,7 @@ def get_workflow(x):
         return x._workflow
 
     return None
-
-def serialize_arguments(bound_args):
-    """
-    Generator that takes the bound_args output of signature().bind and iterates
-    over all the arguments, returning reproducable addresses of each
-    argument.
-
-    An address is stored in an `ArgumentAddress` object (a
-    named tuple), containing the kind of argument (regular, variadic or keyword),
-    the name of the argument, and, if not a regular argument, a key.
-    In the case of a variadic argument this is an integer index into the
-    variadic arguments list, in the case of a keyword argument it is a
-    string. For regular arguments the key is set to `None`.
-
-    @param bound_args:
-        Bound arguments structure, as described in the documentation of the
-        `inspect` module.
-    @type bound_args: BoundArguments
-
-    @returns:
-        Generates (kind, name, key)-tuples representing an address into the
-        argument structure.
-    @rtype: Iterator[ArgumentAddress]
-    """
-    for p in bound_args.signature.parameters.values():
-        if p.kind == Parameter.VAR_POSITIONAL:
-            for i, v in enumerate(bound_args.arguments[p.name]):
-                yield ArgumentAddress(ArgumentKind.variadic, p.name, i)
-            continue
-
-        if p.kind == Parameter.VAR_KEYWORD:
-            for k, v in bound_args.arguments[p.name].items():
-                yield ArgumentAddress(ArgumentKind.keyword, p.name, k)
-            continue
-
-        yield ArgumentAddress(ArgumentKind.regular, p.name, None)
-
-def ref_argument(bound_args, address):
-    """
-    Taking a bound_args object, and an ArgumentAddress, retrieves the data
-    currently stored in bound_args for this particular address.
-    """
-    if address.kind == ArgumentKind.regular:
-        return bound_args.arguments[address.name]
-
-    return bound_args.arguments[address.name][address.key]
-
-def set_argument(bound_args, address, value):
-    """
-    Taking a bound_args object, and  an ArgumentAddress and a value,
-    sets the value pointed to by the address to `value`.
-    """
-    if address.kind == ArgumentKind.regular:
-        bound_args.arguments[address.name] = value
-        return
-
-    bound_args.arguments[address.name][address.key] = value
-
-def format_address(address):
-    """
-    Formats an ArgumentAddress for human reading.
-    """
-    if address.kind == ArgumentKind.regular:
-        return address.name
-
-    return "{0}[{1}]".format(address.name, address.key)
+#==============================================================================#
 
 def insert_result(node, address, value):
     """
@@ -221,49 +143,6 @@ def merge_workflow(f, bound_args):
         links[workflow.top].add((idx, address))
 
     return Workflow(id(node), nodes, links)
-
-def find_links_to(links, node):
-    """
-    Find links to a node.
-
-    @param links:
-        forward links of a workflow
-    @type links: Mapping[NodeId, Set[(NodeId, ArgumentType, [int|str]])]
-
-    @param node:
-        index to a node
-    @type node: int
-
-    @returns:
-        dictionary of sources for each argument
-    @rtype: Mapping[(ArgumentType, [int|str]), NodeId]
-    """
-    return dict((address, src)
-            for src, (tgt, address) in _all_valid(links)
-            if tgt == node)
-
-def _all_valid(links):
-    """
-    Iterates over all links, forgetting emtpy registers.
-    """
-    for k, v in links.items():
-        for i in v:
-            yield k, i
-
-def invert_links(links):
-    """
-    Inverts the call-graph to get a dependency graph. Possibly slow,
-    short version.
-
-    @param links:
-        forward links of a call-graph.
-    @type links: Mapping[NodeId, Set[(NodeId, ArgumentType, [int|str]])]
-
-    @returns:
-        inverted graph, giving dependency of jobs.
-    @rtype: Mapping[NodeId, Mapping[(ArgumentType, [int|str]), NodeId]]
-    """
-    return dict((node, find_links_to(links, node)) for node in links)
 
 def is_node_ready(node):
     """
