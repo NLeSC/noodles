@@ -12,7 +12,7 @@ FunctionNode = namedtuple('FunctionNode',
     ['foo', 'bound_args'])
 
 Node = namedtuple('Node',
-    ['name', 'arguments'])
+    ['module', 'name', 'arguments'])
 
 Argument = namedtuple('Argument',
     ['address', 'value'])

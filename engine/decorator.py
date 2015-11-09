@@ -1,4 +1,4 @@
-from inspect import signature
+from inspect import signature, getmodule
 from itertools import tee, filterfalse, repeat, chain
 from functools import wraps
 
@@ -13,6 +13,10 @@ def schedule(f):
     scheduler in order to be run on any architecture supporting the current
     python environment.
     """
+
+    #print("wrapping {name} in module {mod}".format(
+    #    name = f.__name__, mod = getmodule(f).__name__))
+
     @wraps(f)
     def wrapped(*args, **kwargs):
         bound_args = signature(f).bind(*args, **kwargs)
