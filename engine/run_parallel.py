@@ -36,7 +36,7 @@ def run_parallel(workflow, n_threads):
 
     dynamic_links = {
         id(master):
-            DynamicLink(source = master, target = master, node = master.top)
+            DynamicLink(source = master, target = master, node = master.root)
     }
 
     results = {
@@ -76,7 +76,7 @@ def run_parallel(workflow, n_threads):
                 Q.task_done()
                 continue
 
-            if n == w.top:
+            if n == w.root:
                 _, w, n = dynamic_links[id(w)]
 
             results[id(w)][n] = v
@@ -100,4 +100,4 @@ def run_parallel(workflow, n_threads):
 
     Q.join()
 
-    return results[id(master)][master.top]
+    return results[id(master)][master.root]

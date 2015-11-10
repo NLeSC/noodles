@@ -55,7 +55,7 @@ def delayed(a, delay=1.0):
 
 def test_parallel_runner_02():
     A = repeat(delayed(1, 0.1), 4)
-    B = sum(bind(*A))
+    B = sum(gather(*A))
 
     start = time.time()
     assert run_parallel(B, 4) == 4

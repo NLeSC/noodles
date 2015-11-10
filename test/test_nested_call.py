@@ -10,7 +10,7 @@ def sum(a, buildin_sum = sum):
 
 @schedule
 def map(f, lst):
-    return bind(*[f(x) for x in lst])
+    return gather(*[f(x) for x in lst])
 
 @schedule
 def num_range(a, b):

@@ -1,5 +1,5 @@
 from .data_types import *
-from inspect import Parameter
+from inspect import Parameter, signature, getmodule
 
 def serialize_arguments(bound_args):
     """
@@ -66,3 +66,26 @@ def format_address(address):
         return address.name
 
     return "{0}[{1}]".format(address.name, address.key)
+
+def get_arguments(bound_args):
+    return [(address, ref_argument(bound_args, address))
+        for address in serialize_arguments(bound_args)
+        if ref_argument(bound_args, address) != Empty]
+
+def bind_arguments(f, arguments):
+    bound_args = signature(f).bind_partial()
+
+    variadic = next((x.name for x in bound_args.signature.parameters.values()
+        if x.kind == Parameter.VAR_POSITIONAL), None)
+
+    # *HACK*
+    # the BoundArguments class uses a tuple to store the
+    # variadic arguments. Since we need to modify them,
+    # we have to replace the tuple with a list. This works, for now...
+    if variadic:
+        bound_args.arguments[variadic] = list(bound_args.arguments[variadic])
+
+    for address, value in arguments:
+        set_argument(bound_args, address, value)
+
+    return bound_args
