@@ -12,16 +12,16 @@ def run_parallel(workflow, n_threads):
     inserted, but we do need to lock when checking for readiness. For this we
     create a lock for each node in the workflow.
 
-    @param workflow:
+    :param workflow:
         the workflow
-    @type workflow: Workflow
+    :type workflow: Workflow
 
-    @param n_threads:
+    :param n_threads:
         number of threads
-    @type n_threads: int
+    :type n_threads: int
 
-    @returns: output of workflow
-    @rtype: Any
+    :returns: output of workflow
+    :rtype: Any
     """
     master = get_workflow(workflow)
     if not master:
