@@ -14,15 +14,15 @@ def serialize_arguments(bound_args):
     variadic arguments list, in the case of a keyword argument it is a
     string. For regular arguments the key is set to `None`.
 
-    @param bound_args:
+    :param bound_args:
         Bound arguments structure, as described in the documentation of the
         `inspect` module.
-    @type bound_args: BoundArguments
+    :type bound_args: BoundArguments
 
-    @returns:
+    :returns:
         Generates (kind, name, key)-tuples representing an address into the
         argument structure.
-    @rtype: Iterator[ArgumentAddress]
+    :rtype: Iterator[ArgumentAddress]
     """
     for p in bound_args.signature.parameters.values():
         if p.kind == Parameter.VAR_POSITIONAL:

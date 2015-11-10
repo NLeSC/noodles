@@ -96,18 +96,18 @@ def merge_workflow(f, bound_args):
     results in a new workflow with all the correct dependencies represented
     as links in the graph.
 
-    @param bound_args:
+    :param bound_args:
         Object containing the argument bindings for the function that is
         being called.
-    @type bound_args: BoundArguments
+    :type bound_args: BoundArguments
 
-    @param f:
+    :param f:
         Function being called.
-    @type f: Callable
+    :type f: Callable
 
-    @returns:
+    :returns:
         New workflow.
-    @rtype: Workflow
+    :rtype: Workflow
     """
     variadic = next((x.name for x in bound_args.signature.parameters.values()
         if x.kind == Parameter.VAR_POSITIONAL), None)
