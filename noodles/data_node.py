@@ -5,13 +5,34 @@ from inspect import signature, getmodule, Parameter
 from importlib import import_module
 
 def look_up(module, name):
+    """
+    Import the object named by `name` from the module named by
+    `module`.
+    """
     M = import_module(module)
     return getattr(M, name)
 
 def module_and_name(f):
+    """
+    Retrieve the module and name of the given object.
+    """
     return getmodule(f).__name__, f.__name__
 
 def importable(x):
+    """
+    Checks whether we can get import the object and get the same.
+
+    .. code-block:: python
+
+        x == look_up(*module_and_name(x))
+
+    :param x:
+        Any object.
+
+    :returns:
+        True if `x` can be imported.
+    :rtype: bool
+    """
     try:
         module, name = module_and_name(x)
         return x == look_up(module, name)
@@ -20,6 +41,20 @@ def importable(x):
         return False
 
 class FunctionNode:
+    """
+    Captures a function call as a combination of function and arguments.
+    Some of these arguments may be set to :py:obj:`Empty`, these need to be
+    filled in by the workflow before the function can be applied.
+
+    .. py:attribute:: foo
+
+    The function (or object) that is being called.
+
+    .. py:attribute:: bound_args
+
+    A :py:class:`BoundArguments` object storing the arguments to
+    the function.
+    """
     @staticmethod
     def from_node(node):
         foo = look_up(node.module, node.name)
@@ -32,6 +67,9 @@ class FunctionNode:
         self._node = node
 
     def node(self):
+        """
+        Convert to a :py:class:`Node` for subsequent serialisation.
+        """
         if not self._node:
             module, name = module_and_name(self.foo)
             arguments = get_arguments(self.bound_args)
@@ -48,7 +86,10 @@ def from_call(foo, args, kwargs):
     These arguments are stored in a BoundArguments object matching to the
     signature of the given function `f`. That is, bound_args was constructed
     by doing:
-        > inspect.signature(foo).bind(*args, **kwargs)
+
+    .. code-block:: python
+
+        inspect.signature(foo).bind(*args, **kwargs)
 
     The arguments stored in the `bound_args` object are filtered on being
     either 'plain', or 'promised'. If an argument is promised, the value
@@ -60,10 +101,10 @@ def from_call(foo, args, kwargs):
     if not already present in the new workflow from an earlier argument,
     are copied to the new workflow, and a new entry is made into the link
     dictionary. Then the links in the old workflow are also added to the
-    link dictionary. Since the link dictionary points from nodes to a _set_
+    link dictionary. Since the link dictionary points from nodes to a `set`
     of `ArgumentAddress`es, no links are duplicated.
 
-    In the `bound_args` object the promised value is replaced by the `empty`
+    In the `bound_args` object the promised value is replaced by the `Empty`
     object, so that we can see which arguments still have to be evaluated.
 
     Doing this for all promised value arguments in the bound_args object,

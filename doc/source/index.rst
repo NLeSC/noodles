@@ -20,6 +20,10 @@ Docs
 .. automodule:: noodles
     :members: schedule, run, run_parallel, Workflow, PromisedObject
 
+Internal Specs
+==============
+.. automodule:: noodles.datamodel
+    :members: look_up, module_and_name, importable, from_call, Node, FunctionNode
 
 Indices and tables
 ==================

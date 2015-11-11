@@ -3,15 +3,15 @@ from .decorator import schedule
 @schedule
 def gather(*a):
     """
-    Converts a list of workflows (i.e. `PromisedObject`) to
+    Converts a list of workflows (i.e. :py:class:`PromisedObject`) to
     a workflow representing the promised list of values.
 
-    Currently the `merge_workflow` function detects workflows
+    Currently the :py:func:`from_call` function detects workflows
     only by their top type (using `isinstance`). If we have some
-    deeper structure containing `PromisedObject`s, these are not
+    deeper structure containing :py:class:`PromisedObject`s, these are not
     recognised as workflow input and taken as literal values.
 
     This behaviour may change in the future, making this function
-    `bind` obsolete.
+    `gather` obsolete.
     """
     return list(a)
