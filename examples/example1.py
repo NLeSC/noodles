@@ -1,4 +1,4 @@
-from engine import schedule
+from noodles import schedule
 
 from prototype import draw_workflow
 

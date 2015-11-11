@@ -1,6 +1,6 @@
 from nose.tools import raises
 
-from engine import *
+from noodles import *
 
 def dummy(a, b, c, *args, **kwargs):
     pass

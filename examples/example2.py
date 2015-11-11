@@ -1,4 +1,4 @@
-from engine import schedule, bind, run, run_parallel
+from noodles import schedule, bind, run, run_parallel
 from prototype import draw_workflow
 
 @schedule

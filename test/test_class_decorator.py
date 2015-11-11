@@ -1,4 +1,4 @@
-from engine import *
+from noodles import *
 from nose.tools import raises
 
 @schedule
@@ -9,7 +9,7 @@ class A:
     def multiply(self, factor):
         self.value *= factor
         return self
-        
+
 def test_class_decorator():
     a = A(5).multiply(10)
     a.second = 7
@@ -23,4 +23,3 @@ def test_class_decorator2():
     b = a.divide(0)
     result = run(b)
     print(dir(result))
-    
