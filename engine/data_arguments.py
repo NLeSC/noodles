@@ -1,4 +1,5 @@
 from .data_types import *
+from itertools import repeat
 from inspect import Parameter, signature, getmodule
 
 def serialize_arguments(bound_args):
@@ -56,6 +57,19 @@ def set_argument(bound_args, address, value):
         bound_args.arguments[address.name] = value
         return
 
+    if address.kind == ArgumentKind.variadic:
+        if not address.name in bound_args.arguments:
+            bound_args.arguments[address.name] = []
+
+        l = len(bound_args.arguments[address.name])
+        if address.key >= l:
+            bound_args.arguments[address.name].extend(
+                repeat(Empty, address.key - l + 1))
+
+    if address.kind == ArgumentKind.keyword:
+        if not address.name in bound_args.arguments:
+            bound_args.arguments[address.name] = {}
+
     bound_args.arguments[address.name][address.key] = value
 
 def format_address(address):
@@ -83,7 +97,7 @@ def bind_arguments(f, arguments):
     # variadic arguments. Since we need to modify them,
     # we have to replace the tuple with a list. This works, for now...
     if variadic:
-        bound_args.arguments[variadic] = list(bound_args.arguments[variadic])
+        bound_args.arguments[variadic] = []
 
     for address, value in arguments:
         set_argument(bound_args, address, value)

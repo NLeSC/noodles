@@ -37,6 +37,7 @@ from .data_graph import *
 from .data_arguments import *
 from .data_json import *
 from .data_node import *
+from .data_workflow import *
 
 def insert_result(node, address, value):
     """

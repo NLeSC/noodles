@@ -15,7 +15,7 @@ class FunctionNode:
     @staticmethod
     def from_node(node):
         foo = look_up(node.module, node.name)
-        bound_args = bind_arguments(f, node.arguments)
+        bound_args = bind_arguments(foo, node.arguments)
         return FunctionNode(foo, bound_args, node)
 
     def __init__(self, foo, bound_args, node = None):
