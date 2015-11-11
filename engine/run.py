@@ -4,8 +4,8 @@ def run(workflow):
     """
     Returns the result of evaluting the worflow
     :param workflow:  Workflow to compute
-    :type  workflow: namedTuple |Workflow| or |PromisedObject| 
-    
+    :type  workflow: namedTuple |Workflow| or |PromisedObject|
+
     """
     master = get_workflow(workflow)
     if not master:
@@ -13,7 +13,7 @@ def run(workflow):
 
     results = dict((n, Empty) for n in master.nodes)
     dynamic_links = { id(master): DynamicLink(
-        source = master, target = master, node = master.top) }
+        source = master, target = master, node = master.root) }
 
     Q = Queue()
     queue_workflow(Q, master)
@@ -33,7 +33,7 @@ def run(workflow):
             queue_workflow(Q, v)
             continue
 
-        if n == w.top:
+        if n == w.root:
             _, w, n = dynamic_links[id(w)]
 
         results[n] = v
@@ -43,4 +43,4 @@ def run(workflow):
             if is_node_ready(w.nodes[tgt]):
                 Q.put(Job(workflow = w, node = tgt))
 
-    return results[master.top]
+    return results[master.root]

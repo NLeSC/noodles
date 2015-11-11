@@ -27,10 +27,9 @@ def foo(a, b, c):
 
 multiples = [foo(i, r2, r1) for i in range(6)]
 
-r5 = sum(bind(*multiples))
+r5 = sum(gather(*multiples))
 
 draw_workflow("graph-example2.svg", r5)
 answer = run_parallel(r5, 4)
 
 print("The answer is: {0}".format(answer))
-

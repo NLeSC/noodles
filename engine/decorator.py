@@ -1,10 +1,10 @@
-from inspect import signature
+from inspect import signature, getmodule
 from itertools import tee, filterfalse, repeat, chain
 from functools import wraps
 
 from lib import *
 
-from .datamodel import FunctionNode, Workflow, merge_workflow, get_workflow
+from .datamodel import from_call, get_workflow
 
 def schedule(f):
     """
@@ -15,9 +15,7 @@ def schedule(f):
     """
     @wraps(f)
     def wrapped(*args, **kwargs):
-        bound_args = signature(f).bind(*args, **kwargs)
-        bound_args.apply_defaults()
-        return PromisedObject(merge_workflow(f, bound_args))
+        return PromisedObject(from_call(f, args, kwargs))
 
     return wrapped
 
