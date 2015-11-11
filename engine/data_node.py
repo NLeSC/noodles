@@ -8,8 +8,16 @@ def look_up(module, name):
     M = import_module(module)
     return getattr(M, name)
 
-def function_module_and_name(f):
+def module_and_name(f):
     return getmodule(f).__name__, f.__name__
+
+def importable(x):
+    try:
+        module, name = module_and_name(x)
+        return x == look_up(module, name)
+
+    except:
+        return False
 
 class FunctionNode:
     @staticmethod
@@ -25,7 +33,7 @@ class FunctionNode:
 
     def node(self):
         if not self._node:
-            module, name = function_module_and_name(self.foo)
+            module, name = module_and_name(self.foo)
             arguments = get_arguments(self.bound_args)
             self._node = Node(module, name, arguments)
 

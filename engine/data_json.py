@@ -9,6 +9,24 @@ from .data_workflow import *
 
 import json
 from itertools import count
+from inspect import isfunction
+
+def json_sauce(x):
+    if importable(x):
+        module, name = module_and_name(x)
+        return { '_noodles': { 'type':   'importable',
+                               'module': module,
+                               'name':   name } }
+
+    raise TypeError
+
+def json_desauce(x):
+    if not '_noodles' in x:
+        return x
+
+    obj = x['_noodles']
+    if obj['type'] == 'importable':
+        return look_up(obj['module'], obj['name'])
 
 def address_to_jobject(a):
     return { 'kind':  a.kind.name,
@@ -77,5 +95,7 @@ def jobject_to_workflow(jobj):
     return reset_workflow(Workflow(root, nodes, links))
 
 def workflow_to_json(workflow):
-    return json.dumps(workflow_to_joboject(workflow),
-                sort_keys = True, indent = 2)
+    return json.dumps(workflow_to_jobject(workflow), default = json_sauce)
+
+def json_to_workflow(s):
+    return jobject_to_workflow(json.loads(s, object_hook = json_desauce))
