@@ -6,4 +6,4 @@ cover
 .coverage
 */.ipynb_checkpoints
 *~
-
+doc/build
