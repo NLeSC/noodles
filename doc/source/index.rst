@@ -18,7 +18,7 @@ The primary goal of Noodles is to make it easy to run jobs on cluster supercompu
 Docs
 ====
 .. automodule:: noodles
-    :members: schedule, run, run_parallel, Workflow, PromisedObject
+    :members: schedule, run, run_parallel, Workflow, PromisedObject, gather
 
 Internal Specs
 ==============

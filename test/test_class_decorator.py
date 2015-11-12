@@ -17,6 +17,13 @@ def test_class_decorator():
     assert result.value == 50
     assert result.second == 7
 
+def f(x):
+    return x
+
+def test_unwrap():
+    assert f == unwrap(schedule(f))
+    assert f == unwrap(f)
+
 @raises(AttributeError)
 def test_class_decorator2():
     a = A(6).multiply(7)

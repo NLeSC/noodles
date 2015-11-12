@@ -92,12 +92,14 @@ def bind_arguments(f, arguments):
     variadic = next((x.name for x in bound_args.signature.parameters.values()
         if x.kind == Parameter.VAR_POSITIONAL), None)
 
-    # *HACK*
-    # the BoundArguments class uses a tuple to store the
-    # variadic arguments. Since we need to modify them,
-    # we have to replace the tuple with a list. This works, for now...
     if variadic:
         bound_args.arguments[variadic] = []
+
+    keyword = next((x.name for x in bound_args.signature.parameters.values()
+        if x.kind == Parameter.VAR_KEYWORD), None)
+
+    if keyword:
+        bound_args.arguments[keyword] = {}
 
     for address, value in arguments:
         set_argument(bound_args, address, value)

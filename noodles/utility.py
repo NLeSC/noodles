@@ -8,7 +8,7 @@ def gather(*a):
 
     Currently the :py:func:`from_call` function detects workflows
     only by their top type (using `isinstance`). If we have some
-    deeper structure containing :py:class:`PromisedObject`s, these are not
+    deeper structure containing :py:class:`PromisedObject`, these are not
     recognised as workflow input and taken as literal values.
 
     This behaviour may change in the future, making this function
