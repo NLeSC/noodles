@@ -1,6 +1,11 @@
 
 
-__all__ = ['run_fireworks']
+__all__ = ['run_fireworks', 'NoodleTask']
+
+"""
+Notes:
+ *
+"""
 
 #================> Python Standard  and third-party <==========
 
@@ -55,8 +60,7 @@ def run_fireworks(workflow, remote_db = None,  queue_type = 'SLURM', walltime ='
     if remote_db:
         handlerPort.kill()    # close connections    
 
-
-        
+    
 
 #====================<>===============================
 def create_tasks(wf):
@@ -71,24 +75,75 @@ def create_tasks(wf):
     
     root_ref, nodes, links = workflow
 
-    fireworks, connections = [], {}
-    #Root Case
-    node1    = nodes[root_ref]
-    var_res  = 'var_{}'.format(root_ref)
-
-    # prueba   = node1.foo(node1.bound_args.args, node1.bound_args.kwargs) 
-    sys.exit()
-    
-    task     = PyTask(node1.foo, args = node1.bound_args.args, kwargs = node1.bound_args.kwargs, stored_data_varname = var_res) 
-    fw1      = Firework(task, spec={"_pass_job_info": True}, fw_id = root_ref)
-    nodes.pop(root_ref)
-
-    fireworks.append(fw1)
-    ## ith-case 
-
+    connections = fireworks_connections(links)
+    fireworks   = []
+    for k in nodes.keys():
+        n= create_noodle_task(k,nodes[k],links)
+        fireworks.append(n)
+        
     return WorkFlow(fireworks, connections)
 
+def create_noodle_task(key, node, links):
+    """
+    Calculates the expression inside the node using the bound arguments. The variables
+    corresponding to workflows are lookup from the database. Also, the node evaluation
+    result is stored in the database.
+    :param key: Unique node identifier  
+    :param key: int
+    :param node: Closure to execute remotely
+    :type node: |FunctionNode|
+    :param links: Dependencies between nodes
+    :type  links: Dict
+    """
 
+    fun_node   = node.node
+    fun_module = fun_node.module
+    fun_name   = fun_node.name
+    fun_qual   = fun_module + '.' + fun_name
+     
+    #variable representing the result of computing this node, store in the db
+    var_res      = 'var_{}'.format(key)
+
+    # 
+    args, kwargs = fireworks_dependencies(key,node,links)
+    task         = PyTask(fun_qual, args = args, kwargs = kwargs, stored_data_varname = var_res) 
+
+    return Firework(task, spec={"_pass_job_info": True}, fw_id = key)
+
+def fireworks_dependencies(key,node,links):
+    """
+    :param key: Unique node identifier  
+    :param key: int
+    :param node: Closure to execute remotely
+    :type node: |FunctionNode|
+    :param links: Dependencies between nodes
+    :type  links: Dict
+    """
+    var_names = node.bound_args.signature.parameters.keys()
+
+    return args, kwargs 
+
+
+def fireworks_connections(links):
+    """
+    Using the Noodles depencies returns a dictionary of Depencies for Fireworks.
+    :param links: Dependencies between nodes
+    :type  links: Dict
+    """
+    ds = {}
+    for k in links.keys():
+        ds[k] = get_children[k]
+
+    return ds
+
+def get_children(set_vars):
+    """
+    :param set_vars: set of pair (node_target, var_to_calculate) 
+    :param set_vars: Set
+    """
+    return  [k for k,_var in set_vars]
+        
+    
 
 
 
