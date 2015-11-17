@@ -32,7 +32,7 @@ def _getattr(obj, attr):
     if not (attr in dir(obj)):
         raise AttributeError("{0} not in {1}.".format(attr, obj))
 
-    return obj.__getattribute__(attr)
+    return getattr(obj, attr)
 
 @schedule
 def _setattr(obj, attr, value):
@@ -52,6 +52,7 @@ class PromisedObject:
     """
     def __init__(self, workflow):
         self._workflow = workflow
+        # self._set_history = {}
 
     def __call__(self, *args, **kwargs):
         return _do_call(self._workflow, *args, **kwargs)
@@ -60,6 +61,12 @@ class PromisedObject:
         if attr[0] == '_':
             return self.__dict__[attr]
 
+        # # if we know when an attribute was set, take that version
+        # # of the workflow.
+        # if attr in self._set_history:
+        #     return _getattr(self._set_history[attr], attr)
+        #
+        # # otherwise take the most recent version.
         return _getattr(self._workflow, attr)
 
     def __setattr__(self, attr, value):
@@ -68,3 +75,4 @@ class PromisedObject:
             return
 
         self._workflow = get_workflow(_setattr(self._workflow, attr, value))
+        # self._set_history[attr] = self._workflow
