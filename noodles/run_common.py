@@ -1,19 +1,13 @@
 from .datamodel import *
 from queue import Queue
+import uuid
 
-def run_node(node):
+def run_job(node):
     return node.foo(*node.bound_args.args, **node.bound_args.kwargs)
 
 Job = namedtuple('Job', ['workflow', 'node'])
 
 DynamicLink = namedtuple('DynamicLink', ['source', 'target', 'node'])
-
-def queue_workflow(Q, workflow):
-    depends = invert_links(workflow.links)
-
-    for n in workflow.nodes:
-        if depends[n] == {}:
-            Q.put(Job(workflow = workflow, node = n))
 
 class IOQueue:
     """
@@ -44,25 +38,24 @@ class IOQueue:
         self.Q.join()
 
 class Connection:
+    def __init__(self, source, sink):
+        self.source = source
+        self.sink   = sink
+
+    def setup(self):
+        src = self.source()
+        snk = self.sink()
+        snk.send(None)
+        return src, snk
+
+class QueueConnection(Connection):
     """
     Takes an input and output queue, and conceptually links them,
     returning a pair containing a source from the input queue
     and a sink to the output queue.
     """
     def __init__(self, d_in, d_out):
-        self._d_in  = d_in
-        self._d_out = d_out
-
-    def setup(self):
-        """
-        Initialize the generators, returning a (source, sink) tuple.
-        """
-        source = self._d_in.source()
-        sink   = self._d_out.sink()
-
-        sink.send(None)
-
-        return source, sink
+        super(QueueConnection, self).__init__(d_in.source, d_out.sink)
 
 class Scheduler:
     def __init__(self):
@@ -107,7 +100,7 @@ class Scheduler:
     def schedule(self, job, sink):
         uid = uuid.uuid1()
         self.jobs[uid] = job
-        sink.send((uuid, job.node))
+        sink.send((uid, job.workflow.nodes[job.node]))
         return uid
 
     def add_workflow(self, wf, target, node, sink):
