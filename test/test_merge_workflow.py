@@ -58,3 +58,32 @@ def test_with_keywords():
     assert is_workflow(C)
     assert C.nodes[C.root].bound_args.args     == ("regular!",)
     assert C.nodes[C.root].bound_args.kwargs   == {'a': Empty, 'b': Empty}
+
+class Normal:
+    pass
+
+@schedule
+class Scheduled:
+    pass
+
+def test_arg_by_ref():
+    n = Normal()
+    s = Scheduled()
+
+    n.x = 4
+    s.x = n
+    n.x = 5
+    s.y = n
+
+    result = run(s)
+    assert result.x.x == 4
+    assert result.y.x == 5
+
+@raises(TypeError)
+def test_hidden_promise():
+    a = Normal()
+    b = Scheduled()
+    c = Scheduled()
+
+    a.x = b
+    c.x = a

@@ -3,6 +3,7 @@ from .data_arguments import *
 
 from inspect import signature, getmodule, Parameter
 from importlib import import_module
+from copy import deepcopy
 
 def look_up(module, name):
     """
@@ -144,12 +145,12 @@ def from_call(foo, args, kwargs):
     links = {root: set()}
 
     for address in serialize_arguments(node.bound_args):
-        workflow = get_workflow(
-            ref_argument(node.bound_args, address))
-
-        if not workflow:
+        arg = ref_argument(node.bound_args, address)
+        if not is_workflow(arg):
+            set_argument(node.bound_args, address, deepcopy(arg))
             continue
 
+        workflow = get_workflow(arg)
         set_argument(node.bound_args, address, Empty)
         for n in workflow.nodes:
             if n not in nodes:
