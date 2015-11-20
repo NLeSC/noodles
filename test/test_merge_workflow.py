@@ -1,6 +1,7 @@
 from nose.tools import raises
 
 from noodles import *
+from prototype import draw_workflow
 
 def dummy(a, b, c, *args, **kwargs):
     pass
@@ -15,6 +16,10 @@ def value(a):
 @schedule
 def add(a, b):
     return a+b
+
+@schedule
+def sub(a, b):
+    return a - b
 
 def test_merge_workflow():
     A = value(1)
@@ -87,3 +92,15 @@ def test_hidden_promise():
 
     a.x = b
     c.x = a
+
+def test_tuple_unpack():
+    a = Scheduled()
+    b = Scheduled()
+
+    a.x, a.y = 2, 3
+    b.x, b.y = sub(a.x, a.y), sub(a.y, a.x)
+
+    draw_workflow('tuple-test.png', b)
+    result = run(b)
+    assert result.x == -1
+    assert result.y == 1

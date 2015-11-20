@@ -1,5 +1,5 @@
 from .datamodel import *
-from queue import Queue
+from queue import Queue, Empty as QEmpty
 import uuid
 
 def run_job(node):
@@ -21,8 +21,9 @@ class IOQueue:
     of these queues. On the other side there is the controller taking results
     from a second pipe, the snake biting its tail.
     """
-    def __init__(self):
+    def __init__(self, blocking = True):
         self.Q = Queue()
+        self.blocking = blocking
 
     def sink(self):
         while True:
@@ -31,7 +32,12 @@ class IOQueue:
 
     def source(self):
         while True:
-            yield self.Q.get()
+            try:
+                v = self.Q.get(self.blocking)
+                yield v
+            except QEmpty:
+                yield
+
             self.Q.task_done()
 
     def wait(self):
@@ -56,6 +62,14 @@ class QueueConnection(Connection):
     """
     def __init__(self, d_in, d_out):
         super(QueueConnection, self).__init__(d_in.source, d_out.sink)
+
+def merge_sources(*sources):
+    while True:
+        for s in sources:
+            v = next(s)
+            if v:
+                yield v
+        yield
 
 class Scheduler:
     def __init__(self):

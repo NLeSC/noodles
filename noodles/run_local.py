@@ -30,14 +30,15 @@ def hybrid_worker(selector, workers, fall_back = single_worker()):
         The worker to use if no hints were given.
     """
 
-    connections = dict((key, w.setup()) for w in workers)
+    connections = dict((key, w.setup()) for key, w in workers.items())
+    # source = merge_sources(*[
     fbc = fall_back.setup()
 
     def do_job():
         while True:
             key, job = yield
             h = get_hints(job)
-            w = fbc if not h else connections[selector(h)]
+            connections.get(selector(h), fbc)
 
 
 
