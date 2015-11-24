@@ -1,5 +1,6 @@
 from .run_common import *
 import threading
+import time
 
 def single_worker():
     """
@@ -32,7 +33,7 @@ def unzip_dict(d):
 
     return a, b
 
-def threaded_worker(n_threads, blocking_results_q = True):
+def threaded_worker(n_threads):
     """
     Sets up a number of threads, each polling for jobs.
 
@@ -40,8 +41,8 @@ def threaded_worker(n_threads, blocking_results_q = True):
         Connection to the job and result queues
     :rtype: :py:class:`Connection`
     """
-    job_q    = IOQueue(True)
-    result_q = IOQueue(blocking_results_q)
+    job_q    = IOQueue()
+    result_q = IOQueue()
 
     worker_connection    = QueueConnection(job_q, result_q)
     scheduler_connection = QueueConnection(result_q, job_q)
@@ -60,7 +61,7 @@ def threaded_worker(n_threads, blocking_results_q = True):
 
     return scheduler_connection
 
-def hybrid_worker(selector, workers, fall_back = threaded_worker(1)):
+def hybrid_worker(selector, workers, fall_back):
     """
     :param selector:
         The selector function takes a hint that was attached to a job
@@ -74,15 +75,35 @@ def hybrid_worker(selector, workers, fall_back = threaded_worker(1)):
     fb_source, fb_sink = fall_back.setup()
     sources['__default__'] = fb_source
 
+    result_q = IOQueue()
+    sink = result_q.sink()
+
+    def gather_results():
+        while True:
+            got_result = False
+            for k, s in sources.items():
+                v = next(s)
+                print("polling {0}:".format(k), v)
+                if v:
+                    got_result = True
+                    sink.send(v)
+
+            if not got_result:
+                time.sleep(0.1)
+
+    t = threading.Thread(target = gather_results)
+    t.daemon = True
+    t.start()
+
     @coroutine_sink
     def dispatch_job():
         while True:
             key, job = yield
             h = get_hints(job)
-            print("dispatching: ", job.foo.__name__, job.hints)
+            print("dispatching {0}: ".format(job.hints), job.foo.__name__, job.bound_args)
             sinks.get(selector(h), fb_sink).send((key, job))
 
-    return Connection(merge_sources(*sources.values()), dispatch_job)
+    return Connection(result_q.source, dispatch_job)
 
 def run(wf):
     worker = single_worker()

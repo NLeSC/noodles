@@ -1,5 +1,5 @@
 from noodles import *
-
+from prototype import draw_workflow
 @schedule_hint(1)
 def f(x):
     return 2*x
@@ -45,13 +45,15 @@ def selector(hints):
     else:
         return
 
-def test_hints():
-    a = [f(x) for x in range(5)]
-    b = [g(x) for x in range(5)]
-    c = gather(*[h(x, y) for x in a for y in b])
-
-    result = Scheduler().run(
-        hybrid_worker(selector, {"adf": w1, 2: w2}, w0),
-        get_workflow(c))
-
-    print(result)
+# def test_hints():
+#     a = [f(x) for x in range(5)]
+#     b = [g(x) for x in range(5)]
+#     c = gather(*[h(x, y) for x in a for y in b])
+#
+#     draw_workflow('test.png', get_workflow(c))
+#     result = Scheduler().run(
+# #        threaded_worker(4),
+#         hybrid_worker(selector, {1: w1, 2: w2}, w0),
+#         get_workflow(c))
+#
+#     print(result)
