@@ -14,7 +14,7 @@ ArgumentAddress = namedtuple('ArgumentAddress',
     ['kind', 'name', 'key'])
 
 Node = namedtuple('Node',
-    ['module', 'name', 'arguments'])
+    ['module', 'name', 'arguments', 'hints'])
 
 Argument = namedtuple('Argument',
     ['address', 'value'])

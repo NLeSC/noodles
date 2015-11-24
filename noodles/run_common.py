@@ -1,13 +1,26 @@
 from .datamodel import *
 from queue import Queue
 import uuid
+from functools import wraps
 
 def run_job(node):
     return node.foo(*node.bound_args.args, **node.bound_args.kwargs)
 
+def get_hints(node):
+    return node.hints
+
 Job = namedtuple('Job', ['workflow', 'node'])
 
 DynamicLink = namedtuple('DynamicLink', ['source', 'target', 'node'])
+
+def coroutine_sink(f):
+    @wraps(f)
+    def g(*args, **kwargs):
+        sink = f(*args, **kwargs)
+        sink.send(None)
+        return sink
+
+    return g
 
 class IOQueue:
     """
@@ -24,6 +37,7 @@ class IOQueue:
     def __init__(self):
         self.Q = Queue()
 
+    @coroutine_sink
     def sink(self):
         while True:
             r = yield
@@ -45,7 +59,6 @@ class Connection:
     def setup(self):
         src = self.source()
         snk = self.sink()
-        snk.send(None)
         return src, snk
 
 class QueueConnection(Connection):
@@ -56,6 +69,31 @@ class QueueConnection(Connection):
     """
     def __init__(self, d_in, d_out):
         super(QueueConnection, self).__init__(d_in.source, d_out.sink)
+
+def merge_sources(*sources):
+    def f():
+        while True:
+            for s in sources:
+                v = next(s)
+                if v:
+                    yield v
+            #yield
+
+    return f
+
+def merge_sinks(*sinks):
+    @coroutine_sink
+    def f():
+        while True:
+            v = yield
+
+            if not v:
+                continue
+
+            for s in sinks:
+                s.send(v)
+
+    return f
 
 class Scheduler:
     def __init__(self):

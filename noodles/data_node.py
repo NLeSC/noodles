@@ -59,11 +59,12 @@ class FunctionNode:
     def from_node(node):
         foo = look_up(node.module, node.name)
         bound_args = bind_arguments(foo, node.arguments)
-        return FunctionNode(foo, bound_args, node)
+        return FunctionNode(foo, bound_args, node.hints, node)
 
-    def __init__(self, foo, bound_args, node = None):
+    def __init__(self, foo, bound_args, hints, node = None):
         self.foo = foo
         self.bound_args = bound_args
+        self.hints = hints
         self._node = node
 
     def node(self):
@@ -73,11 +74,11 @@ class FunctionNode:
         if not self._node:
             module, name = module_and_name(self.foo)
             arguments = get_arguments(self.bound_args)
-            self._node = Node(module, name, arguments)
+            self._node = Node(module, name, arguments, self.hints)
 
         return self._node
 
-def from_call(foo, args, kwargs):
+def from_call(foo, args, kwargs, hints):
     """
     Takes a function and a set of arguments it needs to run on. Returns a newly
     constructed workflow representing the promised value from the evaluation of
@@ -137,7 +138,7 @@ def from_call(foo, args, kwargs):
     if variadic:
         bound_args.arguments[variadic] = list(bound_args.arguments[variadic])
 
-    node = FunctionNode(foo, bound_args)
+    node = FunctionNode(foo, bound_args, hints)
 
     root  = id(node)
     nodes = {root: node}

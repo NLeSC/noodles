@@ -1,5 +1,5 @@
 body {
-background-color: #ddd;
+background-color: white;
 font-size: 18pt;
 }
 .container {
@@ -25,4 +25,12 @@ color: navy;
 }
 .reveal table th, .reveal table td {
 color: white;
+}
+
+.reveal .slide-background {
+    background-image: url("two-webs-template.png");
+    background-repeat: no-repeat;
+    background-position: center bottom;
+    background-attachment: fixed;
+    background-size: contain;
 }
