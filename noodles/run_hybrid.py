@@ -43,16 +43,10 @@ def hybrid_threaded_worker(selector, workers):
                 result = run_job(job)
                 default_sink.send((key, result))
 
-    def result_proxy(source):
-        sink = results.sink()
-
-        for result in source:
-            sink.send(result)
-
-    for k, v in worker_source.items():
+    for k, source in worker_source.items():
         t = threading.Thread(
-            target = result_proxy,
-            args = (v,))
+            target = patch,
+            args = (source, results.sink()))
         t.daemon = True
         t.start()
 
