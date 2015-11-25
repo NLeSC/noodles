@@ -15,8 +15,9 @@ def find_links_to(links, node):
     :rtype: Mapping[(ArgumentType, [int|str]), NodeId]
     """
     return dict((address, src)
-            for src, (tgt, address) in _all_valid(links)
-            if tgt == node)
+                for src, (tgt, address) in _all_valid(links)
+                if tgt == node)
+
 
 def _all_valid(links):
     """
@@ -25,6 +26,7 @@ def _all_valid(links):
     for k, v in links.items():
         for i in v:
             yield k, i
+
 
 def invert_links(links):
     """

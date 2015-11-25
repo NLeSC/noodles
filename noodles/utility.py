@@ -1,5 +1,6 @@
 from .decorator import schedule
 
+
 @schedule
 def gather(*a):
     """
@@ -16,8 +17,10 @@ def gather(*a):
     """
     return list(a)
 
+
 def map_dict(f, d):
     return dict((k, f(v)) for k, v in d.items())
+
 
 def unzip_dict(d):
     a = {}

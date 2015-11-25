@@ -1,9 +1,13 @@
-from .datamodel import *
-from .coroutines import *
+from .data_types import is_workflow, get_workflow, Empty
+from .data_graph import invert_links
+from .datamodel import insert_result, is_node_ready
+from collections import namedtuple
 import uuid
+
 
 def run_job(node):
     return node.foo(*node.bound_args.args, **node.bound_args.kwargs)
+
 
 def get_hints(node):
     return node.hints
@@ -11,6 +15,7 @@ def get_hints(node):
 Job = namedtuple('Job', ['workflow', 'node'])
 
 DynamicLink = namedtuple('DynamicLink', ['source', 'target', 'node'])
+
 
 class Scheduler:
     def __init__(self):
@@ -46,7 +51,7 @@ class Scheduler:
             for (tgt, address) in wf.links[n]:
                 insert_result(wf.nodes[tgt], address, result)
                 if is_node_ready(wf.nodes[tgt]):
-                    self.schedule(Job(workflow = wf, node = tgt), sink)
+                    self.schedule(Job(workflow=wf, node=tgt), sink)
 
             # see if we're done
             if wf == master and n == master.root:
@@ -60,7 +65,7 @@ class Scheduler:
 
     def add_workflow(self, wf, target, node, sink):
         self.dynamic_links[id(wf)] = DynamicLink(
-            source = wf, target = target, node = node)
+            source=wf, target=target, node=node)
 
         self.results[id(wf)] = dict((n, Empty) for n in wf.nodes)
 
@@ -68,4 +73,4 @@ class Scheduler:
 
         for n in wf.nodes:
             if depends[n] == {}:
-                self.schedule(Job(workflow = wf, node = n), sink)
+                self.schedule(Job(workflow=wf, node=n), sink)

@@ -1,5 +1,11 @@
-from queue import Queue, Empty as QEmpty
+"""
+We use coroutines to handle the communication between the scheduler and
+the different workers.
+"""
+
+from queue import Queue
 from functools import wraps
+
 
 def coroutine_sink(f):
     @wraps(f)
@@ -9,6 +15,7 @@ def coroutine_sink(f):
         return sink
 
     return g
+
 
 class IOQueue:
     """
@@ -22,7 +29,7 @@ class IOQueue:
     of these queues. On the other side there is the controller taking results
     from a second pipe, the snake biting its tail.
     """
-    def __init__(self, blocking = True):
+    def __init__(self, blocking=True):
         self.Q = Queue()
         self.blocking = blocking
 
@@ -36,7 +43,7 @@ class IOQueue:
         while True:
             v = self.Q.get()
             yield v
-            
+
             # try:
             #     v = self.Q.get(self.blocking)
             #     yield v
@@ -47,15 +54,17 @@ class IOQueue:
     def wait(self):
         self.Q.join()
 
+
 class Connection:
     def __init__(self, source, sink):
         self.source = source
-        self.sink   = sink
+        self.sink = sink
 
     def setup(self):
         src = self.source()
         snk = self.sink()
         return src, snk
+
 
 class QueueConnection(Connection):
     """
@@ -65,6 +74,7 @@ class QueueConnection(Connection):
     """
     def __init__(self, d_in, d_out):
         super(QueueConnection, self).__init__(d_in.source, d_out.sink)
+
 
 def pull_from(*sources):
     def f():
@@ -77,9 +87,11 @@ def pull_from(*sources):
 
     return f
 
+
 def patch(source, sink):
     for v in source:
         sink.send(v)
+
 
 def broadcast_to(*sinks):
     @coroutine_sink

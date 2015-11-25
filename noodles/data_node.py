@@ -1,9 +1,12 @@
-from .data_types import *
-from .data_arguments import *
+from .data_types import Node, Workflow, Empty, is_workflow, get_workflow
+from .data_arguments import (bind_arguments, get_arguments,
+                             serialize_arguments, ref_argument,
+                             set_argument)
 
 from inspect import signature, getmodule, Parameter
 from importlib import import_module
 from copy import deepcopy
+
 
 def look_up(module, name):
     """
@@ -13,11 +16,13 @@ def look_up(module, name):
     M = import_module(module)
     return getattr(M, name)
 
+
 def module_and_name(f):
     """
     Retrieve the module and name of the given object.
     """
     return getmodule(f).__name__, f.__name__
+
 
 def importable(x):
     """
@@ -41,6 +46,7 @@ def importable(x):
     except:
         return False
 
+
 class FunctionNode:
     """
     Captures a function call as a combination of function and arguments.
@@ -62,7 +68,7 @@ class FunctionNode:
         bound_args = bind_arguments(foo, node.arguments)
         return FunctionNode(foo, bound_args, node.hints, node)
 
-    def __init__(self, foo, bound_args, hints, node = None):
+    def __init__(self, foo, bound_args, hints, node=None):
         self.foo = foo
         self.bound_args = bound_args
         self.hints = hints
@@ -78,6 +84,7 @@ class FunctionNode:
             self._node = Node(module, name, arguments, self.hints)
 
         return self._node
+
 
 def from_call(foo, args, kwargs, hints):
     """
@@ -129,8 +136,9 @@ def from_call(foo, args, kwargs, hints):
     bound_args = signature(foo).bind(*args, **kwargs)
     bound_args.apply_defaults()
 
-    variadic = next((x.name for x in bound_args.signature.parameters.values()
-        if x.kind == Parameter.VAR_POSITIONAL), None)
+    variadic = next((x.name
+                    for x in bound_args.signature.parameters.values()
+                    if x.kind == Parameter.VAR_POSITIONAL), None)
 
     # *HACK*
     # the BoundArguments class uses a tuple to store the
@@ -141,7 +149,7 @@ def from_call(foo, args, kwargs, hints):
 
     node = FunctionNode(foo, bound_args, hints)
 
-    root  = id(node)
+    root = id(node)
     nodes = {root: node}
     links = {root: set()}
 

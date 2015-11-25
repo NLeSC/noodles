@@ -1,23 +1,28 @@
 """
-The basic types that define a workflow. All these types are serialisable through
-JSON storage.
+The basic types that define a workflow. All these types are serialisable
+through JSON storage.
 """
 
 from collections import namedtuple
 from inspect import Parameter
 from enum import Enum
 
-ArgumentKind = Enum('ArgumentKind',
+ArgumentKind = Enum(
+    'ArgumentKind',
     ['regular', 'variadic', 'keyword'])
 
-ArgumentAddress = namedtuple('ArgumentAddress',
+ArgumentAddress = namedtuple(
+    'ArgumentAddress',
     ['kind', 'name', 'key'])
 
-Node = namedtuple('Node',
+Node = namedtuple(
+    'Node',
     ['module', 'name', 'arguments', 'hints'])
 
-Argument = namedtuple('Argument',
+Argument = namedtuple(
+    'Argument',
     ['address', 'value'])
+
 
 class Workflow(namedtuple('Workflow', ['root', 'nodes', 'links'])):
     """
@@ -39,8 +44,10 @@ class Workflow(namedtuple('Workflow', ['root', 'nodes', 'links'])):
 
 Empty = Parameter.empty
 
+
 def is_workflow(x):
     return isinstance(x, Workflow) or ('_workflow' in dir(x))
+
 
 def get_workflow(x):
     if isinstance(x, Workflow):

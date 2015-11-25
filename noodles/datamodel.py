@@ -7,17 +7,22 @@
     workflow can be thought of as a *promise* of a value.
 """
 
-import inspect
-from inspect import signature
+from inspect import Parameter
 
-from itertools import tee, filterfalse, chain, repeat, count
+from .data_types import (Workflow, Node, is_workflow, get_workflow, Empty,
+                         ArgumentAddress, ArgumentKind)
+from .data_arguments import (ref_argument, set_argument, format_address,
+                             serialize_arguments)
+from .data_json import json_to_workflow, workflow_to_json
+from .data_node import FunctionNode, from_call
+from .data_graph import invert_links
 
-from .data_types import *
-from .data_graph import *
-from .data_arguments import *
-from .data_json import *
-from .data_node import *
-from .data_workflow import *
+__all__ = ['Workflow', 'Node', 'json_to_workflow', 'workflow_to_json',
+           'FunctionNode', 'from_call', 'get_workflow',
+           'is_workflow', 'get_workflow', 'Empty',
+           'ArgumentAddress', 'ArgumentKind',
+           'insert_result', 'is_node_ready', 'invert_links']
+
 
 def insert_result(node, address, value):
     """
@@ -28,15 +33,17 @@ def insert_result(node, address, value):
     """
     a = ref_argument(node.bound_args, address)
     if a != Parameter.empty:
-        raise RuntimeError("Noodle panic. Argument {arg} in " \
-                             "{name} already given."            \
-                .format(arg=format_address(address), name=node.foo.__name__))
+        raise RuntimeError("Noodle panic. Argument {arg} in "
+                           "{name} already given."
+                           .format(arg=format_address(address),
+                                   name=node.foo.__name__))
 
     set_argument(node.bound_args, address, value)
+
 
 def is_node_ready(node):
     """
     Returns True if none of the argument holders contain any `Empty` object.
     """
     return all(ref_argument(node.bound_args, a) != Parameter.empty
-        for a in serialize_arguments(node.bound_args))
+               for a in serialize_arguments(node.bound_args))

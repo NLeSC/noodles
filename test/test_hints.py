@@ -1,19 +1,24 @@
-from noodles import *
-from noodles.run_common import run_job, IOQueue, Connection
-from prototype import draw_workflow
+from noodles import schedule, schedule_hint
+from noodles.run_common import run_job
+from noodles.coroutines import IOQueue, Connection
+
+
 @schedule_hint(1)
 def f(x):
     return 2*x
+
 
 @schedule_hint(2)
 def g(x):
     return 3*x
 
+
 @schedule
 def h(x, y):
     return x + y
 
-def single_worker_using(runner = run_job):
+
+def single_worker_using(runner=run_job):
     jobs = IOQueue()
 
     def get_result():
@@ -24,14 +29,15 @@ def single_worker_using(runner = run_job):
 
     return Connection(get_result, jobs.sink)
 
+
 def rjp(n):
     def run_job_print(job):
         result = run_job(job)
         print("runner {n}: {f} {args} = {res}".format(
-            n = n,
-            f = job.foo.__name__,
-            args = job.bound_args.args,
-            res = result))
+            n=n,
+            f=job.foo.__name__,
+            args=job.bound_args.args,
+            res=result))
         return result
 
     return run_job_print
@@ -39,6 +45,7 @@ def rjp(n):
 w0 = single_worker_using(rjp(0))
 w1 = single_worker_using(rjp(1))
 w2 = single_worker_using(rjp(2))
+
 
 def selector(hints):
     if hints:

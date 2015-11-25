@@ -1,7 +1,10 @@
-from .run_common import *
+from .datamodel import get_workflow
+from .run_common import run_job, Scheduler
+from .coroutines import IOQueue, Connection, patch, coroutine_sink
 from .utility import map_dict, unzip_dict
 
 import threading
+
 
 def hybrid_coroutine_worker(selector, workers):
     """
@@ -17,7 +20,7 @@ def hybrid_coroutine_worker(selector, workers):
         source = jobs.source()
 
         for key, job in source:
-            if job.hints == None:
+            if job.hints is None:
                 yield (key, run_job(job))
             else:
                 worker = selector(job.hints)
@@ -27,6 +30,7 @@ def hybrid_coroutine_worker(selector, workers):
                 yield result
 
     return Connection(get_result, jobs.sink)
+
 
 def hybrid_threaded_worker(selector, workers):
     """Runs a set of workers, each in a separate thread.
@@ -69,12 +73,13 @@ def hybrid_threaded_worker(selector, workers):
 
     for k, source in worker_source.items():
         t = threading.Thread(
-            target = patch,
-            args = (source, results.sink()))
+            target=patch,
+            args=(source, results.sink()))
         t.daemon = True
         t.start()
 
     return Connection(results.source, dispatch_job)
+
 
 def run_hybrid(wf, selector, workers):
     """

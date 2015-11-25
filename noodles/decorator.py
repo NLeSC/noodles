@@ -1,12 +1,9 @@
-from inspect import signature, getmodule
-from itertools import tee, filterfalse, repeat, chain
 from functools import wraps
-
-from lib import *
 
 from .datamodel import from_call, get_workflow
 
-def schedule(f, hints = None):
+
+def schedule(f, hints=None):
     """
     The Noodles schedule function decorator.
 
@@ -21,17 +18,20 @@ def schedule(f, hints = None):
 
     return wrapped
 
+
 def schedule_hint(*hints):
     def g(f):
         return schedule(f, hints)
 
     return g
 
+
 def unwrap(f):
     try:
         return f.__wrapped__
     except AttributeError:
         return f
+
 
 @schedule
 def _getattr(obj, attr):
@@ -40,14 +40,17 @@ def _getattr(obj, attr):
 
     return getattr(obj, attr)
 
+
 @schedule
 def _setattr(obj, attr, value):
     obj.__setattr__(attr, value)
     return obj
 
+
 @schedule
 def _do_call(obj, *args, **kwargs):
     return obj(*args, **kwargs)
+
 
 class PromisedObject:
     """

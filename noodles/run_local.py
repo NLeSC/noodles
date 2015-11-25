@@ -1,6 +1,8 @@
-from .run_common import *
+from .datamodel import get_workflow
+from .coroutines import IOQueue, Connection, QueueConnection
+from .run_common import run_job, Scheduler
 import threading
-import time
+
 
 def single_worker():
     """
@@ -20,6 +22,7 @@ def single_worker():
 
     return Connection(get_result, jobs.sink)
 
+
 def threaded_worker(n_threads):
     """
     Sets up a number of threads, each polling for jobs.
@@ -28,10 +31,10 @@ def threaded_worker(n_threads):
         Connection to the job and result queues
     :rtype: :py:class:`Connection`
     """
-    job_q    = IOQueue()
+    job_q = IOQueue()
     result_q = IOQueue()
 
-    worker_connection    = QueueConnection(job_q, result_q)
+    worker_connection = QueueConnection(job_q, result_q)
     scheduler_connection = QueueConnection(result_q, job_q)
 
     def worker(source, sink):
@@ -40,13 +43,14 @@ def threaded_worker(n_threads):
 
     for i in range(n_threads):
         t = threading.Thread(
-            target = worker,
-            args   = worker_connection.setup())
+            target=worker,
+            args=worker_connection.setup())
 
         t.daemon = True
         t.start()
 
     return scheduler_connection
+
 
 def run(wf):
     """
@@ -58,6 +62,7 @@ def run(wf):
     """
     worker = single_worker()
     return Scheduler().run(worker, get_workflow(wf))
+
 
 def run_parallel(wf, n_threads):
     """

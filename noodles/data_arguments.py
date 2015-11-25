@@ -1,6 +1,7 @@
-from .data_types import *
+from .data_types import ArgumentKind, ArgumentAddress, Empty
 from itertools import repeat
-from inspect import Parameter, signature, getmodule
+from inspect import Parameter, signature
+
 
 def serialize_arguments(bound_args):
     """
@@ -9,7 +10,8 @@ def serialize_arguments(bound_args):
     argument.
 
     An address is stored in an `ArgumentAddress` object (a
-    named tuple), containing the kind of argument (regular, variadic or keyword),
+    named tuple), containing the kind of argument
+    (regular, variadic or keyword),
     the name of the argument, and, if not a regular argument, a key.
     In the case of a variadic argument this is an integer index into the
     variadic arguments list, in the case of a keyword argument it is a
@@ -38,6 +40,7 @@ def serialize_arguments(bound_args):
 
         yield ArgumentAddress(ArgumentKind.regular, p.name, None)
 
+
 def ref_argument(bound_args, address):
     """
     Taking a bound_args object, and an ArgumentAddress, retrieves the data
@@ -47,6 +50,7 @@ def ref_argument(bound_args, address):
         return bound_args.arguments[address.name]
 
     return bound_args.arguments[address.name][address.key]
+
 
 def set_argument(bound_args, address, value):
     """
@@ -58,7 +62,7 @@ def set_argument(bound_args, address, value):
         return
 
     if address.kind == ArgumentKind.variadic:
-        if not address.name in bound_args.arguments:
+        if address.name not in bound_args.arguments:
             bound_args.arguments[address.name] = []
 
         l = len(bound_args.arguments[address.name])
@@ -67,10 +71,11 @@ def set_argument(bound_args, address, value):
                 repeat(Empty, address.key - l + 1))
 
     if address.kind == ArgumentKind.keyword:
-        if not address.name in bound_args.arguments:
+        if address.name not in bound_args.arguments:
             bound_args.arguments[address.name] = {}
 
     bound_args.arguments[address.name][address.key] = value
+
 
 def format_address(address):
     """
@@ -81,22 +86,26 @@ def format_address(address):
 
     return "{0}[{1}]".format(address.name, address.key)
 
+
 def get_arguments(bound_args):
     return [(address, ref_argument(bound_args, address))
-        for address in serialize_arguments(bound_args)
-        if ref_argument(bound_args, address) != Empty]
+            for address in serialize_arguments(bound_args)
+            if ref_argument(bound_args, address) != Empty]
+
 
 def bind_arguments(f, arguments):
     bound_args = signature(f).bind_partial()
 
-    variadic = next((x.name for x in bound_args.signature.parameters.values()
-        if x.kind == Parameter.VAR_POSITIONAL), None)
+    variadic = next((x.name
+                     for x in bound_args.signature.parameters.values()
+                     if x.kind == Parameter.VAR_POSITIONAL), None)
 
     if variadic:
         bound_args.arguments[variadic] = []
 
-    keyword = next((x.name for x in bound_args.signature.parameters.values()
-        if x.kind == Parameter.VAR_KEYWORD), None)
+    keyword = next((x.name
+                    for x in bound_args.signature.parameters.values()
+                    if x.kind == Parameter.VAR_KEYWORD), None)
 
     if keyword:
         bound_args.arguments[keyword] = {}
