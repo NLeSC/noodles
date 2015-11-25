@@ -15,3 +15,16 @@ def gather(*a):
     `gather` obsolete.
     """
     return list(a)
+
+def map_dict(f, d):
+    return dict((k, f(v)) for k, v in d.items())
+
+def unzip_dict(d):
+    a = {}
+    b = {}
+
+    for k, (v, w) in d.items():
+        a[k] = v
+        b[k] = w
+
+    return a, b

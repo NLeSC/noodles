@@ -1,8 +1,6 @@
 from .datamodel import *
-from queue import Queue
-import uuid
-from functools import wraps
 from .coroutines import *
+import uuid
 
 def run_job(node):
     return node.foo(*node.bound_args.args, **node.bound_args.kwargs)
