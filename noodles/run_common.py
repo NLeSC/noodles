@@ -18,12 +18,29 @@ DynamicLink = namedtuple('DynamicLink', ['source', 'target', 'node'])
 
 
 class Scheduler:
+    """
+    Schedules jobs, recieves results, then schedules more jobs as they
+    become ready to compute. This class communicates with a pool of workers
+    by means of coroutines.
+    """
     def __init__(self):
         self.dynamic_links = {}
         self.results = {}
         self.jobs = {}
 
     def run(self, connection, master):
+        """
+        Run a workflow.
+
+        :param connection:
+            A connection giving a sink to the job-queue and a source yielding
+            results.
+        :type connection: Connection
+
+        :param master:
+            The workflow.
+        :type master: Workflow
+        """
         # initiate worker slave army and take up reins ...
         source, sink = connection.setup()
 

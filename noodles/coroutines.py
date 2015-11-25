@@ -1,6 +1,7 @@
 """
 We use coroutines to handle the communication between the scheduler and
-the different workers.
+the different workers. Some of the functionality here may be reinventing
+some batteries. If so, submit an issue and teach me the idiomatic way!
 """
 
 from queue import Queue
@@ -8,6 +9,11 @@ from functools import wraps
 
 
 def coroutine_sink(f):
+    """
+    A sink should be send `None` first, so that the coroutine arrives
+    at the `yield` position. This wrapper takes care that this is done
+    automatically when the coroutine is started.
+    """
     @wraps(f)
     def g(*args, **kwargs):
         sink = f(*args, **kwargs)
@@ -56,6 +62,10 @@ class IOQueue:
 
 
 class Connection:
+    """
+    Combine a source and a sink. These should represent the IO of
+    some object, probably a worker.
+    """
     def __init__(self, source, sink):
         self.source = source
         self.sink = sink
@@ -76,33 +86,9 @@ class QueueConnection(Connection):
         super(QueueConnection, self).__init__(d_in.source, d_out.sink)
 
 
-def pull_from(*sources):
-    def f():
-        while True:
-            for s in sources:
-                v = next(s)
-                if v:
-                    yield v
-            yield
-
-    return f
-
-
 def patch(source, sink):
+    """
+    Create a direct link between a source and a sink.
+    """
     for v in source:
         sink.send(v)
-
-
-def broadcast_to(*sinks):
-    @coroutine_sink
-    def f():
-        while True:
-            v = yield
-
-            if not v:
-                continue
-
-            for s in sinks:
-                s.send(v)
-
-    return f
