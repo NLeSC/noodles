@@ -1,5 +1,6 @@
 from .run_common import *
 import threading
+import time
 
 def single_worker():
     """
@@ -18,31 +19,6 @@ def single_worker():
             yield (key, run_job(job))
 
     return Connection(get_result, jobs.sink)
-
-def hybrid_worker(selector, workers, fall_back = single_worker()):
-    """
-    :param selector:
-        The selector function takes a hint that was attached to a job
-        and returns the prefered worker (by key into the workers dict).
-    :param workers:
-        A dictionary of workers.
-    :param fall_back:
-        The worker to use if no hints were given.
-    """
-
-    connections = dict((key, w.setup()) for key, w in workers.items())
-    # source = merge_sources(*[
-    fbc = fall_back.setup()
-
-    def do_job():
-        while True:
-            key, job = yield
-            h = get_hints(job)
-            connections.get(selector(h), fbc)
-
-
-
-
 
 def threaded_worker(n_threads):
     """

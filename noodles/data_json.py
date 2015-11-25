@@ -38,7 +38,8 @@ def node_to_jobject(node):
              'name':      node.name,
              'arguments': [ { 'address' : address_to_jobject(a),
                               'value'   : v }
-                              for a, v in node.arguments ] }
+                              for a, v in node.arguments ],
+             'hints':     node.hints }
 
 def _remap_links(remap, links):
     return [ { 'node': remap[source],
@@ -73,7 +74,7 @@ def jobject_to_node(jobj):
                     for a in jobj['arguments']]
 
     return FunctionNode.from_node(
-        Node(jobj['module'], jobj['name'], arguments))
+        Node(jobj['module'], jobj['name'], arguments, jobj['hints']))
 
 def jobject_to_workflow(jobj):
     """

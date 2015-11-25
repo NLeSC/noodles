@@ -6,7 +6,7 @@ from lib import *
 
 from .datamodel import from_call, get_workflow
 
-def schedule(f):
+def schedule(f, hints = None):
     """
     The Noodles schedule function decorator.
 
@@ -17,9 +17,15 @@ def schedule(f):
     """
     @wraps(f)
     def wrapped(*args, **kwargs):
-        return PromisedObject(from_call(f, args, kwargs))
+        return PromisedObject(from_call(f, args, kwargs, hints))
 
     return wrapped
+
+def schedule_hint(*hints):
+    def g(f):
+        return schedule(f, hints)
+
+    return g
 
 def unwrap(f):
     try:
