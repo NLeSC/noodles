@@ -1,4 +1,5 @@
 from nose.tools import raises
+from noodles.datamodel import *
 
 from noodles import *
 from prototype import draw_workflow

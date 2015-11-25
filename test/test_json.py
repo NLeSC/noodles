@@ -1,4 +1,5 @@
 from noodles import *
+from noodles.datamodel import *
 import random, time
 
 @schedule

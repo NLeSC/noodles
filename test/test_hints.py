@@ -1,4 +1,5 @@
 from noodles import *
+from noodles.run_common import run_job, IOQueue, Connection
 from prototype import draw_workflow
 @schedule_hint(1)
 def f(x):
