@@ -39,7 +39,7 @@ Runners
     :members: run_job, Scheduler
 
 .. automodule:: noodles.run_hybrid
-    :members: hybrid_threaded_runner, run_hybrid
+    :members: hybrid_threaded_worker, run_hybrid
 
 Indices and tables
 ==================
