@@ -155,8 +155,15 @@ def from_call(foo, args, kwargs, hints):
 
     for address in serialize_arguments(node.bound_args):
         arg = ref_argument(node.bound_args, address)
+
+        # the argument may still become a workflow if it
+        # is a Storable and it contains a promised object
         if not is_workflow(arg):
-            set_argument(node.bound_args, address, deepcopy(arg))
+            arg = deepcopy(arg)
+
+        # if still not a workflow, we have a plain value!
+        if not is_workflow(arg):
+            set_argument(node.bound_args, address, arg)
             continue
 
         workflow = get_workflow(arg)

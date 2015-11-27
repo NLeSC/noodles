@@ -1,17 +1,21 @@
-from noodles import *
+from noodles import schedule, run
 from prototype import draw_workflow
+
 
 @schedule
 def sqr(x):
     return x*x
 
+
 @schedule
 def divide(x, y):
     return x/y
 
+
 @schedule
 def mul(x, y):
     return x*y
+
 
 @schedule
 class A:
@@ -26,12 +30,13 @@ class A:
     def attr(self):
         return sqr(self.__attr)
 
-    def mul_attr(self, factor = 1):
+    def mul_attr(self, factor=1):
         return mul(self.__attr, factor)
 
     @attr.setter
     def attr(self, x):
         self.__attr = divide(x, 2)
+
 
 @schedule
 class B:

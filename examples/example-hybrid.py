@@ -1,6 +1,7 @@
 from noodles import schedule, schedule_hint, gather
 from noodles.datamodel import get_workflow
-from noodles.run_common import IOQueue, run_job, Connection, Scheduler
+from noodles.coroutines import IOQueue, Connection
+from noodles.run_common import run_job, Scheduler
 from noodles.run_hybrid import hybrid_threaded_worker
 
 
