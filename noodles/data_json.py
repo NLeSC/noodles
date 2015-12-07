@@ -5,6 +5,7 @@ Functions for storing a |Workflow| as a JSON stream.
 from .data_types import (Workflow, ArgumentAddress, ArgumentKind, Node)
 from .data_node import FunctionNode, importable, module_and_name, look_up
 from .data_workflow import reset_workflow
+from .storable import Storable, storable
 
 import json
 from itertools import count
@@ -12,6 +13,13 @@ from itertools import count
 
 
 def json_sauce(x):
+    if storable(x) and importable(type(x)):
+        module, name = module_and_name(type(x))
+        return {'_noodles': {'type':   'storable',
+                             'module': module,
+                             'name':   name},
+                '__dict__': x.__dict__}
+
     if importable(x):
         module, name = module_and_name(x)
         return {'_noodles': {'type':   'importable',
@@ -28,6 +36,10 @@ def json_desauce(x):
     obj = x['_noodles']
     if obj['type'] == 'importable':
         return look_up(obj['module'], obj['name'])
+
+    if obj['type'] == 'storable':
+        cls = look_up(obj['module'], obj['name'])
+        return cls.from_dict(**x['__dict__'])
 
 
 def address_to_jobject(a):

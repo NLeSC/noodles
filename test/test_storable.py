@@ -1,5 +1,5 @@
 from noodles import schedule, run
-from noodles.storable import Storable
+from noodles.storable import Storable, storable
 
 from nose.tools import raises
 
@@ -26,6 +26,8 @@ def test_storable():
     a = A()
     b = A()
 
+    assert storable(a)
+
     a.x = 1
     b.x = f(3, 4)
 
@@ -38,6 +40,8 @@ def test_storable():
 def test_nonstorable():
     a = A()
     b = M()
+
+    assert not storable(b)
 
     a.x = 1
     b.x = f(3, 4)

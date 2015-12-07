@@ -1,6 +1,8 @@
-from noodles import schedule, schedule_hint
-from noodles.run_common import run_job
-from noodles.coroutines import IOQueue, Connection
+from noodles import schedule, schedule_hint, gather
+from noodles.run_local import single_worker, threaded_worker
+from noodles.run_hybrid import run_hybrid
+
+import time
 
 
 @schedule_hint(1)
@@ -18,40 +20,43 @@ def h(x, y):
     return x + y
 
 
-def single_worker_using(runner=run_job):
-    jobs = IOQueue()
-
-    def get_result():
-        source = jobs.source()
-
-        for key, job in source:
-            yield (key, runner(job))
-
-    return Connection(get_result, jobs.sink)
-
-
-def rjp(n):
-    def run_job_print(job):
-        result = run_job(job)
-        print("runner {n}: {f} {args} = {res}".format(
-            n=n,
-            f=job.foo.__name__,
-            args=job.bound_args.args,
-            res=result))
-        return result
-
-    return run_job_print
-
-w0 = single_worker_using(rjp(0))
-w1 = single_worker_using(rjp(1))
-w2 = single_worker_using(rjp(2))
-
-
 def selector(hints):
     if hints:
         return hints[0]
     else:
         return
+
+
+@schedule_hint(1)
+def delayed(a, dt):
+    time.sleep(dt)
+    return a
+
+
+@schedule
+def sum(a, buildin_sum=sum):
+    return buildin_sum(a)
+
+
+def test_hybrid_threaded_runner_02():
+    A = [delayed(1, 0.01) for i in range(8)]
+    B = sum(gather(*A))
+
+    start = time.time()
+    assert run_hybrid(B, selector, {1: threaded_worker(8)}) == 8
+    end = time.time()
+    assert (end - start) < 0.02
+
+
+def test_hybrid_threaded_runner_03():
+    A = [delayed(1, 0.01) for i in range(8)]
+    B = sum(gather(*A))
+
+    start = time.time()
+    assert run_hybrid(B, selector, {1: single_worker()}) == 8
+    end = time.time()
+    assert (end - start) > 0.08
+
 
 # def test_hints():
 #     a = [f(x) for x in range(5)]

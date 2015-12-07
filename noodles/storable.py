@@ -7,6 +7,10 @@ from .decorator import PromisedObject, schedule
 from copy import deepcopy
 
 
+def storable(obj):
+    return isinstance(obj, Storable)
+
+
 class StorableMeta(type):
     """
     The Storable metaclass registers all known classes that are derived from
@@ -23,14 +27,23 @@ class StorableMeta(type):
         super(StorableMeta, cls).__init__(name, bases, dct)
 
 
-@schedule
-def storable_from_dict(cls, **kwargs):
-    pass
+def copy_if_normal(memo):
+    def f(obj):
+        if isinstance(obj, PromisedObject):
+            return obj
+        else:
+            return deepcopy(obj, memo)
+
+    return f
 
 
-class Storable(object):
-    __metaclass__ = StorableMeta
+def from_dict(cls, **kwargs):
+    obj = cls.__new__(cls)
+    obj.__dict__ = kwargs
+    return obj
 
+
+class Storable:
     @classmethod
     def from_dict(cls, **kwargs):
         obj = cls.__new__(cls)
@@ -39,8 +52,9 @@ class Storable(object):
 
     def __deepcopy__(self, memo):
         cls = self.__class__
-        if any(isinstance(x, PromisedObject) for x in self.__dict__.values()):
-            return schedule(cls.from_dict)(**self.__dict__)
+        tmp = map_dict(copy_if_normal(memo), self.__dict__)
+
+        if any(isinstance(x, PromisedObject) for x in tmp.values()):
+            return schedule(from_dict)(cls, **tmp)
         else:
-            return cls.from_dict(**map_dict(
-                lambda x: deepcopy(x, memo), self.__dict__))
+            return cls.from_dict(**tmp)
