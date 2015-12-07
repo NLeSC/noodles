@@ -1,7 +1,9 @@
 from noodles import schedule, run
-from noodles.data_node import importable, module_and_name
-from noodles.data_json import workflow_to_json, json_to_workflow, Storable
+from noodles.data_json import workflow_to_json, json_to_workflow
+from noodles.storable import Storable
 import random
+
+from nose.tools import raises
 
 
 @schedule
@@ -82,3 +84,15 @@ def test_json_with_storable():
     re = run(e)
     rf = run(f)
     assert re == rf
+
+
+class C:
+    pass
+
+
+@raises(TypeError)
+def test_json_error():
+    c = C()  # not storable
+    b = B(c, 4)
+    w = f(b.a, 3)
+    workflow_to_json(w._workflow, indent=2)

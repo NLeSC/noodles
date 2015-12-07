@@ -5,7 +5,7 @@ Functions for storing a |Workflow| as a JSON stream.
 from .data_types import (Workflow, ArgumentAddress, ArgumentKind, Node)
 from .data_node import FunctionNode, importable, module_and_name, look_up
 from .data_workflow import reset_workflow
-from .storable import Storable, storable
+from .storable import storable
 
 import json
 from itertools import count

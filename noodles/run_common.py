@@ -9,8 +9,8 @@ def run_job(node):
     return node.foo(*node.bound_args.args, **node.bound_args.kwargs)
 
 
-def get_hints(node):
-    return node.hints
+# def get_hints(node):
+#     return node.hints
 
 Job = namedtuple('Job', ['workflow', 'node'])
 

@@ -67,8 +67,11 @@ class PromisedObject:
         return _do_call(self._workflow, *args, **kwargs)
 
     def __getattr__(self, attr):
-        if attr[0] == '_':
-            return self.__dict__[attr]
+        # apparently these lines are completely superfluous, but I don't know
+        # why. There was no way in which I could trigger the if statement to
+        # evaluate True.
+        # if attr[0] == '_':
+        #     return self.__dict__[attr]
 
         # # if we know when an attribute was set, take that version
         # # of the workflow.

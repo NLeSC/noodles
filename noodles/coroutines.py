@@ -57,8 +57,8 @@ class IOQueue:
             # except:
             #     yield
 
-    def wait(self):
-        self.Q.join()
+    # def wait(self):
+    #     self.Q.join()
 
 
 class Connection:

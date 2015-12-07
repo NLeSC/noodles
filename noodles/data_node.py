@@ -82,11 +82,6 @@ class FunctionNode:
         Convert to a :py:class:`Node` for subsequent serialisation.
         """
         if not self._node:
-            if not importable(self.foo):
-                raise Exception("not importable {0} : {1} . {2} -> {3}".format(
-                    type(self.foo), *module_and_name(self.foo),
-                    type(look_up(*module_and_name(self.foo)))))
-
             module, name = module_and_name(self.foo)
             arguments = get_arguments(self.bound_args)
             self._node = Node(module, name, arguments, self.hints)
