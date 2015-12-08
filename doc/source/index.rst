@@ -41,6 +41,10 @@ Runners
 .. automodule:: noodles.run_hybrid
     :members: hybrid_threaded_worker, run_hybrid
 
+Worker executable
+=================
+.. automodule:: noodles.worker
+
 Indices and tables
 ==================
 
