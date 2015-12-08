@@ -5,17 +5,23 @@ term_codes = {
     'bg':        (48, lambda r, g, b: ";2;{0};{1};{2}".format(r, g, b), 'm'),
     'bold':      (1,  'm'),
     'underline': (4,  'm'),
-    'regular':   (22, 'm'),
+    'regular':   (23, 'm'),
     'italic':    (3,  'm'),
     'reset':     (0,  'm'),
     'back':      (lambda n=1: str(n), 'D'),
     'forward':   (lambda n=1: str(n), 'C'),
-    'newline':   ('1E',)}
+    'newline':   ('1E',),
+    'up':        ("{0}".format, 'A'),
+    'down':      ("{0}".format, 'B'),
+    'save':      ('s',),
+    'restore':   ('u',),
+    'move':      ("{0};{1}".format, 'H'),
+    'clear':     ('2J',)}
 
 
 def make_escape(cmd, *args):
     def f(x):
-        if isfunction(x):
+        if hasattr(x, '__call__'):
             return x(*args)
         else:
             return str(x)
