@@ -1,4 +1,3 @@
-from inspect import isfunction
 
 term_codes = {
     'fg':        (38, lambda r, g, b: ";2;{0};{1};{2}".format(r, g, b), 'm'),
@@ -16,7 +15,8 @@ term_codes = {
     'save':      ('s',),
     'restore':   ('u',),
     'move':      ("{0};{1}".format, 'H'),
-    'clear':     ('2J',)}
+    'clear':     ('2J',),
+    'reverse':   ('7m',)}
 
 
 def make_escape(cmd, *args):

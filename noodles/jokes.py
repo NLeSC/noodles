@@ -1,4 +1,8 @@
-# "|▛▀▜|▙▄▟|▗▄▖|▝▀▘|"
+"""
+|▛▀▜|▙▄▟|▗▄▖|▝▀▘|
+⌮⌬
+○◉□▣◔◑◕●♾⚝☺☹✨✩❄❅❆✾⚛✗✓✔✘
+"""
 
 
 class Turtle:
@@ -105,10 +109,11 @@ if __name__ == "__main__":
     fr1 = make_frame(64, 7)
     fr2 = make_frame(64, 12)
 
-    perr << ['reset'] << ['fg', 80, 0, 40]
+    perr << ['reset'] << ['fg', 140, 0, 40]
     perr << ['clear'] << ['move', 1, 1]
     for l in ls:
-        perr << l << '\n'
+        perr << ['save'] << l << ['restore'] << ['down', 1]
+    perr << ['fg', 170, 110, 10] << ['move', 10, 10] << 'λみ'
 
     perr << ['fg', 50, 120, 90] << ['move', 5, 16]
     for l in fr1:
@@ -121,7 +126,7 @@ if __name__ == "__main__":
     perr << ['fg', 160, 220, 100] << ['move', 3, 20]
     perr << ['italic']
     perr << " Noodles 0.1.0 - worker console "
-    perr << ['move', 4, 20] << ['fg', 0, 0, 0] << ['bg', 40, 40, 40] << "▆"*58
+    perr << ['move', 4, 20] << ['reverse'] << ['fg', 40, 40, 40] << "▆"*58
 
     perr << ['reset'] << ['fg', 100, 160, 60] << ['italic']
     perr << ['move', 5, 19] << "(status)"

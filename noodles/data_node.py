@@ -8,6 +8,13 @@ from importlib import import_module
 from copy import deepcopy
 
 
+def unwrap(f):
+    try:
+        return f.__wrapped__
+    except AttributeError:
+        return f
+
+
 def look_up(module, name):
     """
     Import the object named by `name` from the module named by
@@ -67,7 +74,7 @@ class FunctionNode:
     """
     @staticmethod
     def from_node(node):
-        foo = look_up(node.module, node.name)
+        foo = unwrap(look_up(node.module, node.name))
         bound_args = bind_arguments(foo, node.arguments)
         return FunctionNode(foo, bound_args, node.hints, node)
 
