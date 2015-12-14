@@ -16,10 +16,12 @@ def put_job(key, job):
     return json.dumps(obj, default=json_sauce)
 
 
-def process_worker(verbose=False):
+def process_worker(verbose=False, jobdirs=False):
     cmd = ["python3.5", "-m", "noodles.worker", "online"]
     if verbose:
         cmd.append("-verbose")
+    if jobdirs:
+        cmd.append("-jobdirs")
 
     p = Popen(
         cmd,

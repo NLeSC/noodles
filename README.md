@@ -1,9 +1,27 @@
 # QM Works - workflow engine
 
 Current requirements for running the prototype are:
-*   Python 3
+*   Python 3.5
 *   GraphViz
 *   pygraphviz
+
+*   xenon (packaged with pyxenon)
+*   pyxenon
+
+## Installing
+
+To run the unittests, install the following in a virtualenv:
+
+    > pyvenv-3.5 <venv-dir>
+    > . <venv-dir>/bin/activate
+    > cd ../pyxenon          # git pull git@github.com:NLeSC/pyxenon.git
+    > make install
+    > cd ../noodles
+    > pip install pygraphviz
+    > pip install nose
+    > pip install coverage
+    > pip install sphinx
+    > nosetests
 
 ## The prototype
 The prototype is very simple. It should support the definition of function

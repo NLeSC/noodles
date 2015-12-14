@@ -17,7 +17,9 @@ def test_worker():
     a = [f(i, j) for i in range(5) for j in range(5)]
     b = ssum(gather(*a))
 
-    result = Scheduler().run(process_worker(), get_workflow(b))
+    result = Scheduler().run(
+        process_worker(),
+        get_workflow(b))
     assert result == 100
 
 

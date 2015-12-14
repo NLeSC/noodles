@@ -55,13 +55,26 @@ def run_online_mode(args):
     if args.n == 1:
         for line in sys.stdin:
             key, job = get_job(line)
+            if args.jobdirs:
+                # make a directory
+                os.mkdir("noodles-{0}".format(key.hex))
+                # enter it
+                os.chdir("noodles-{0}".format(key.hex))
+
             if args.verbose:
+                print("============\nraw json: ", line,
+                      file=sys.stderr, flush=True)
                 print("worker: ",
                       job.foo.__name__,
                       job.bound_args.args,
                       job.bound_args.kwargs,
                       file=sys.stderr, flush=True)
             result = run_job(job)
+
+            if args.jobdirs:
+                # parent directory
+                os.chdir("..")
+
             print(put_result(key, result), flush=True)
 
 
@@ -98,6 +111,10 @@ if __name__ == "__main__":
     online_parser.add_argument(
         "-verbose",
         help="output information to stderr for debugging",
+        default=False, action='store_true')
+    online_parser.add_argument(
+        "-jobdirs",
+        help="create a directory for each job to run in",
         default=False, action='store_true')
     online_parser.set_defaults(func=run_online_mode)
 

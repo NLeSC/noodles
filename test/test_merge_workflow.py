@@ -3,7 +3,6 @@ from noodles.datamodel import (
     Empty, ArgumentAddress,
     ArgumentKind, is_workflow, get_workflow, Workflow)
 from noodles import run, schedule, gather
-from prototype import draw_workflow
 
 
 def dummy(a, b, c, *args, **kwargs):
@@ -131,7 +130,6 @@ def test_tuple_unpack():
     a.x, a.y = 2, 3
     b.x, b.y = sub(a.x, a.y), sub(a.y, a.x)
 
-    draw_workflow('tuple-test.png', b)
     result = run(b)
     assert result.x == -1
     assert result.y == 1
