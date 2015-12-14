@@ -7,3 +7,4 @@ cover
 */.ipynb_checkpoints
 *~
 doc/build
+venv

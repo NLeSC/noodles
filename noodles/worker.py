@@ -32,7 +32,6 @@ import uuid
 import json
 from .data_json import (json_desauce, json_sauce, jobject_to_node)
 from .run_common import run_job
-from .decorator import unwrap
 
 
 def get_job(s):
@@ -56,6 +55,12 @@ def run_online_mode(args):
     if args.n == 1:
         for line in sys.stdin:
             key, job = get_job(line)
+            if args.verbose:
+                print("worker: ",
+                      job.foo.__name__,
+                      job.bound_args.args,
+                      job.bound_args.kwargs,
+                      file=sys.stderr, flush=True)
             result = run_job(job)
             print(put_result(key, result), flush=True)
 
@@ -90,6 +95,10 @@ if __name__ == "__main__":
     online_parser.add_argument(
         "-n", type=int,
         help="the number of threads.", default=1)
+    online_parser.add_argument(
+        "-verbose",
+        help="output information to stderr for debugging",
+        default=False, action='store_true')
     online_parser.set_defaults(func=run_online_mode)
 
     args = parser.parse_args()

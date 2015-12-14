@@ -3,6 +3,7 @@ from .data_graph import invert_links
 from .datamodel import insert_result, is_node_ready
 from collections import namedtuple
 import uuid
+import sys
 
 
 def run_job(node):
@@ -23,10 +24,13 @@ class Scheduler:
     become ready to compute. This class communicates with a pool of workers
     by means of coroutines.
     """
-    def __init__(self):
+    def __init__(self, verbose=False):
         self.dynamic_links = {}
         self.results = {}
         self.jobs = {}
+        self.count = 0
+        self.key_map = {}
+        self.verbose = verbose
 
     def run(self, connection, master):
         """
@@ -49,6 +53,10 @@ class Scheduler:
 
         # process results
         for job_key, result in source:
+            if self.verbose:
+                print("sched result [{0}]: ".format(self.key_map[job_key]),
+                      result,
+                      file=sys.stderr, flush=True)
             wf, n = self.jobs[job_key]
 
             # if we retrieve a workflow, push a child
@@ -77,7 +85,14 @@ class Scheduler:
     def schedule(self, job, sink):
         uid = uuid.uuid1()
         self.jobs[uid] = job
-        sink.send((uid, job.workflow.nodes[job.node]))
+        self.count += 1
+        self.key_map[uid] = self.count
+        node = job.workflow.nodes[job.node]
+        if self.verbose:
+            print("sched job [{0}]: ".format(self.count),
+                  node.foo.__name__, node.bound_args.args,
+                  file=sys.stderr, flush=True)
+        sink.send((uid, node))
         return uid
 
     def add_workflow(self, wf, target, node, sink):

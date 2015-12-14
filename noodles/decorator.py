@@ -90,5 +90,7 @@ class PromisedObject:
         # self._set_history[attr] = self._workflow
 
     def __deepcopy__(self, memo):
-        raise TypeError("A PromisedObject cannot be deepcopied. "
-                        "hint: Derive your data class from Storable.")
+        rnode = self._workflow.nodes[self._workflow.root]
+        raise TypeError("A PromisedObject cannot be deepcopied.\n"
+                        "hint: Derive your data class from Storable.\n"
+                        "info: {0} {1}".format(rnode.foo, rnode.node()))

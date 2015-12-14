@@ -88,11 +88,9 @@ class FunctionNode:
         """
         Convert to a :py:class:`Node` for subsequent serialisation.
         """
-        if not self._node:
-            module, name = module_and_name(self.foo)
-            arguments = get_arguments(self.bound_args)
-            self._node = Node(module, name, arguments, self.hints)
-
+        module, name = module_and_name(self.foo)
+        arguments = get_arguments(self.bound_args)
+        self._node = Node(module, name, arguments, self.hints)
         return self._node
 
 
