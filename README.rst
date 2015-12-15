@@ -9,11 +9,13 @@ Current requirements for running the prototype are:
 -   xenon (packaged with pyxenon)
 -   pyxenon
 
-## Installing
+Installing
+----------
 
 To run the unittests, install the following in a virtualenv:
 
 .. code:: bash
+
     # pyxenon needs jnius, which needs this env
     export JAVA_HOME="/usr/lib/jvm/default-java"  # or similar...
     pyvenv-3.5 <venv-dir>
@@ -51,6 +53,7 @@ give here some examples of how the user would use the workflow engine.
 The developer has prepared some nice functions for the user:
 
 .. code:: python
+
     @schedule
     def f(a, b):
         return a+b
@@ -66,6 +69,7 @@ The developer has prepared some nice functions for the user:
 The user then uses these in a workflow:
 
 .. code:: python
+
     u = f(5, 4)
     v = g(u, 3)
     w = g(u, 2)
