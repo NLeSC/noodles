@@ -1,13 +1,13 @@
- QM Works - workflow engine
+Noodles - workflow engine
 =============================
 
 Current requirements for running the prototype are:
-*   Python 3.5
-*   GraphViz
-*   pygraphviz
 
-*   xenon (packaged with pyxenon)
-*   pyxenon
+-   Python 3.5
+-   GraphViz
+-   pygraphviz
+-   xenon (packaged with pyxenon)
+-   pyxenon
 
 ## Installing
 
@@ -35,9 +35,10 @@ in this context are: workflow, node, link.
 Developers interface
 --------------------
 Questions:
-*   What does a developer adding functionality to the workflow engine need to
+
+-   What does a developer adding functionality to the workflow engine need to
     know?
-*   How do we specify the surrounding context of functions in terms of types
+-   How do we specify the surrounding context of functions in terms of types
     and monadic context?
 
 User interface
