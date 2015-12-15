@@ -79,4 +79,4 @@ The user then uses these in a workflow:
 
 Resulting in the graph:
 
-.. File:: examples/callgraph.png?raw=true
+.. image:: examples/callgraph.png?raw=true
