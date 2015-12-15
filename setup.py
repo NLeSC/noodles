@@ -1,6 +1,14 @@
 #!/usr/bin/env python
 
-from distutils.core import setup
+from setuptools import setup
+from os import path
+from codecs import open
+
+here = path.abspath(path.dirname(__file__))
+
+# Get the long description from the README file
+with open(path.join(here, 'README.rst'), encoding='utf-8') as f:
+    long_description = f.read()
 
 setup(
     name='Noodles',
@@ -20,5 +28,9 @@ setup(
         'Programming Language :: Python :: 3.5',
         'Topic :: System :: Distributed Computing'],
 
-    install_requires=[],
-    tests_require=['nose', 'coverage', 'pyflakes', 'pep8'])
+    install_requires=['pyxenon'],
+
+    extras_require={
+        'test': ['nose', 'coverage', 'pyflakes', 'pep8']
+    },
+)

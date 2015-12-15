@@ -17,7 +17,7 @@ def test_worker():
     a = [f(i, j) for i in range(5) for j in range(5)]
     b = ssum(gather(*a))
 
-    config = XenonConfig()
+    config = XenonConfig()  # use default settings
     config.schedule_args = ('ssh', 'localhost', None, None)
 
     result = Scheduler().run(
@@ -25,4 +25,3 @@ def test_worker():
         get_workflow(b))
 
     assert result == 100
-
