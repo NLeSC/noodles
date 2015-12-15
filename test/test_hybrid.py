@@ -2,6 +2,11 @@ from noodles import schedule, schedule_hint, gather
 from noodles.run_local import single_worker, threaded_worker
 from noodles.run_hybrid import run_hybrid
 
+from noodles.run_hybrid import hybrid_coroutine_worker
+from noodles.run_common import Scheduler, run_job
+from noodles.datamodel import get_workflow
+from noodles.coroutines import IOQueue, Connection
+
 import time
 
 
@@ -56,12 +61,6 @@ def test_hybrid_threaded_runner_03():
     assert run_hybrid(B, selector, {1: single_worker()}) == 8
     end = time.time()
     assert (end - start) > 0.08
-
-
-from noodles.run_hybrid import hybrid_coroutine_worker
-from noodles.run_common import Scheduler, run_job
-from noodles.datamodel import get_workflow
-from noodles.coroutines import IOQueue, Connection
 
 
 def tic_worker(tic):

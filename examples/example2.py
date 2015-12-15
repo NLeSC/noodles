@@ -1,29 +1,36 @@
-from noodles import schedule, bind, run, run_parallel
+from noodles import schedule, gather, run_parallel
 from prototype import draw_workflow
+
 
 @schedule
 def add(a, b):
     return a+b
 
+
 @schedule
 def sub(a, b):
     return a-b
+
 
 @schedule
 def mul(a, b):
     return a*b
 
+
 @schedule
-def sum(a, buildin_sum = sum):
+def sum(a, buildin_sum=sum):
     return buildin_sum(a)
 
+
 # a bit more complicated example
-#-------------------------------
+# -------------------------------
 r1 = add(1, 1)
 r2 = sub(3, r1)
 
+
 def foo(a, b, c):
     return mul(add(a, b), c)
+
 
 multiples = [foo(i, r2, r1) for i in range(6)]
 

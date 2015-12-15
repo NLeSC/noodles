@@ -1,29 +1,33 @@
-from noodles import *
+from noodles import schedule, run, unwrap
 from nose.tools import raises
+
 
 @schedule
 def sqr(x):
     return x*x
 
+
 @schedule
 def divide(x, y):
     return x/y
+
 
 @schedule
 def mul(x, y):
     return x*y
 
+
 @schedule
 class A:
     def __init__(self, value):
         self.value = value
-        self.attr  = 0
+        self.attr = 0
 
     @property
     def attr(self):
         return sqr(self.__attr)
 
-    def mul_attr(self, factor = 1):
+    def mul_attr(self, factor=1):
         return mul(self.__attr, factor)
 
     @attr.setter
@@ -34,9 +38,11 @@ class A:
         self.value *= factor
         return self
 
+
 @schedule
 class B:
     pass
+
 
 def test_class_decorator():
     a = A(5).multiply(10)
@@ -45,12 +51,13 @@ def test_class_decorator():
     assert result.value == 50
     assert result.second == 7
 
+
 def test_class_property():
     a = A(10)
     a.attr = 1.0
 
     b = B()
-    b.first  = a.attr
+    b.first = a.attr
     b.second = a.mul_attr(3)
 
     result = run(b)
@@ -84,12 +91,15 @@ def test_class_property():
 #     result = run(b)
 #     assert result.t == 5
 
+
 def f(x):
     return x
+
 
 def test_unwrap():
     assert f == unwrap(schedule(f))
     assert f == unwrap(f)
+
 
 @raises(AttributeError)
 def test_class_decorator2():

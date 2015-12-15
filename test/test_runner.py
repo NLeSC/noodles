@@ -1,4 +1,5 @@
 from noodles import schedule, run, run_parallel, gather
+import time
 
 
 @schedule
@@ -52,8 +53,6 @@ def test_parallel_runner_01():
     C = sum(gather(*multiples))
 
     assert run_parallel(C, 4) == 42
-
-import time
 
 
 @schedule

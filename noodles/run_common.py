@@ -82,6 +82,8 @@ class Scheduler:
             if wf == master and n == master.root:
                 return result
 
+        print("Seventh circle of HELL")
+
     def schedule(self, job, sink):
         uid = uuid.uuid1()
         self.jobs[uid] = job

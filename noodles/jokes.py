@@ -4,6 +4,9 @@
 ○◉□▣◔◑◕●♾⚝☺☹✨✩❄❅❆✾⚛✗✓✔✘
 """
 
+import sys
+from .pretty_term import OutStream
+
 
 class Turtle:
     dx = [1, 0, -1, 0]
@@ -99,9 +102,6 @@ def make_frame(w, h):
     cx.put(line)
     return cx.render()
 
-
-import sys
-from .pretty_term import OutStream
 
 perr = OutStream(sys.stderr)
 
