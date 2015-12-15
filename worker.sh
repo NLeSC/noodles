@@ -1,10 +1,14 @@
 #!/bin/bash
 
-#source .profile
+cd "$(dirname "${BASH_SOURCE[0]}")"
 
-export JAVA_HOME="/usr/lib/jvm/java-7-openjdk-amd64/"
-cd ${HOME}/Code/workflow-engine
-# echo $*
-source ${HOME}/Code/workflow-engine/venv/bin/activate
-python3.5 $* 2> errlog
-deactivate
+if [ -e $1/bin/activate ]; then
+	source $1/bin/activate;
+fi
+
+python -m noodles.worker ${@:2} 2> errlog
+
+if [ -z ${VIRTUAL_ENV+x} ]; then
+	deactivate;
+fi
+

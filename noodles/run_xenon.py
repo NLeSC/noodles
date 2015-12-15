@@ -5,6 +5,7 @@ import json
 import uuid
 import xenon
 import os
+import sys
 import time
 from queue import Queue
 
@@ -77,22 +78,36 @@ class XenonKeeper:
         return XenonJob(self, job, desc)
 
 
-def xenon_interactive_worker():
+class XenonConfig:
+    def __init__(self):
+        self.scheduler_args = ('local', None, None, None)
+        self.working_dir = os.getcwd()
+        self.exec_command = None
+        self.time_out = 5000  # 5 seconds
+        self.prefix = sys.prefix
+
+
+def xenon_interactive_worker(config=None):
     """Uses Xenon to run a single remote interactive worker.
 
     Jobs are read from stdin, and results written to stdout.
     """
 
-    K = XenonKeeper(
-        scheduler_args=('ssh', 'localhost', None, None))
+    if config is None:
+        config = XenonConfig()  # default config
 
-    J = K.submit(
-        ['/bin/bash',
-         '/home/johannes/Code/workflow-engine/worker.sh',
-         '-m', 'noodles.worker', 'online', '-verbose'],
-        interactive=True)
+    K = XenonKeeper(config.scheduler_args)
 
-    status = J.wait_until_running(4672)
+    if config.exec_command is None:
+        config.exec_command = [
+            '/bin/bash',
+            config.working_dir + '/worker.sh',
+            config.prefix,
+            'online', '-verbose']
+
+    J = K.submit(config.exec_command, interactive=True)
+
+    status = J.wait_until_running(config.time_out)
     if not status.isRunning():
         raise RuntimeError("Could not get the job running")
 
