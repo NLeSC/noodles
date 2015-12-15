@@ -48,8 +48,8 @@ User interface
 The user should have it easy. From the spirit of wishful programming, we may
 give here some examples of how the user would use the workflow engine.
 
-## Prototype example
-
+Prototype example
+-----------------
 The developer has prepared some nice functions for the user:
 
 .. code:: python
@@ -79,4 +79,4 @@ The user then uses these in a workflow:
 
 Resulting in the graph:
 
-![Graph showing the flow diagram for this arithmetic](examples/callgraph.png?raw=true "Example graph")
+.. File:: examples/callgraph.png?raw=true
