@@ -1,11 +1,9 @@
 Noodles - workflow engine
 =============================
 
-Current requirements for running the prototype are:
+Requirements for running the first release (0.1.0) are:
 
 -   Python 3.5
--   GraphViz
--   pygraphviz
 -   xenon (packaged with pyxenon)
 -   pyxenon
 

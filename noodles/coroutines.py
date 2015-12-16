@@ -49,6 +49,7 @@ class IOQueue:
         while True:
             v = self.Q.get()
             yield v
+            self.Q.task_done()
 
             # try:
             #     v = self.Q.get(self.blocking)
