@@ -1,0 +1,341 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>The Noodles Scheduler &mdash; Noodles 0.1.0 documentation</title>
+  
+
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  
+  
+    <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  
+
+  
+
+  
+    <link rel="top" title="Noodles 0.1.0 documentation" href="index.html"/>
+        <link rel="prev" title="Development documentation" href="development.html"/> 
+
+  
+  <script src="_static/js/modernizr.min.js"></script>
+
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search">
+          
+
+          
+            <a href="index.html" class="icon icon-home"> Noodles
+          
+
+          
+            
+            <img src="_static/nlesc-logo-white.svg" class="logo" />
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                0.1.0
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+                <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="index.html">Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="eating.html">Eating of Noodles (user docs)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="cooking.html">Cooking of Noodles (library docs)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="development.html">Development documentation</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="">The Noodles Scheduler</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#local-workers">Local workers</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#the-single-worker">The single worker</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#the-threaded-worker">The Threaded worker</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#the-hybrid-worker">The Hybrid worker</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#remote-workers">Remote workers</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#xenon">Xenon</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#fireworks">Fireworks</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+        <a href="index.html">Noodles</a>
+      </nav>
+
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="index.html">Docs</a> &raquo;</li>
+      
+    <li>The Noodles Scheduler</li>
+      <li class="wy-breadcrumbs-aside">
+        
+          
+            <a href="_sources/scheduler.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="the-noodles-scheduler">
+<span id="noodles-scheduler"></span><h1>The Noodles Scheduler<a class="headerlink" href="#the-noodles-scheduler" title="Permalink to this headline">¶</a></h1>
+<p>The Noodles scheduler is completely separated from the worker infrastructure. The scheduler accepts a single worker as an argument. This worker provides the scheduler with two coroutines. One acts as a generator of results, the other as a sink for jobs (the scheduler calls the <code class="docutils literal"><span class="pre">send()</span></code> method on it).</p>
+<p>Both jobs and results are accompanied by a unique key to identify the associated job. The scheduler loops over the results as follows (more or less):</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="k">for</span> <span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">result</span><span class="p">)</span> <span class="ow">in</span> <span class="n">source</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;process result&quot;&quot;&quot;</span>
+    <span class="o">...</span>
+
+    <span class="k">for</span> <span class="n">node</span> <span class="ow">in</span> <span class="n">workflow</span><span class="o">.</span><span class="n">nodes</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">node</span><span class="o">.</span><span class="n">ready</span><span class="p">():</span>
+            <span class="n">sink</span><span class="o">.</span><span class="n">send</span><span class="p">((</span><span class="n">node</span><span class="o">.</span><span class="n">key</span><span class="p">,</span> <span class="n">node</span><span class="o">.</span><span class="n">job</span><span class="p">))</span>
+</pre></div>
+</div>
+<div class="section" id="local-workers">
+<h2>Local workers<a class="headerlink" href="#local-workers" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="the-single-worker">
+<h3>The single worker<a class="headerlink" href="#the-single-worker" title="Permalink to this headline">¶</a></h3>
+<p>It is the responsibility of the worker to keep a queue where so desired. A single result may trigger many new nodes to be ready for evaluation. This means that either the jobs or the results must be buffered in a queue. In the simplest case we have a single worker in the same thread as the scheduler.</p>
+<div class="figure align-center" id="id1">
+<img alt="sequence diagram, single thread" src="_images/sd-single.svg" /><p class="caption"><span class="caption-text">Sequence diagram for a single threaded execution model.</span></p>
+</div>
+<p>The worker code looks like this:</p>
+<div class="highlight-python"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre> 1
+ 2
+ 3
+ 4
+ 5
+ 6
+ 7
+ 8
+ 9
+10
+11
+12
+13
+14</pre></div></td><td class="code"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">noodles.coroutines</span> <span class="kn">import</span> <span class="p">(</span><span class="n">IOQueue</span><span class="p">,</span> <span class="n">Connection</span><span class="p">)</span>
+<span class="kn">from</span> <span class="nn">noodles.run_common</span> <span class="kn">import</span> <span class="n">run_job</span>
+
+<span class="k">def</span> <span class="nf">single_worker</span><span class="p">():</span>
+    <span class="sd">&quot;&quot;&quot;Sets up a single worker co-routine.&quot;&quot;&quot;</span>
+    <span class="n">jobs</span> <span class="o">=</span> <span class="n">IOQueue</span><span class="p">()</span>
+
+    <span class="k">def</span> <span class="nf">get_result</span><span class="p">():</span>
+        <span class="n">source</span> <span class="o">=</span> <span class="n">jobs</span><span class="o">.</span><span class="n">source</span><span class="p">()</span>
+
+        <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">job</span> <span class="ow">in</span> <span class="n">source</span><span class="p">:</span>
+            <span class="k">yield</span> <span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">run_job</span><span class="p">(</span><span class="n">job</span><span class="p">))</span>
+
+    <span class="k">return</span> <span class="n">Connection</span><span class="p">(</span><span class="n">get_result</span><span class="p">,</span> <span class="n">jobs</span><span class="o">.</span><span class="n">sink</span><span class="p">)</span>
+</pre></div>
+</td></tr></table></div>
+<p>The <code class="docutils literal"><span class="pre">IOQueue</span></code> class wraps a standard Python queue. It provides a <code class="docutils literal"><span class="pre">sink</span></code> member pushing elements onto the queue, and a <code class="docutils literal"><span class="pre">source</span></code> member yielding elements from the queue, calling <code class="docutils literal"><span class="pre">Queue.task_done()</span></code> when the coroutine regains control.
+The <code class="docutils literal"><span class="pre">Connection</span></code> class packs a coroutine source (a generator) and a sink. Together these objects provide a plug-board interface for the scheduler and a hierarchy of workers.</p>
+<p>Now, when the scheduler calls <code class="docutils literal"><span class="pre">sink.send(...)</span></code>, the job is pushed onto the queue that is created in <code class="docutils literal"><span class="pre">single_worker()</span></code>. When the scheduler iterates over the results, <code class="docutils literal"><span class="pre">get_result()</span></code> feeds it results that it computes itself (through <code class="docutils literal"><span class="pre">run_job</span></code>).</p>
+<p>The Python queue is thread-safe. We may call <code class="docutils literal"><span class="pre">jobs.source()</span></code> in a different thread in another worker. This worker then safely pulls jobs from the same queue.</p>
+</div>
+<div class="section" id="the-threaded-worker">
+<h3>The Threaded worker<a class="headerlink" href="#the-threaded-worker" title="Permalink to this headline">¶</a></h3>
+<p>To have several workers run in tandem we need to keep a result queue in addition to the job queue. In the next sequence diagram we see how any number of threads are completely decoupled from the thread that manages the scheduling.</p>
+<div class="figure align-center" id="id2">
+<img alt="sequence diagram, multiple threads" src="_images/sd-threaded.svg" /><p class="caption"><span class="caption-text">Sequence diagram where the actual job execution is deferred to one or more additional threads.</span></p>
+</div>
+<p>In Python source this looks as follows:</p>
+<div class="highlight-python"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre> 1
+ 2
+ 3
+ 4
+ 5
+ 6
+ 7
+ 8
+ 9
+10
+11
+12
+13
+14
+15
+16
+17
+18
+19
+20
+21</pre></div></td><td class="code"><div class="highlight"><pre><span class="k">def</span> <span class="nf">threaded_worker</span><span class="p">(</span><span class="n">n_threads</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Sets up a number of threads, each polling for jobs.&quot;&quot;&quot;</span>
+    <span class="n">job_q</span> <span class="o">=</span> <span class="n">IOQueue</span><span class="p">()</span>
+    <span class="n">result_q</span> <span class="o">=</span> <span class="n">IOQueue</span><span class="p">()</span>
+
+    <span class="n">worker_connection</span> <span class="o">=</span> <span class="n">QueueConnection</span><span class="p">(</span><span class="n">job_q</span><span class="p">,</span> <span class="n">result_q</span><span class="p">)</span>
+    <span class="n">scheduler_connection</span> <span class="o">=</span> <span class="n">QueueConnection</span><span class="p">(</span><span class="n">result_q</span><span class="p">,</span> <span class="n">job_q</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">worker</span><span class="p">(</span><span class="n">source</span><span class="p">,</span> <span class="n">sink</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">job</span> <span class="ow">in</span> <span class="n">source</span><span class="p">:</span>
+            <span class="n">sink</span><span class="o">.</span><span class="n">send</span><span class="p">((</span><span class="n">key</span><span class="p">,</span> <span class="n">run_job</span><span class="p">(</span><span class="n">job</span><span class="p">)))</span>
+
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n_threads</span><span class="p">):</span>
+        <span class="n">t</span> <span class="o">=</span> <span class="n">threading</span><span class="o">.</span><span class="n">Thread</span><span class="p">(</span>
+            <span class="n">target</span><span class="o">=</span><span class="n">worker</span><span class="p">,</span>
+            <span class="n">args</span><span class="o">=</span><span class="n">worker_connection</span><span class="o">.</span><span class="n">setup</span><span class="p">())</span>
+
+        <span class="n">t</span><span class="o">.</span><span class="n">daemon</span> <span class="o">=</span> <span class="bp">True</span>
+        <span class="n">t</span><span class="o">.</span><span class="n">start</span><span class="p">()</span>
+
+    <span class="k">return</span> <span class="n">scheduler_connection</span>
+</pre></div>
+</td></tr></table></div>
+</div>
+<div class="section" id="the-hybrid-worker">
+<h3>The Hybrid worker<a class="headerlink" href="#the-hybrid-worker" title="Permalink to this headline">¶</a></h3>
+<div class="figure align-center" id="id3">
+<img alt="sequence diagram, hybrid model" src="_images/sd-hybrid.svg" /><p class="caption"><span class="caption-text">Sequence diagram where the jobs get dispatched, each to a worker selected by a dispatcher.</span></p>
+</div>
+</div>
+</div>
+<div class="section" id="remote-workers">
+<h2>Remote workers<a class="headerlink" href="#remote-workers" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="xenon">
+<h3>Xenon<a class="headerlink" href="#xenon" title="Permalink to this headline">¶</a></h3>
+</div>
+<div class="section" id="fireworks">
+<h3>Fireworks<a class="headerlink" href="#fireworks" title="Permalink to this headline">¶</a></h3>
+</div>
+</div>
+</div>
+
+
+           </div>
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+      
+        <a href="development.html" class="btn btn-neutral" title="Development documentation" accesskey="p"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2015, Johan Hidding, Felipe Zapata.
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'./',
+            VERSION:'0.1.0',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true
+        };
+    </script>
+      <script type="text/javascript" src="_static/jquery.js"></script>
+      <script type="text/javascript" src="_static/underscore.js"></script>
+      <script type="text/javascript" src="_static/doctools.js"></script>
+      <script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+
+  
+
+  
+  
+    <script type="text/javascript" src="_static/js/theme.js"></script>
+  
+
+  
+  
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.StickyNav.enable();
+      });
+  </script>
+   
+
+</body>
+</html>
