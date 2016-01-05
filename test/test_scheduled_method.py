@@ -1,14 +1,6 @@
-from noodles import schedule, Scheduler, Storable
+from noodles import schedule, Scheduler, Storable, has_scheduled_methods
 from noodles.datamodel import get_workflow
 from noodles.run_process import process_worker
-
-
-def has_scheduled_methods(cls):
-    for name, member in cls.__dict__.items():
-        if hasattr(member, '__wrapped__'):
-            member.__wrapped__.__member_of__ = cls
-
-    return cls
 
 
 @has_scheduled_methods
