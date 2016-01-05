@@ -18,7 +18,7 @@ def test_worker():
     b = ssum(gather(*a))
 
     config = XenonConfig()  # use default settings
-    config.schedule_args = ('ssh', 'localhost', None, None)
+    # config.schedule_args = ('ssh', 'localhost', None, None)
 
     result = Scheduler().run(
         xenon_interactive_worker(config),

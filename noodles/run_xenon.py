@@ -1,5 +1,6 @@
 from .coroutines import coroutine_sink, Connection
 from .data_json import json_sauce, json_desauce, node_to_jobject
+from .logger import log
 # from .run_common import Schedule
 import json
 import uuid
@@ -8,8 +9,9 @@ import os
 import sys
 import time
 from queue import Queue
+import threading
 
-xenon.init()  # log_level='ERROR')  # noqa
+xenon.init(log_level='ERROR')  # noqa
 
 from jnius import autoclass
 
@@ -103,13 +105,21 @@ def xenon_interactive_worker(config=None):
             '/bin/bash',
             config.working_dir + '/worker.sh',
             config.prefix,
-            'online', '-verbose']
+            'online']
 
     J = K.submit(config.exec_command, interactive=True)
 
     status = J.wait_until_running(config.time_out)
     if not status.isRunning():
         raise RuntimeError("Could not get the job running")
+
+    def read_stderr():
+        for line in jLines(J.streams.getStderr()):
+            log.worker_stderr("Xe {0:X}".format(id(K)), line)
+
+    K.stderr_thread = threading.Thread(target=read_stderr)
+    K.stderr_thread.daemon = True
+    K.stderr_thread.start()
 
     @coroutine_sink
     def send_job():
