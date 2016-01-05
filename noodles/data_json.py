@@ -19,10 +19,8 @@ from .data_node import FunctionNode, importable, module_and_name, look_up
 from .data_workflow import reset_workflow
 from .storable import storable, StorableRef
 
-
 import json
 from itertools import count
-# from inspect import isfunction
 
 
 def json_sauce(x):
@@ -33,10 +31,18 @@ def json_sauce(x):
     if storable(x) and importable(type(x)):
         module, name = module_and_name(type(x))
         return {'_noodles': {'type': 'storable',
-                             'use_ref': x.use_ref,
+                             'use_ref': x._use_ref,
                              'module': module,
                              'name': name},
                 'data': x.as_dict()}
+
+    if hasattr(x, '__member_of__') and x.__member_of__ is not None:
+        module, class_name = module_and_name(x.__member_of__)
+        method_name = x.__name__
+        return {'_noodles': {'type': 'method',
+                             'module': module,
+                             'class': class_name,
+                             'name': method_name}}
 
     if importable(x):
         module, name = module_and_name(x)
@@ -65,6 +71,10 @@ def json_desauce(x):
     if obj['type'] == 'workflow':
         return jobject_to_workflow(obj['data'])
 
+    if obj['type'] == 'method':
+        cls = look_up(obj['module'], obj['class'])
+        return getattr(cls, obj['name'])
+
 
 def address_to_jobject(a):
     return {'kind':  a.kind.name,
@@ -73,8 +83,7 @@ def address_to_jobject(a):
 
 
 def node_to_jobject(node):
-    return {'module':    node.module,
-            'name':      node.name,
+    return {'function':  node.function,
             'arguments': [{'address': address_to_jobject(a),
                            'value':   v}
                           for a, v in node.arguments],
@@ -126,7 +135,7 @@ def jobject_to_node(jobj, deref=False):
                  for a in jobj['arguments']]
 
     return FunctionNode.from_node(
-        Node(jobj['module'], jobj['name'], arguments, jobj['hints']))
+        Node(jobj['function'], arguments, jobj['hints']))
 
 
 def jobject_to_workflow(jobj, deref=False):

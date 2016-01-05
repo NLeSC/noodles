@@ -28,7 +28,7 @@ def module_and_name(f):
     """
     Retrieve the module and name of the given object.
     """
-    return getmodule(f).__name__, f.__name__
+    return getmodule(f).__name__, f.__qualname__
 
 
 def importable(x):
@@ -74,7 +74,7 @@ class FunctionNode:
     """
     @staticmethod
     def from_node(node):
-        foo = unwrap(look_up(node.module, node.name))
+        foo = unwrap(node.function)
         bound_args = bind_arguments(foo, node.arguments)
         return FunctionNode(foo, bound_args, node.hints, node)
 
@@ -88,9 +88,8 @@ class FunctionNode:
         """
         Convert to a :py:class:`Node` for subsequent serialisation.
         """
-        module, name = module_and_name(self.foo)
         arguments = get_arguments(self.bound_args)
-        self._node = Node(module, name, arguments, self.hints)
+        self._node = Node(self.foo, arguments, self.hints)
         return self._node
 
 

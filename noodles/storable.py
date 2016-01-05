@@ -29,7 +29,7 @@ def from_dict(cls, **kwargs):
 
 class Storable:
     def __init__(self, use_ref=False):
-        self.use_ref = use_ref
+        self._use_ref = use_ref
 
     def as_dict(self):
         return self.__dict__
