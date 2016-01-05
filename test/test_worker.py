@@ -25,7 +25,8 @@ def test_worker():
 
 class A(Storable):
     def __init__(self, **kwargs):
-        self.__dict__ = kwargs
+        super(A, self).__init__()
+        self.__dict__.update(kwargs)
 
 
 @schedule

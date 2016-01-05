@@ -37,7 +37,7 @@ from .run_common import run_job
 def get_job(s):
     obj = json.loads(s, object_hook=json_desauce)
     key = uuid.UUID(obj['key'])
-    node = jobject_to_node(obj['node'])
+    node = jobject_to_node(obj['node'], deref=True)
     return (key, node)
 
 

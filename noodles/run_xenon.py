@@ -9,7 +9,7 @@ import sys
 import time
 from queue import Queue
 
-xenon.init(log_level='ERROR')  # noqa
+xenon.init()  # log_level='ERROR')  # noqa
 
 from jnius import autoclass
 

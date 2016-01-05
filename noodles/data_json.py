@@ -1,12 +1,23 @@
 """
 Functions for storing a |Workflow| as a JSON stream.
+
+A Workflow is stored as with `root`, `nodes` and `links`. The `nodes` contain
+a list of all nodes. And `links` is an object containing `node`, indexing
+the source node and `to`, a list of indices to target nodes. When we reload
+a workflow the node ids will not be conserved.
+
+A Node contains a reference to some Python function or object. This part is
+stored as the `module` and `name` needed to reimport this. Second the node
+stores all arguments needed to make the function call. These arguments should
+either be a primitive value, an importable object or an instance of a class
+derived from `Storable`.
 """
 
 from .data_types import (Workflow, ArgumentAddress, ArgumentKind, Node,
                          is_workflow, get_workflow)
 from .data_node import FunctionNode, importable, module_and_name, look_up
 from .data_workflow import reset_workflow
-from .storable import storable
+from .storable import storable, StorableRef
 
 
 import json
@@ -21,16 +32,17 @@ def json_sauce(x):
 
     if storable(x) and importable(type(x)):
         module, name = module_and_name(type(x))
-        return {'_noodles': {'type':   'storable',
+        return {'_noodles': {'type': 'storable',
+                             'use_ref': x.use_ref,
                              'module': module,
-                             'name':   name},
-                '__dict__': x.__dict__}
+                             'name': name},
+                'data': x.as_dict()}
 
     if importable(x):
         module, name = module_and_name(x)
-        return {'_noodles': {'type':   'importable',
+        return {'_noodles': {'type': 'importable',
                              'module': module,
-                             'name':   name}}
+                             'name': name}}
 
     raise TypeError
 
@@ -44,8 +56,11 @@ def json_desauce(x):
         return look_up(obj['module'], obj['name'])
 
     if obj['type'] == 'storable':
-        cls = look_up(obj['module'], obj['name'])
-        return cls.from_dict(**x['__dict__'])
+        if obj['use_ref']:
+            return StorableRef(x)
+        else:
+            cls = look_up(obj['module'], obj['name'])
+            return cls.from_dict(**x['data'])
 
     if obj['type'] == 'workflow':
         return jobject_to_workflow(obj['data'])
@@ -98,15 +113,23 @@ def jobject_to_address(jobj):
         jobj['key'])
 
 
-def jobject_to_node(jobj):
-    arguments = [(jobject_to_address(a['address']), a['value'])
+def deref_argument(x):
+    if isinstance(x, StorableRef):
+        return x.make()
+    else:
+        return x
+
+
+def jobject_to_node(jobj, deref=False):
+    arguments = [(jobject_to_address(a['address']),
+                  a['value'] if not deref else deref_argument(a['value']))
                  for a in jobj['arguments']]
 
     return FunctionNode.from_node(
         Node(jobj['module'], jobj['name'], arguments, jobj['hints']))
 
 
-def jobject_to_workflow(jobj):
+def jobject_to_workflow(jobj, deref=False):
     """
     Converts a JSON object (the result of |json.loads|) to a functioning
     workflow. Doing `jobject_to_workflow(workflow_to_jobject(wf))`
@@ -114,7 +137,7 @@ def jobject_to_workflow(jobj):
     """
     root = jobj['root']
 
-    nodes = dict(zip(count(), (jobject_to_node(n)
+    nodes = dict(zip(count(), (jobject_to_node(n, deref)
                  for n in jobj['nodes'])))
 
     links = dict((l['node'],
@@ -131,5 +154,24 @@ def workflow_to_json(workflow, **kwargs):
                       default=json_sauce, **kwargs)
 
 
-def json_to_workflow(s):
-    return jobject_to_workflow(json.loads(s, object_hook=json_desauce))
+def json_to_workflow(s, deref=False):
+    """Takes a JSON string and converts it to a workflow.
+
+    :param s:
+        A JSON string
+
+    :param deref:
+        If the workflow contains Storable objects that were loaded by
+        reference, this parameter determines wether to instantiate them.
+        This should only be True if the process intends to evaluate the
+        Workflow.
+    :type deref: bool
+
+    :returns:
+        A workflow
+    :rtype: Workflow
+    """
+
+    return jobject_to_workflow(
+        json.loads(s, object_hook=json_desauce),
+        deref)
