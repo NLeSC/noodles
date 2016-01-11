@@ -62,10 +62,11 @@ def delayed(a, delay=1.0):
 
 
 def test_parallel_runner_02():
-    A = [delayed(1, 0.01) for i in range(4)]
+    A = [delayed(1, 0.01) for i in range(100)]
     B = sum(gather(*A))
 
     start = time.time()
-    assert run_parallel(B, 4) == 4
+    assert run_parallel(B, 4) == 100
     end = time.time()
-    assert (end - start) < 0.02   # liberal upper limit for running time
+    # print(end-start)
+    assert (end - start) < 0.3   # liberal upper limit for running time

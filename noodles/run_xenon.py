@@ -1,5 +1,5 @@
 from .coroutines import coroutine_sink, Connection
-from .data_json import json_sauce, json_desauce, node_to_jobject
+from .data_json import json_sauce, desaucer, node_to_jobject
 from .logger import log
 # from .run_common import Schedule
 import json
@@ -17,7 +17,7 @@ from jnius import autoclass
 
 
 def read_result(s):
-    obj = json.loads(s, object_hook=json_desauce)
+    obj = json.loads(s, object_hook=desaucer())
     return (uuid.UUID(obj['key']), obj['result'])
 
 

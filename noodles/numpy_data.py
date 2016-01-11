@@ -11,13 +11,17 @@ class NumpyData(Storable):
     layer (which is NYI ;).
     """
     def __init__(self, data, filename=None):
+        super(NumpyData, self).__init__(use_ref=True)
+
         self.data = data
         self.filename = filename if filename \
-            else (uuid.uuid4() + '.npy')
+            else (str(uuid.uuid4()) + '.npy')
 
     @classmethod
     def from_dict(cls, filename):
         obj = cls.__new__(cls)
+        super(NumpyData, obj).__init__(use_ref=True)
+
         obj.filename = filename
         obj.data = np.load(filename)
         return obj

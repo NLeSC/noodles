@@ -53,27 +53,32 @@ def json_sauce(x):
     raise TypeError
 
 
-def json_desauce(x):
-    if '_noodles' not in x:
-        return x
+def desaucer(deref=False):
+    def json_desauce(x):
+        if '_noodles' not in x:
+            return x
 
-    obj = x['_noodles']
-    if obj['type'] == 'importable':
-        return look_up(obj['module'], obj['name'])
+        obj = x['_noodles']
+        if obj['type'] == 'importable':
+            return look_up(obj['module'], obj['name'])
 
-    if obj['type'] == 'storable':
-        if obj['use_ref']:
-            return StorableRef(x)
-        else:
+        if obj['type'] == 'storable':
+            if obj['use_ref']:
+                if deref:
+                    return StorableRef(x).make()
+                return StorableRef(x)
+
             cls = look_up(obj['module'], obj['name'])
             return cls.from_dict(**x['data'])
 
-    if obj['type'] == 'workflow':
-        return jobject_to_workflow(obj['data'])
+        if obj['type'] == 'workflow':
+            return jobject_to_workflow(obj['data'])
 
-    if obj['type'] == 'method':
-        cls = look_up(obj['module'], obj['class'])
-        return getattr(cls, obj['name'])
+        if obj['type'] == 'method':
+            cls = look_up(obj['module'], obj['class'])
+            return getattr(cls, obj['name'])
+
+    return json_desauce
 
 
 def address_to_jobject(a):
@@ -122,23 +127,15 @@ def jobject_to_address(jobj):
         jobj['key'])
 
 
-def deref_argument(x):
-    if isinstance(x, StorableRef):
-        return x.make()
-    else:
-        return x
-
-
-def jobject_to_node(jobj, deref=False):
-    arguments = [(jobject_to_address(a['address']),
-                  a['value'] if not deref else deref_argument(a['value']))
+def jobject_to_node(jobj):
+    arguments = [(jobject_to_address(a['address']), a['value'])
                  for a in jobj['arguments']]
 
     return FunctionNode.from_node(
         Node(jobj['function'], arguments, jobj['hints']))
 
 
-def jobject_to_workflow(jobj, deref=False):
+def jobject_to_workflow(jobj):
     """
     Converts a JSON object (the result of |json.loads|) to a functioning
     workflow. Doing `jobject_to_workflow(workflow_to_jobject(wf))`
@@ -146,7 +143,7 @@ def jobject_to_workflow(jobj, deref=False):
     """
     root = jobj['root']
 
-    nodes = dict(zip(count(), (jobject_to_node(n, deref)
+    nodes = dict(zip(count(), (jobject_to_node(n)
                  for n in jobj['nodes'])))
 
     links = dict((l['node'],
@@ -182,5 +179,4 @@ def json_to_workflow(s, deref=False):
     """
 
     return jobject_to_workflow(
-        json.loads(s, object_hook=json_desauce),
-        deref)
+        json.loads(s, object_hook=desaucer(deref)))
