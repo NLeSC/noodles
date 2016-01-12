@@ -19,6 +19,14 @@ def schedule(f, hints=None):
     return wrapped
 
 
+def has_scheduled_methods(cls):
+    for name, member in cls.__dict__.items():
+        if hasattr(member, '__wrapped__'):
+            member.__wrapped__.__member_of__ = cls
+
+    return cls
+
+
 def schedule_hint(*hints):
     def g(f):
         return schedule(f, hints)

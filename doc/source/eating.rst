@@ -136,6 +136,58 @@ Xenon_ is a Java library offering a uniform interface to all manners of job sche
 
 Using the Xenon runner, there are two modes of operation: *batch* and *online*. In online mode, jobs are streamed to the worker and results read back. If your laptop crashes while an online computation is running, that is to say, the connection is broken, the worker dies and you may lose results. Getting the online mode to be more robust is one of the aims for upcomming releases.
 
+The Xenon runner needs a way to setup the virtualenv on the remote side, so a worker script needs to be specified. We have included a bash-script ``worker.sh`` that should work in the simplest cases.
+
+.. code-block:: bash
+
+    #!/bin/bash
+
+    # run in the directory where the script is located
+    cd "$(dirname "${BASH_SOURCE[0]}")"
+
+    # activate the virtualenv that is given as first argument
+    # invoking this script.
+    if [ -e $1/bin/activate ]; then
+    	source $1/bin/activate;
+    fi
+
+    # start the worker with the rest of the arguments.
+    # stderr is written to a file.
+    python -m noodles.worker ${@:2} 2> errlog
+
+    # close the virtualenv.
+    if [ -z ${VIRTUAL_ENV+x} ]; then
+    	deactivate;
+    fi
+
+If you need to setup some more aspects of the environment, load modules, set variables etc., modify this script and put it in the directory where you want to run the jobs. Specify this directory in the Python script.
+
+::
+
+    from noodles import schedule, Scheduler, gather
+    from noodles.datamodel import get_workflow
+    from noodles.run_xenon import xenon_interactive_worker, XenonConfig
+
+    from noodles.tutorial import add, accumulate
+
+    if __name__ == "__main__":
+        a = [add(i, j) for i in range(5) for j in range(5)]
+        b = accumulate(gather(*a))
+
+        config = XenonConfig()             # use default settings
+        config.working_dir = sys.getcwd()  # this actually is the default
+        config.prefix = sys.prefix         # virtual-env prefix or just '/usr'
+
+        # options given to Xenon.newScheduler()
+        config.schedule_args = ('ssh', 'localhost', None, None)
+
+        result = Scheduler().run(
+            xenon_interactive_worker(config),
+            get_workflow(b))
+
+        print("This test is working {0}%!".format(result))
+
+
 Fireworks
 ~~~~~~~~~
 Fireworks_ is a workflow engine that runs workflows as stored in a MongoDB. This is the `Dicke Bertha`_ in our armoury. Fireworks support is still in an early stage of development. The advantage of Fireworks is that it is here, it works and it is robust. However, it may be a hassle with the system admins to setup a MongoDB and be allowed to communicate with it from within the cluster environment.

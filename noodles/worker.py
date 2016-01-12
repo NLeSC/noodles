@@ -30,12 +30,13 @@ import os
 import uuid
 
 import json
-from .data_json import (json_desauce, json_sauce, jobject_to_node)
+from .data_json import (desaucer, json_sauce, jobject_to_node)
 from .run_common import run_job
 
 
 def get_job(s):
-    obj = json.loads(s, object_hook=json_desauce)
+    #    print(s, file=sys.stderr)
+    obj = json.loads(s, object_hook=desaucer(deref=True))
     key = uuid.UUID(obj['key'])
     node = jobject_to_node(obj['node'])
     return (key, node)

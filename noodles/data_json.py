@@ -1,17 +1,26 @@
 """
 Functions for storing a |Workflow| as a JSON stream.
+
+A Workflow is stored as with `root`, `nodes` and `links`. The `nodes` contain
+a list of all nodes. And `links` is an object containing `node`, indexing
+the source node and `to`, a list of indices to target nodes. When we reload
+a workflow the node ids will not be conserved.
+
+A Node contains a reference to some Python function or object. This part is
+stored as the `module` and `name` needed to reimport this. Second the node
+stores all arguments needed to make the function call. These arguments should
+either be a primitive value, an importable object or an instance of a class
+derived from `Storable`.
 """
 
 from .data_types import (Workflow, ArgumentAddress, ArgumentKind, Node,
                          is_workflow, get_workflow)
 from .data_node import FunctionNode, importable, module_and_name, look_up
 from .data_workflow import reset_workflow
-from .storable import storable
-
+from .storable import storable, StorableRef
 
 import json
 from itertools import count
-# from inspect import isfunction
 
 
 def json_sauce(x):
@@ -21,34 +30,55 @@ def json_sauce(x):
 
     if storable(x) and importable(type(x)):
         module, name = module_and_name(type(x))
-        return {'_noodles': {'type':   'storable',
+        return {'_noodles': {'type': 'storable',
+                             'use_ref': x._use_ref,
                              'module': module,
-                             'name':   name},
-                '__dict__': x.__dict__}
+                             'name': name},
+                'data': x.as_dict()}
+
+    if hasattr(x, '__member_of__') and x.__member_of__ is not None:
+        module, class_name = module_and_name(x.__member_of__)
+        method_name = x.__name__
+        return {'_noodles': {'type': 'method',
+                             'module': module,
+                             'class': class_name,
+                             'name': method_name}}
 
     if importable(x):
         module, name = module_and_name(x)
-        return {'_noodles': {'type':   'importable',
+        return {'_noodles': {'type': 'importable',
                              'module': module,
-                             'name':   name}}
+                             'name': name}}
 
     raise TypeError
 
 
-def json_desauce(x):
-    if '_noodles' not in x:
-        return x
+def desaucer(deref=False):
+    def json_desauce(x):
+        if '_noodles' not in x:
+            return x
 
-    obj = x['_noodles']
-    if obj['type'] == 'importable':
-        return look_up(obj['module'], obj['name'])
+        obj = x['_noodles']
+        if obj['type'] == 'importable':
+            return look_up(obj['module'], obj['name'])
 
-    if obj['type'] == 'storable':
-        cls = look_up(obj['module'], obj['name'])
-        return cls.from_dict(**x['__dict__'])
+        if obj['type'] == 'storable':
+            if obj['use_ref']:
+                if deref:
+                    return StorableRef(x).make()
+                return StorableRef(x)
 
-    if obj['type'] == 'workflow':
-        return jobject_to_workflow(obj['data'])
+            cls = look_up(obj['module'], obj['name'])
+            return cls.from_dict(**x['data'])
+
+        if obj['type'] == 'workflow':
+            return jobject_to_workflow(obj['data'])
+
+        if obj['type'] == 'method':
+            cls = look_up(obj['module'], obj['class'])
+            return getattr(cls, obj['name'])
+
+    return json_desauce
 
 
 def address_to_jobject(a):
@@ -58,8 +88,7 @@ def address_to_jobject(a):
 
 
 def node_to_jobject(node):
-    return {'module':    node.module,
-            'name':      node.name,
+    return {'function':  node.function,
             'arguments': [{'address': address_to_jobject(a),
                            'value':   v}
                           for a, v in node.arguments],
@@ -103,7 +132,7 @@ def jobject_to_node(jobj):
                  for a in jobj['arguments']]
 
     return FunctionNode.from_node(
-        Node(jobj['module'], jobj['name'], arguments, jobj['hints']))
+        Node(jobj['function'], arguments, jobj['hints']))
 
 
 def jobject_to_workflow(jobj):
@@ -131,5 +160,23 @@ def workflow_to_json(workflow, **kwargs):
                       default=json_sauce, **kwargs)
 
 
-def json_to_workflow(s):
-    return jobject_to_workflow(json.loads(s, object_hook=json_desauce))
+def json_to_workflow(s, deref=False):
+    """Takes a JSON string and converts it to a workflow.
+
+    :param s:
+        A JSON string
+
+    :param deref:
+        If the workflow contains Storable objects that were loaded by
+        reference, this parameter determines wether to instantiate them.
+        This should only be True if the process intends to evaluate the
+        Workflow.
+    :type deref: bool
+
+    :returns:
+        A workflow
+    :rtype: Workflow
+    """
+
+    return jobject_to_workflow(
+        json.loads(s, object_hook=desaucer(deref)))

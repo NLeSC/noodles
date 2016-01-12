@@ -17,7 +17,7 @@ ArgumentAddress = namedtuple(
 
 Node = namedtuple(
     'Node',
-    ['module', 'name', 'arguments', 'hints'])
+    ['function', 'arguments', 'hints'])
 
 Argument = namedtuple(
     'Argument',
