@@ -23,7 +23,7 @@ def hybrid_coroutine_worker(selector, workers):
             if job.hints is None:
                 yield (key, run_job(job))
             else:
-                worker = selector(job.hints)
+                worker = selector(job)
                 # send the worker a job and wait for it to return
                 worker_sink[worker].send((key, job))
                 result = next(worker_source[worker])
@@ -65,7 +65,7 @@ def hybrid_threaded_worker(selector, workers):
         while True:
             key, job = yield
             if job.hints:
-                worker = selector(job.hints)
+                worker = selector(job)
                 worker_sink[worker].send((key, job))
             else:
                 result = run_job(job)

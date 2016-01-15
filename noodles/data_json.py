@@ -50,7 +50,7 @@ def json_sauce(x):
                              'module': module,
                              'name': name}}
 
-    raise TypeError
+    raise TypeError("type: {}, value: {}".format(type(x), str(x)))
 
 
 def desaucer(deref=False):

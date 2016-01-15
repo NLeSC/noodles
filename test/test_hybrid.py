@@ -25,9 +25,9 @@ def h(x, y):
     return x + y
 
 
-def selector(hints):
-    if hints:
-        return hints[0]
+def selector(job):
+    if job.hints:
+        return job.hints[0]
     else:
         return
 

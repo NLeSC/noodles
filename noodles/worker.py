@@ -32,6 +32,7 @@ import uuid
 import json
 from .data_json import (desaucer, json_sauce, jobject_to_node)
 from .run_common import run_job
+from contextlib import redirect_stdout
 
 
 def get_job(s):
@@ -70,7 +71,9 @@ def run_online_mode(args):
                       job.bound_args.args,
                       job.bound_args.kwargs,
                       file=sys.stderr, flush=True)
-            result = run_job(job)
+
+            with redirect_stdout(sys.stderr):
+                result = run_job(job)
 
             if args.jobdirs:
                 # parent directory

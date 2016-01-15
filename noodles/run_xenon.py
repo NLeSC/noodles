@@ -82,11 +82,26 @@ class XenonKeeper:
 
 class XenonConfig:
     def __init__(self):
-        self.scheduler_args = ('local', None, None, None)
+        self.jobs_scheme = 'local'
+        self.files_scheme = 'local'
+        self.location = None
+        self.credentials = None
+        self.jobs_properties = None
+        self.files_properties = None
         self.working_dir = os.getcwd()
         self.exec_command = None
         self.time_out = 5000  # 5 seconds
         self.prefix = sys.prefix
+
+    @property
+    def scheduler_args(self):
+        return (self.jobs_scheme, self.location,
+                self.credentials, self.jobs_properties)
+
+    @property
+    def filesystem_args(self):
+        return (self.files_scheme, self.location,
+                self.credentials, self.files_properties)
 
 
 def xenon_interactive_worker(config=None):
