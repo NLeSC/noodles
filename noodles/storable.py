@@ -28,7 +28,7 @@ def from_dict(cls, **kwargs):
 
 
 class Storable:
-    def __init__(self, use_ref=False, files=None):
+    def __init__(self, use_ref=False, files=[]):
         self._use_ref = use_ref
         self._files = files
 
