@@ -5,6 +5,7 @@ trash
 cover
 .coverage
 */.ipynb_checkpoints
+*/.ipynb_checkpoints/*
 *~
 doc/build
 venv

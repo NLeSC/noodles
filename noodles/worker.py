@@ -30,8 +30,9 @@ import os
 import uuid
 
 import json
-from .data_json import (desaucer, json_sauce, jobject_to_node)
+from .data_json import (desaucer, saucer, jobject_to_node)
 from .run_common import run_job
+from contextlib import redirect_stdout
 
 
 def get_job(s):
@@ -42,10 +43,10 @@ def get_job(s):
     return (key, node)
 
 
-def put_result(key, result):
+def put_result(host, key, result):
     return json.dumps(
         {'key': key.hex, 'result': result},
-        default=json_sauce)
+        default=saucer(host))
 
 
 def run_batch_mode(args):
@@ -70,13 +71,15 @@ def run_online_mode(args):
                       job.bound_args.args,
                       job.bound_args.kwargs,
                       file=sys.stderr, flush=True)
-            result = run_job(job)
+
+            with redirect_stdout(sys.stderr):
+                result = run_job(job)
 
             if args.jobdirs:
                 # parent directory
                 os.chdir("..")
 
-            print(put_result(key, result), flush=True)
+            print(put_result(args.name, key, result), flush=True)
 
 
 if __name__ == "__main__":
@@ -89,7 +92,7 @@ if __name__ == "__main__":
                     "jobs remotely.")
 
     parser.add_argument(
-        "--version", action="version", version="Noodles 0.1.0-alpha1")
+        "-version", action="version", version="Noodles 0.1.0-alpha1")
 
     subparsers = parser.add_subparsers(
         title="Execution models",
@@ -117,6 +120,11 @@ if __name__ == "__main__":
         "-jobdirs",
         help="create a directory for each job to run in",
         default=False, action='store_true')
+    online_parser.add_argument(
+        "-name", type=str,
+        help="worker identity",
+        default="worker-" + str(uuid.uuid4()))
+
     online_parser.set_defaults(func=run_online_mode)
 
     args = parser.parse_args()

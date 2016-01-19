@@ -23,34 +23,39 @@ import json
 from itertools import count
 
 
-def json_sauce(x):
-    if is_workflow(x):
-        return {'_noodles': {'type': 'workflow',
-                             'data': workflow_to_jobject(get_workflow(x))}}
+def saucer(host=None):
+    def json_sauce(x):
+        if is_workflow(x):
+            return {'_noodles': {'type': 'workflow',
+                                 'data': workflow_to_jobject(get_workflow(x))}}
 
-    if storable(x) and importable(type(x)):
-        module, name = module_and_name(type(x))
-        return {'_noodles': {'type': 'storable',
-                             'use_ref': x._use_ref,
-                             'module': module,
-                             'name': name},
-                'data': x.as_dict()}
+        if storable(x) and importable(type(x)):
+            module, name = module_and_name(type(x))
+            return {'_noodles': {'type': 'storable',
+                                 'use_ref': x._use_ref,
+                                 'host': host,
+                                 'files': x._files,
+                                 'module': module,
+                                 'name': name},
+                    'data': x.as_dict()}
 
-    if hasattr(x, '__member_of__') and x.__member_of__ is not None:
-        module, class_name = module_and_name(x.__member_of__)
-        method_name = x.__name__
-        return {'_noodles': {'type': 'method',
-                             'module': module,
-                             'class': class_name,
-                             'name': method_name}}
+        if hasattr(x, '__member_of__') and x.__member_of__ is not None:
+            module, class_name = module_and_name(x.__member_of__)
+            method_name = x.__name__
+            return {'_noodles': {'type': 'method',
+                                 'module': module,
+                                 'class': class_name,
+                                 'name': method_name}}
 
-    if importable(x):
-        module, name = module_and_name(x)
-        return {'_noodles': {'type': 'importable',
-                             'module': module,
-                             'name': name}}
+        if importable(x):
+            module, name = module_and_name(x)
+            return {'_noodles': {'type': 'importable',
+                                 'module': module,
+                                 'name': name}}
 
-    raise TypeError
+        raise TypeError("type: {}, value: {}".format(type(x), str(x)))
+
+    return json_sauce
 
 
 def desaucer(deref=False):
@@ -155,9 +160,9 @@ def jobject_to_workflow(jobj):
     return reset_workflow(Workflow(root, nodes, links))
 
 
-def workflow_to_json(workflow, **kwargs):
+def workflow_to_json(workflow, host=None, **kwargs):
     return json.dumps(workflow_to_jobject(workflow),
-                      default=json_sauce, **kwargs)
+                      default=saucer(host), **kwargs)
 
 
 def json_to_workflow(s, deref=False):

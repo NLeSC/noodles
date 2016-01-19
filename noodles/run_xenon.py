@@ -1,5 +1,5 @@
 from .coroutines import coroutine_sink, Connection
-from .data_json import json_sauce, desaucer, node_to_jobject
+from .data_json import saucer, desaucer, node_to_jobject
 from .logger import log
 # from .run_common import Schedule
 import json
@@ -21,10 +21,10 @@ def read_result(s):
     return (uuid.UUID(obj['key']), obj['result'])
 
 
-def put_job(key, job):
+def put_job(host, key, job):
     obj = {'key': key.hex,
            'node': node_to_jobject(job.node())}
-    return json.dumps(obj, default=json_sauce)
+    return json.dumps(obj, default=saucer(host))
 
 
 jPrintStream = autoclass('java.io.PrintStream')
@@ -66,6 +66,7 @@ class XenonJob:
 class XenonKeeper:
     def __init__(self,
                  scheduler_args=('local', None, None, None)):
+        self.name = "scheduler-" + str(uuid.uuid4())
         self.x = xenon.Xenon()
         self.jobs = self.x.jobs()
         self.scheduler = self.jobs.newScheduler(*scheduler_args)
@@ -82,11 +83,26 @@ class XenonKeeper:
 
 class XenonConfig:
     def __init__(self):
-        self.scheduler_args = ('local', None, None, None)
+        self.jobs_scheme = 'local'
+        self.files_scheme = 'local'
+        self.location = None
+        self.credentials = None
+        self.jobs_properties = None
+        self.files_properties = None
         self.working_dir = os.getcwd()
         self.exec_command = None
         self.time_out = 5000  # 5 seconds
         self.prefix = sys.prefix
+
+    @property
+    def scheduler_args(self):
+        return (self.jobs_scheme, self.location,
+                self.credentials, self.jobs_properties)
+
+    @property
+    def filesystem_args(self):
+        return (self.files_scheme, self.location,
+                self.credentials, self.files_properties)
 
 
 def xenon_interactive_worker(config=None):
@@ -105,7 +121,8 @@ def xenon_interactive_worker(config=None):
             '/bin/bash',
             config.working_dir + '/worker.sh',
             config.prefix,
-            'online']
+            'online',
+            '-name', K.name]
 
     J = K.submit(config.exec_command, interactive=True)
 
@@ -127,7 +144,7 @@ def xenon_interactive_worker(config=None):
 
         while True:
             key, ujob = yield
-            out.println(put_job(key, ujob))
+            out.println(put_job(K.name, key, ujob))
             out.flush()
 
     def get_result():
