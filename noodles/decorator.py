@@ -43,10 +43,12 @@ def unwrap(f):
 
 @schedule
 def _getattr(obj, attr):
-    if not (attr in dir(obj)):
-        raise AttributeError("{0} not in {1}.".format(attr, obj))
-
     return getattr(obj, attr)
+
+
+@schedule
+def _getitem(obj, name):
+    return obj[name]
 
 
 @schedule
@@ -73,6 +75,9 @@ class PromisedObject:
 
     def __call__(self, *args, **kwargs):
         return _do_call(self._workflow, *args, **kwargs)
+
+    def __getitem__(self, name):
+        return _getitem(self._workflow, name)
 
     def __getattr__(self, attr):
         # apparently these lines are completely superfluous, but I don't know

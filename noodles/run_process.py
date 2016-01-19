@@ -1,5 +1,5 @@
 from .coroutines import coroutine_sink, Connection
-from .data_json import json_sauce, desaucer, node_to_jobject
+from .data_json import saucer, desaucer, node_to_jobject
 from .logger import log
 
 import threading
@@ -13,16 +13,18 @@ def read_result(s):
     return (uuid.UUID(obj['key']), obj['result'])
 
 
-def put_job(key, job):
+def put_job(host, key, job):
     obj = {'key': key.hex,
            'node': node_to_jobject(job.node())}
-    return json.dumps(obj, default=json_sauce)
+    return json.dumps(obj, default=saucer(host))
 
 # processes = {}
 
 
 def process_worker(verbose=False, jobdirs=False):
-    cmd = ["python3.5", "-m", "noodles.worker", "online"]
+    name = "process-" + str(uuid.uuid4())
+
+    cmd = ["python3.5", "-m", "noodles.worker", "online", "-name", name]
     if verbose:
         cmd.append("-verbose")
     if jobdirs:
@@ -34,7 +36,7 @@ def process_worker(verbose=False, jobdirs=False):
 
     def read_stderr():
         for line in p.stderr:
-            log.worker_stderr("Pr {0:X}".format(id(p)), line)
+            log.worker_stderr(name, line)
 
     t = threading.Thread(target=read_stderr)
     t.daemon = True
@@ -46,7 +48,7 @@ def process_worker(verbose=False, jobdirs=False):
     def send_job():
         while True:
             key, job = yield
-            print(put_job(key, job), file=p.stdin, flush=True)
+            print(put_job(name, key, job), file=p.stdin, flush=True)
 
     def get_result():
         for line in p.stdout:

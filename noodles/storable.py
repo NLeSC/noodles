@@ -28,8 +28,13 @@ def from_dict(cls, **kwargs):
 
 
 class Storable:
-    def __init__(self, use_ref=False):
+    def __init__(self, use_ref=False, files=None):
         self._use_ref = use_ref
+        self._files = files
+
+    @property
+    def files(self):
+        return self._files
 
     def as_dict(self):
         return self.__dict__
