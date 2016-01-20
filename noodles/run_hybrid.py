@@ -7,9 +7,16 @@ import threading
 
 
 def hybrid_coroutine_worker(selector, workers):
-    """
-    Runs a set of workers, all of them in the main thread.
+    """Runs a set of workers, all of them in the main thread.
     This runner is here for testing purposes.
+
+    :param selector:
+        A function returning a worker key, given a job.
+    :type selector: function
+
+    :param workers:
+        A dict of workers.
+    :type workers: dict
     """
     jobs = IOQueue()
 
@@ -20,10 +27,10 @@ def hybrid_coroutine_worker(selector, workers):
         source = jobs.source()
 
         for key, job in source:
-            if job.hints is None:
+            worker = selector(job)
+            if worker is None:
                 yield (key, run_job(job))
             else:
-                worker = selector(job)
                 # send the worker a job and wait for it to return
                 worker_sink[worker].send((key, job))
                 result = next(worker_source[worker])
@@ -40,6 +47,7 @@ def hybrid_threaded_worker(selector, workers):
         indexing a worker in the `workers` dictionary.
     :param workers:
         A dictionary of workers.
+
     :returns:
         A connection for the scheduler.
     :rtype: Connection
@@ -64,8 +72,8 @@ def hybrid_threaded_worker(selector, workers):
 
         while True:
             key, job = yield
-            if job.hints:
-                worker = selector(job)
+            worker = selector(job)
+            if worker:
                 worker_sink[worker].send((key, job))
             else:
                 result = run_job(job)

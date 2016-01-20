@@ -28,19 +28,57 @@ def from_dict(cls, **kwargs):
 
 
 class Storable:
-    def __init__(self, use_ref=False, files=[]):
+    def __init__(self, use_ref=False, files=None):
+        """Storable constructor
+
+        :param use_ref:
+            if this is True, the Storable is loaded as a
+            :py:class:`StorableRef`, only to be restored when the data is
+            really needed. This should be set to True for any object that
+            carries a lot of data; the default is False.
+        :type use_ref: bool
+
+        :param files:
+            the list of filenames that this object uses for
+            storage. The property Storable.files is used by Noodles to copy
+            relevant data if this object is needed on another host.
+        :type files: [str]
+        """
         self._use_ref = use_ref
-        self._files = files
+        self._files = files if files else []
 
     @property
     def files(self):
+        """List of files that this object saves to."""
         return self._files
 
     def as_dict(self):
+        """Converts the object to a `dict` containing the members
+        of the object by name.
+
+        The default implementation is just
+        ::
+
+            def as_dict(self):
+                return self.__dict__
+
+        In most cases, this method is overloaded to provide a more
+        advanced method of serializing data, possibly saving data to
+        an external file. In this case the corresponding filename needs
+        to be appended to `self.files`.
+        """
         return self.__dict__
 
     @classmethod
     def from_dict(cls, **kwargs):
+        """Gets a dictionary by `**kwargs`, and restores the original
+        object. For any object `obj` of type `cls` that is derived from
+        `Storable`, the following should  be true:
+        ::
+
+            cls.from_dict(**obj.as_dict()) == obj
+
+        """
         obj = cls.__new__(cls)
         obj.__dict__ = kwargs
         return obj

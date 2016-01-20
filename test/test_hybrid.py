@@ -29,7 +29,7 @@ def selector(job):
     if job.hints:
         return job.hints[0]
     else:
-        return
+        return None
 
 
 @schedule_hint(1)

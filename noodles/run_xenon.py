@@ -1,14 +1,12 @@
 from .coroutines import coroutine_sink, Connection
 from .data_json import saucer, desaucer, node_to_jobject
 from .logger import log
-# from .run_common import Schedule
+
 import json
 import uuid
 import xenon
 import os
 import sys
-import time
-from queue import Queue
 import threading
 
 xenon.init(log_level='ERROR')  # noqa

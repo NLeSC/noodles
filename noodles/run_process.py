@@ -1,12 +1,15 @@
 from .coroutines import coroutine_sink, Connection
 from .data_json import saucer, desaucer, node_to_jobject
 from .logger import log
+from .run_hybrid import hybrid_threaded_worker
+from .run_common import Scheduler
+from .datamodel import get_workflow
 
 import threading
 from subprocess import Popen, PIPE
 import json
 import uuid
-
+import random
 
 def read_result(s):
     obj = json.loads(s, object_hook=desaucer())
@@ -74,4 +77,46 @@ def process_worker(verbose=False, jobdirs=False, init=None, finish=None):
     if finish is not None:
         send_job().send(("finish", finish()._workflow.root_node))
 
-    return Connection(get_result, send_job)
+    return Connection(get_result, send_job, name=name)
+
+
+def run_process(wf, n_processes,
+                verbose=False, jobdirs=False, init=None, finish=None):
+    """Run the workflow using a number of new python processes. Use this
+    runner to test the workflow in a situation where data serialisation
+    is needed.
+
+    :param wf:
+        The workflow.
+    :type wf: `Workflow` or `PromisedObject`
+
+    :param n_processes:
+        Number of processes to start.
+
+    :param verbose:
+        Request verbose output on worker side
+
+    :param jobdirs:
+        Create a new directory for each job to prevent filename collision. (NYI)
+
+    :param init:
+        An init function that needs to be run in each process before other jobs
+        can be run. This should be a scheduled function returning True on success.
+
+    :param finish:
+        A function that wraps up when the worker closes down.
+
+    :returns: the result of evaluating the workflow
+    :rtype: any
+    """
+    workers = {}
+    for i in range(n_processes):
+        new_worker = process_worker(verbose, jobdirs, init, finish)
+        workers[new_worker.name] = new_worker
+
+    worker_names = list(workers.keys())
+    def random_selector(job):
+        return random.choice(worker_names)
+
+    master_worker = hybrid_threaded_worker(random_selector, workers)
+    return Scheduler().run(master_worker, get_workflow(wf))

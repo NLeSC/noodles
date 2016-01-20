@@ -1,7 +1,4 @@
-from noodles import schedule, Scheduler
-from noodles.datamodel import get_workflow
-from noodles.run_process import process_worker
-
+from noodles import schedule, run_process
 
 @schedule
 def init():
@@ -22,6 +19,6 @@ def checker():
 
 def test_globals():
     a = checker()
-    result = Scheduler().run(process_worker(init=init, finish=finish), get_workflow(a))
+    result = run_process(a, n_processes=1, init=init, finish=finish)
     assert result
 

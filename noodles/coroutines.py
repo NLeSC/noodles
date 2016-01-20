@@ -67,9 +67,10 @@ class Connection:
     Combine a source and a sink. These should represent the IO of
     some object, probably a worker.
     """
-    def __init__(self, source, sink):
+    def __init__(self, source, sink, name=None):
         self.source = source
         self.sink = sink
+        self.name = name if name else "connection-{0:0x}".format(id(self))
 
     def setup(self):
         src = self.source()
