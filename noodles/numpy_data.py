@@ -22,12 +22,7 @@ class NumpyData(Storable):
 
     @classmethod
     def from_dict(cls, filename):
-        obj = cls.__new__(cls)
-        super(NumpyData, obj).__init__(use_ref=True)
-
-        obj.filename = filename
-        obj.data = np.load(filename)
-        return obj
+        return NumpyData(np.load(filename), filename)
 
     def as_dict(self):
         np.save(self.filename, self.data)

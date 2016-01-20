@@ -10,18 +10,24 @@ import uuid
 
 def read_result(s):
     obj = json.loads(s, object_hook=desaucer())
-    return (uuid.UUID(obj['key']), obj['result'])
+    key = obj['key']
+    try:
+        key = uuid.UUID(key)
+    except ValueError:
+        pass
+
+    return key, obj['result']
 
 
 def put_job(host, key, job):
-    obj = {'key': key.hex,
+    obj = {'key': key if isinstance(key, str) else key.hex,
            'node': node_to_jobject(job.node())}
     return json.dumps(obj, default=saucer(host))
 
 # processes = {}
 
 
-def process_worker(verbose=False, jobdirs=False):
+def process_worker(verbose=False, jobdirs=False, init=None, finish=None):
     name = "process-" + str(uuid.uuid4())
 
     cmd = ["python3.5", "-m", "noodles.worker", "online", "-name", name]
@@ -29,6 +35,10 @@ def process_worker(verbose=False, jobdirs=False):
         cmd.append("-verbose")
     if jobdirs:
         cmd.append("-jobdirs")
+    if init:
+        cmd.append("-init")
+    if finish:
+        cmd.append("-finish")
 
     p = Popen(
         cmd,
@@ -54,5 +64,14 @@ def process_worker(verbose=False, jobdirs=False):
         for line in p.stdout:
             key, result = read_result(line)
             yield (key, result)
+
+    if init is not None:
+        send_job().send(("init", init()._workflow.root_node))
+        key, result = next(get_result())
+        if key != "init" or not result:
+            raise RuntimeError("The initializer function did not succeed on worker.")
+
+    if finish is not None:
+        send_job().send(("finish", finish()._workflow.root_node))
 
     return Connection(get_result, send_job)

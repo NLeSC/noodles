@@ -18,11 +18,17 @@ from jnius import autoclass
 
 def read_result(s):
     obj = json.loads(s, object_hook=desaucer())
-    return (uuid.UUID(obj['key']), obj['result'])
+    key = obj['key']
+    try:
+        key = uuid.UUID(key)
+    except ValueError:
+        pass
+
+    return key, obj['result']
 
 
 def put_job(host, key, job):
-    obj = {'key': key.hex,
+    obj = {'key': key if isinstance(key, str) else key.hex,
            'node': node_to_jobject(job.node())}
     return json.dumps(obj, default=saucer(host))
 
@@ -33,7 +39,7 @@ jInputStreamReader = autoclass('java.io.InputStreamReader')
 jScanner = autoclass('java.util.Scanner')
 
 
-def jLines(inp):
+def java_lines(inp):
     reader = jScanner(inp)
 
     while True:
@@ -64,8 +70,7 @@ class XenonJob:
 
 
 class XenonKeeper:
-    def __init__(self,
-                 scheduler_args=('local', None, None, None)):
+    def __init__(self, scheduler_args=('local', None, None, None)):
         self.name = "scheduler-" + str(uuid.uuid4())
         self.x = xenon.Xenon()
         self.jobs = self.x.jobs()
@@ -105,10 +110,16 @@ class XenonConfig:
                 self.credentials, self.files_properties)
 
 
-def xenon_interactive_worker(config=None):
+def xenon_interactive_worker(config=None, init=None, finish=None):
     """Uses Xenon to run a single remote interactive worker.
 
     Jobs are read from stdin, and results written to stdout.
+
+    :param config: The configuration for Xenon. This includes the kind
+    of Xenon adaptor to use along with authentication credentials and the
+    hostname of the machine.
+
+    :type config: :py:class:`XenonConfig`
     """
 
     if config is None:
@@ -116,22 +127,25 @@ def xenon_interactive_worker(config=None):
 
     K = XenonKeeper(config.scheduler_args)
 
-    if config.exec_command is None:
-        config.exec_command = [
-            '/bin/bash',
-            config.working_dir + '/worker.sh',
-            config.prefix,
-            'online',
-            '-name', K.name]
+    cmd = config.exec_command if config.exec_command \
+        else ['/bin/bash',
+              config.working_dir + '/worker.sh',
+              config.prefix,
+              'online', '-name', K.name]
 
-    J = K.submit(config.exec_command, interactive=True)
+    if init:
+        cmd.append("-init")
+    if finish:
+        cmd.append("-finish")
+
+    J = K.submit(cmd, interactive=True)
 
     status = J.wait_until_running(config.time_out)
     if not status.isRunning():
         raise RuntimeError("Could not get the job running")
 
     def read_stderr():
-        for line in jLines(J.streams.getStderr()):
+        for line in java_lines(J.streams.getStderr()):
             log.worker_stderr("Xe {0:X}".format(id(K)), line)
 
     K.stderr_thread = threading.Thread(target=read_stderr)
@@ -148,50 +162,59 @@ def xenon_interactive_worker(config=None):
             out.flush()
 
     def get_result():
-        for line in jLines(J.streams.getStdout()):
+        for line in java_lines(J.streams.getStdout()):
             key, result = read_result(line)
             yield (key, result)
 
-    return Connection(get_result, send_job)
+    if init is not None:
+        send_job().send(("init", init()._workflow.root_node))
+        key, result = next(get_result())
+        if key != "init" or not result:
+            raise RuntimeError("The initializer function did not succeed on worker.")
 
-
-def xenon_batch_worker(poll_delay=1):
-    xenon.init()
-
-    x = xenon.Xenon()
-    jobs_api = x.jobs()
-
-    new_jobs = Queue()
-
-    @coroutine_sink
-    def send_job():
-        sched = jobs_api.newScheduler('ssh', 'localhost', None, None)
-
-        while True:
-            key, job = yield
-            pwd = 'noodles-{0}'.format(key.hex)
-            desc = xenon.jobs.JobDescription()
-            desc.setExecutable('python3.5')
-            desc.setStdout(os.getcwd() + '/' + pwd + '/out.json')
-
-            # submit a job
-            job = jobs_api.submitJob(sched, desc)
-            new_jobs.put((key, job))
-
-    def get_result():
-        jobs = {}
-
-        while True:
-            time.sleep(poll_delay)
-            for key, job in jobs.items():
-                ...
-                result = 42
-                yield (key, result)
-
-            # put recently submitted jobs into the jobs-dict.
-            while not new_jobs.empty():
-                key, job = new_jobs.get()
-                jobs[key] = job
-                new_jobs.task_done()
+    if finish is not None:
+        send_job().send(("finish", finish()._workflow.root_node))
 
     return Connection(get_result, send_job)
+
+
+# def xenon_batch_worker(poll_delay=1):
+#     xenon.init()
+#
+#     x = xenon.Xenon()
+#     jobs_api = x.jobs()
+#
+#     new_jobs = Queue()
+#
+#     @coroutine_sink
+#     def send_job():
+#         sched = jobs_api.newScheduler('ssh', 'localhost', None, None)
+#
+#         while True:
+#             key, job = yield
+#             pwd = 'noodles-{0}'.format(key.hex)
+#             desc = xenon.jobs.JobDescription()
+#             desc.setExecutable('python3.5')
+#             desc.setStdout(os.getcwd() + '/' + pwd + '/out.json')
+#
+#             # submit a job
+#             job = jobs_api.submitJob(sched, desc)
+#             new_jobs.put((key, job))
+#
+#     def get_result():
+#         jobs = {}
+#
+#         while True:
+#             time.sleep(poll_delay)
+#             for key, job in jobs.items():
+#                 ...
+#                 result = 42
+#                 yield (key, result)
+#
+#             # put recently submitted jobs into the jobs-dict.
+#             while not new_jobs.empty():
+#                 key, job = new_jobs.get()
+#                 jobs[key] = job
+#                 new_jobs.task_done()
+#
+#     return Connection(get_result, send_job)

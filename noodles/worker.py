@@ -38,14 +38,14 @@ from contextlib import redirect_stdout
 def get_job(s):
     #    print(s, file=sys.stderr)
     obj = json.loads(s, object_hook=desaucer(deref=True))
-    key = uuid.UUID(obj['key'])
+    key = obj['key']
     node = jobject_to_node(obj['node'])
     return (key, node)
 
 
 def put_result(host, key, result):
     return json.dumps(
-        {'key': key.hex, 'result': result},
+        {'key': key, 'result': result},
         default=saucer(host))
 
 
@@ -55,8 +55,27 @@ def run_batch_mode(args):
 
 def run_online_mode(args):
     if args.n == 1:
+        finish = None
+
+        # run the init function if it is given
+        if args.init:
+            line = sys.stdin.readline()
+            key, job = get_job(line)
+            if key != 'init':
+                raise RuntimeError("Expected init function.")
+            result = run_job(job)
+            print(put_result(args.name, key, result), flush=True)
+
+        if args.finish:
+            line = sys.stdin.readline()
+            key, job = get_job(line)
+            if key != 'finish':
+                raise RuntimeError("Expected finish function.")
+            finish = job
+
         for line in sys.stdin:
             key, job = get_job(line)
+
             if args.jobdirs:
                 # make a directory
                 os.mkdir("noodles-{0}".format(key.hex))
@@ -81,6 +100,8 @@ def run_online_mode(args):
 
             print(put_result(args.name, key, result), flush=True)
 
+        if finish:
+            run_job(finish)
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
@@ -124,6 +145,12 @@ if __name__ == "__main__":
         "-name", type=str,
         help="worker identity",
         default="worker-" + str(uuid.uuid4()))
+    online_parser.add_argument(
+        "-init", help="an init function will be send before other jobs",
+        default=False, action='store_true')
+    online_parser.add_argument(
+        "-finish", help="a finish function will be send before other jobs",
+        default=False, action='store_true')
 
     online_parser.set_defaults(func=run_online_mode)
 

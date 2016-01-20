@@ -42,6 +42,11 @@ class Workflow(namedtuple('Workflow', ['root', 'nodes', 'links'])):
         A `dict` giving a `set` of links from each node.
     """
 
+    @property
+    def root_node(self):
+        return self.nodes[self.root]
+
+
 Empty = Parameter.empty
 
 
