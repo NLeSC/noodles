@@ -7,6 +7,10 @@ from .decorator import PromisedObject, schedule
 from .data_node import look_up
 from copy import deepcopy
 
+import uuid
+import pickle
+import base64
+
 
 def storable(obj):
     return isinstance(obj, Storable)
@@ -91,6 +95,33 @@ class Storable:
             return schedule(from_dict)(cls, **tmp)
         else:
             return cls.from_dict(**tmp)
+
+
+class PickleString(Storable):
+    def __init__(self):
+        super(PickleString, self).__init__()
+
+    def as_dict(self):
+        return {"pickle_string": base64.b64encode(pickle.dumps(self))}
+
+    @classmethod
+    def from_dict(cls, pickle_string):
+        return pickle.loads(base64.b64decode(pickle_string))
+
+
+class PickleFile(Storable):
+    def __init__(self, filename=None):
+        self._filename = filename if filename \
+            else str(uuid.uuid4()) + ".pickle"
+        super(PickleFile, self).__init__(use_ref=True, files=[self._filename])
+
+    def as_dict(self):
+        pickle.dump(self, self._filename)
+        return {"pickle_file": self._filename}
+
+    @classmethod
+    def from_dict(cls, pickle_file):
+        return pickle.load(pickle_file)
 
 
 class StorableRef(dict):

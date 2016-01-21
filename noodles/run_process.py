@@ -30,7 +30,9 @@ def put_job(host, key, job):
 # processes = {}
 
 
-def process_worker(verbose=False, jobdirs=False, init=None, finish=None):
+def process_worker(
+        verbose=False, jobdirs=False, init=None, finish=None,
+        status=True):
     name = "process-" + str(uuid.uuid4())
 
     cmd = ["python3.5", "-m", "noodles.worker", "online", "-name", name]
@@ -38,6 +40,8 @@ def process_worker(verbose=False, jobdirs=False, init=None, finish=None):
         cmd.append("-verbose")
     if jobdirs:
         cmd.append("-jobdirs")
+    if not status:
+        cmd.append("-nostatus")
     if init:
         cmd.append("-init")
     if finish:
@@ -115,6 +119,7 @@ def run_process(wf, n_processes,
         workers[new_worker.name] = new_worker
 
     worker_names = list(workers.keys())
+
     def random_selector(job):
         return random.choice(worker_names)
 

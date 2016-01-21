@@ -65,22 +65,47 @@ class IOQueue:
 class Connection:
     """
     Combine a source and a sink. These should represent the IO of
-    some object, probably a worker.
+    some object, probably a worker. In this case the `source` is a
+    coroutine generating results, while the sink needs to be fed jobs.
     """
-    def __init__(self, source, sink, name=None):
+    def __init__(self, source, sink, name=None, status=None):
+        """Connection constructor
+
+        :param source:
+            The source signal coroutine
+        :type source: generator
+
+        :param sink:
+            The signal sink coroutine
+        :type sink: sink coroutine
+
+        :param name:
+            The name of the worker. If the worker is remote, this name is also
+            known on the remote side.
+        :type name: str
+
+        :param status:
+            Status object (NYI)
+        """
         self.source = source
         self.sink = sink
         self.name = name if name else "connection-{0:0x}".format(id(self))
+        self.status = status
 
     def setup(self):
+        """Activate the source and sink functions and return them in
+        that order.
+
+        :returns:
+            source, sink
+        :rtype: tuple"""
         src = self.source()
         snk = self.sink()
         return src, snk
 
 
 class QueueConnection(Connection):
-    """
-    Takes an input and output queue, and conceptually links them,
+    """Takes an input and output queue, and conceptually links them,
     returning a pair containing a source from the input queue
     and a sink to the output queue.
     """
@@ -89,8 +114,7 @@ class QueueConnection(Connection):
 
 
 def patch(source, sink):
-    """
-    Create a direct link between a source and a sink.
+    """Create a direct link between a source and a sink.
     """
     for v in source:
         sink.send(v)

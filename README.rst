@@ -1,5 +1,5 @@
 Noodles - workflow engine
-=============================
+=========================
 
 Requirements for running the first release (0.1.0) are:
 
