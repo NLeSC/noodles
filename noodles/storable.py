@@ -102,11 +102,12 @@ class PickleString(Storable):
         super(PickleString, self).__init__()
 
     def as_dict(self):
-        return {"pickle_string": base64.b64encode(pickle.dumps(self))}
+        str_data = base64.b64encode(pickle.dumps(self)).decode('ascii')
+        return {"pickle_string": str_data}
 
     @classmethod
     def from_dict(cls, pickle_string):
-        return pickle.loads(base64.b64decode(pickle_string))
+        return pickle.loads(base64.b64decode(pickle_string.encode('ascii')))
 
 
 class PickleFile(Storable):
@@ -116,12 +117,15 @@ class PickleFile(Storable):
         super(PickleFile, self).__init__(use_ref=True, files=[self._filename])
 
     def as_dict(self):
-        pickle.dump(self, self._filename)
+        with open(self._filename, 'wb') as f:
+            pickle.dump(self, f)
+
         return {"pickle_file": self._filename}
 
     @classmethod
     def from_dict(cls, pickle_file):
-        return pickle.load(pickle_file)
+        with open(pickle_file, 'rb') as f:
+            return pickle.load(f)
 
 
 class StorableRef(dict):
