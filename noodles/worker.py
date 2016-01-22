@@ -63,7 +63,9 @@ def run_online_mode(args):
             key, job = get_job(line)
             if key != 'init':
                 raise RuntimeError("Expected init function.")
-            result = run_job(job)
+            
+            with redirect_stdout(sys.stderr):
+                result = run_job(job)
             print(put_result(args.name, key, result), flush=True)
 
         if args.finish:
