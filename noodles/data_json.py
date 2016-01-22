@@ -74,7 +74,18 @@ def desaucer(deref=False):
                 return StorableRef(x)
 
             cls = look_up(obj['module'], obj['name'])
-            return cls.from_dict(**x['data'])
+            data = x['data']
+            return cls.from_dict(**data)
+
+        if obj['type'] == 'autostorable':
+            cls = look_up(obj['module'], obj['name'])
+            data = x['data']
+            return cls.from_dict(**data)
+
+        if obj['type'] == 'dict':
+            cls = look_up(obj['module'], obj['name'])
+            data = x['data']
+            return cls(data)
 
         if obj['type'] == 'workflow':
             return jobject_to_workflow(obj['data'])
@@ -92,10 +103,31 @@ def address_to_jobject(a):
             'key':   a.key}
 
 
+def value_to_jobject(v):
+    if hasattr(v, '_noodles') and v._noodles.get('do_not_touch', False):
+        return v
+
+    if isinstance(v, dict):
+        module, name = module_and_name(type(v))
+        return {'_noodles': {'type': 'dict',
+                             'module': module,
+                             'name': name},
+                'data': v}
+
+    if not storable(v) and hasattr(v, 'as_dict') and hasattr(type(v), 'from_dict'):
+        module, name = module_and_name(type(v))
+        return {'_noodles': {'type': 'autostorable',
+                             'module': module,
+                             'name': name},
+                'data': v.as_dict()}
+
+    return v
+
+
 def node_to_jobject(node):
     return {'function':  node.function,
             'arguments': [{'address': address_to_jobject(a),
-                           'value':   v}
+                           'value':   value_to_jobject(v)}
                           for a, v in node.arguments],
             'hints':     node.hints}
 
