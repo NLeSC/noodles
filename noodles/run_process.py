@@ -10,8 +10,11 @@ from subprocess import Popen, PIPE
 import json
 import uuid
 import random
+import sys
+
 
 def read_result(s):
+    print(s, file=sys.stderr, flush=True)
     obj = json.loads(s, object_hook=desaucer())
     key = obj['key']
     try:
