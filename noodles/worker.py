@@ -30,7 +30,7 @@ import os
 import uuid
 
 import json
-from .data_json import (desaucer, saucer, jobject_to_node)
+from .data_json import (desaucer, saucer, jobject_to_node, value_to_jobject)
 from .run_common import run_job
 from contextlib import redirect_stdout
 
@@ -45,7 +45,7 @@ def get_job(s):
 
 def put_result(host, key, result):
     return json.dumps(
-        {'key': key, 'result': result},
+        {'key': key, 'result': value_to_jobject(result)},
         default=saucer(host))
 
 
@@ -63,7 +63,9 @@ def run_online_mode(args):
             key, job = get_job(line)
             if key != 'init':
                 raise RuntimeError("Expected init function.")
-            result = run_job(job)
+
+            with redirect_stdout(sys.stderr):
+                result = run_job(job)
             print(put_result(args.name, key, result), flush=True)
 
         if args.finish:

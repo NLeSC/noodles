@@ -138,6 +138,7 @@ class StorableRef(dict):
     """
 
     def __init__(self, data):
+        self._noodles = {'do_not_touch': True}
         super(StorableRef, self).__init__(data)
 
     def make(self):

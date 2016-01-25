@@ -5,6 +5,7 @@ import numpy as np
 from numpy import (random, fft)
 
 
+
 class A(PickleString):
     def __init__(self, data):
         super(A, self).__init__()
@@ -16,14 +17,17 @@ def do_fft(a):
     return A(fft.fft(a.data))
 
 
+
 @schedule
 def make_kernel(n, sigma):
     return A(np.exp(-fft.fftfreq(n)**2 * sigma**2))
 
 
+
 @schedule
 def do_ifft(a):
     return A(fft.ifft(a.data).real)
+
 
 
 @schedule
@@ -34,6 +38,7 @@ def apply_filter(a, b):
 @schedule
 def make_noise(n):
     return A(random.normal(0, 1, n))
+
 
 
 def test_pickle():

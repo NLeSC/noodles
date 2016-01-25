@@ -10,6 +10,8 @@ from subprocess import Popen, PIPE
 import json
 import uuid
 import random
+import sys
+
 
 def read_result(s):
     obj = json.loads(s, object_hook=desaucer())
