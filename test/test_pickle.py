@@ -2,31 +2,39 @@ from noodles import schedule, run_process
 from noodles.storable import PickleString
 
 import numpy as np
+from numpy import (random, fft)
+
 
 class A(PickleString):
     def __init__(self, data):
         super(A, self).__init__()
         self.data = data
 
+
 @schedule
 def do_fft(a):
-    return A(np.fft.fft(a.data))
+    return A(fft.fft(a.data))
+
 
 @schedule
 def make_kernel(n, sigma):
-    return A(np.exp(-np.fft.fftfreq(n)**2 * sigma**2))
+    return A(np.exp(-fft.fftfreq(n)**2 * sigma**2))
+
 
 @schedule
 def do_ifft(a):
-    return A(np.fft.ifft(a.data).real)
+    return A(fft.ifft(a.data).real)
+
 
 @schedule
 def apply_filter(a, b):
     return A(a.data * b.data)
 
+
 @schedule
 def make_noise(n):
-    return A(np.random.normal(0, 1, n))
+    return A(random.normal(0, 1, n))
+
 
 def test_pickle():
     x = make_noise(256)
