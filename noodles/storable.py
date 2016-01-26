@@ -128,7 +128,7 @@ class PickleFile(Storable):
             return pickle.load(f)
 
 
-class StorableRef(dict):
+class StorableRef:
     """A reference to a storable object, containing
     only the JSON content needed to restore the original.
 
@@ -138,10 +138,9 @@ class StorableRef(dict):
     """
 
     def __init__(self, data):
-        self._noodles = {'do_not_touch': True}
-        super(StorableRef, self).__init__(data)
+        self.data = data
 
     def make(self):
-        meta = self['_noodles']
+        meta = self.data['_noodles']
         cls = look_up(meta['module'], meta['name'])
-        return cls.from_dict(**self['data'])
+        return cls.from_dict(**self.data['data'])

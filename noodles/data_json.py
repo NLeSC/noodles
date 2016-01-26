@@ -40,6 +40,9 @@ def saucer(host=None):
                                  'name': name},
                     'data': x.as_dict()}
 
+        if isinstance(x, StorableRef):
+            return x.data
+
         if hasattr(x, '__member_of__') and x.__member_of__ is not None:
             module, class_name = module_and_name(x.__member_of__)
             method_name = x.__name__
@@ -105,8 +108,8 @@ def address_to_jobject(a):
 
 
 def value_to_jobject(v):
-    if hasattr(v, '_noodles') and v._noodles.get('do_not_touch', False):
-        return v
+    #if hasattr(v, '_noodles') and v._noodles.get('do_not_touch', False):
+    #    return v
 
     if isinstance(v, dict) and type(v) != dict:
         module, name = module_and_name(type(v))
