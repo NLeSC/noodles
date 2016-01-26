@@ -26,6 +26,7 @@ def deep_map(f, root):
 
     # stage 1: map all objects
     q = [root]
+
     while len(q) != 0:
         obj = q.pop()
 

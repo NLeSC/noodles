@@ -32,6 +32,7 @@ import uuid
 import json
 from .data_json import (desaucer, saucer, jobject_to_node, value_to_jobject)
 from .run_common import run_job
+from .deepmap import deep_map
 from contextlib import redirect_stdout
 
 
@@ -45,7 +46,7 @@ def get_job(s):
 
 def put_result(host, key, result):
     return json.dumps(
-        {'key': key, 'result': value_to_jobject(result)},
+        {'key': key, 'result': deep_map(value_to_jobject, result)},
         default=saucer(host))
 
 

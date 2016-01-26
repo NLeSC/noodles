@@ -22,6 +22,7 @@ from .deepmap import deep_map
 
 import json
 from itertools import count
+from copy import copy
 
 
 def saucer(host=None):

@@ -1,4 +1,4 @@
-from noodles import (schedule, run_process, Storable)
+from noodles import (schedule, run_process, Storable, gather)
 import sys
 
 
@@ -11,7 +11,6 @@ class A(object):
         return cls(a)
 
     def as_dict(self):
-        print("Running as_dict!", file=sys.stderr)
         return {'a': self.a}
 
 
@@ -41,6 +40,10 @@ def test_autostorable():
     a = g(7)
     b = f(a)
     c = h(b)
+    d = gather(c, a)
 
-    result = run_process(c, n_processes=1, verbose=True)
-    assert result == 42
+    result = run_process(d, n_processes=1)
+    assert result[0] == 42
+    assert result[1].a == 7
+
+
