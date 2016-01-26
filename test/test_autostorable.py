@@ -1,4 +1,4 @@
-from noodles import schedule, run_process
+from noodles import (schedule, run_process, Storable)
 import sys
 
 
@@ -15,17 +15,32 @@ class A(object):
         return {'a': self.a}
 
 
+class B(Storable):
+    def __init__(self):
+        super(B, self).__init__()
+
+
 @schedule
 def g(a):
     return A(a)
 
+
 @schedule
 def f(a):
-    return a.a * 5
+    b = B()
+    b.b = A(a.a * 5)
+    return b
+
+
+@schedule
+def h(b):
+    return b.b.a + 7
 
 
 def test_autostorable():
     a = g(7)
     b = f(a)
-    result = run_process(b, n_processes=1, verbose=True)
-    assert result == 35
+    c = h(b)
+
+    result = run_process(c, n_processes=1, verbose=True)
+    assert result == 42

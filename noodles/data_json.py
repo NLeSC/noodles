@@ -38,7 +38,7 @@ def saucer(host=None):
                                  'files': x._files,
                                  'module': module,
                                  'name': name},
-                    'data': value_to_jobject(x.as_dict())}
+                    'data': deep_map(value_to_jobject, x.as_dict())}
 
         if isinstance(x, StorableRef):
             return x.data
@@ -118,7 +118,8 @@ def value_to_jobject(v):
                              'name': name},
                 'data': dict(v)}
 
-    if not storable(v) and hasattr(v, 'as_dict') and hasattr(type(v), 'from_dict'):
+    if not storable(v) and hasattr(v, 'as_dict') \
+            and hasattr(type(v), 'from_dict'):
         module, name = module_and_name(type(v))
         return {'_noodles': {'type': 'autostorable',
                              'module': module,
