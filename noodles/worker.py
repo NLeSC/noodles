@@ -98,6 +98,10 @@ def run_online_mode(args):
             with redirect_stdout(sys.stderr):
                 result = run_job(job)
 
+            if args.verbose:
+                print("result: ", result, file=sys.stderr, flush=True)
+                print("json: ", put_result(args.name, key, result), file=sys.stderr, flush=True)
+
             if args.jobdirs:
                 # parent directory
                 os.chdir("..")
