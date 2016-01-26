@@ -27,7 +27,7 @@ def read_result(s):
 def put_job(host, key, job):
     obj = {'key': key if isinstance(key, str) else key.hex,
            'node': node_to_jobject(job.node())}
-    print(obj, file=sys.stderr, flush=True)
+    # print(obj, file=sys.stderr, flush=True)
     return json.dumps(obj, default=saucer(host))
 
 # processes = {}

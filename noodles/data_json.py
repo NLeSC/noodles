@@ -41,7 +41,7 @@ def saucer(host=None):
                     'data': deep_map(value_to_jobject, x.as_dict())}
 
         if isinstance(x, StorableRef):
-            return x.data
+            return deep_map(value_to_jobject, x.data)
 
         if hasattr(x, '__member_of__') and x.__member_of__ is not None:
             module, class_name = module_and_name(x.__member_of__)
