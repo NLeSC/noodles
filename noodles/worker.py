@@ -76,6 +76,10 @@ def run_online_mode(args):
             finish = job
 
         for line in sys.stdin:
+            if args.verbose:
+                print("============\nraw json: ", line,
+                      file=sys.stderr, flush=True)
+
             key, job = get_job(line)
 
             if args.jobdirs:
@@ -85,8 +89,6 @@ def run_online_mode(args):
                 os.chdir("noodles-{0}".format(key.hex))
 
             if args.verbose:
-                print("============\nraw json: ", line,
-                      file=sys.stderr, flush=True)
                 print("worker: ",
                       job.foo.__name__,
                       job.bound_args.args,
