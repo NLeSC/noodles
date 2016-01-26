@@ -18,6 +18,7 @@ from .data_types import (Workflow, ArgumentAddress, ArgumentKind, Node,
 from .data_node import FunctionNode, importable, module_and_name, look_up
 from .data_workflow import reset_workflow
 from .storable import storable, StorableRef
+from .deepmap import deep_map
 
 import json
 from itertools import count
@@ -107,12 +108,12 @@ def value_to_jobject(v):
     if hasattr(v, '_noodles') and v._noodles.get('do_not_touch', False):
         return v
 
-    if isinstance(v, dict):
+    if isinstance(v, dict) and type(v) != dict:
         module, name = module_and_name(type(v))
         return {'_noodles': {'type': 'dict',
                              'module': module,
                              'name': name},
-                'data': v}
+                'data': dict(v)}
 
     if not storable(v) and hasattr(v, 'as_dict') and hasattr(type(v), 'from_dict'):
         module, name = module_and_name(type(v))
@@ -127,7 +128,7 @@ def value_to_jobject(v):
 def node_to_jobject(node):
     return {'function':  node.function,
             'arguments': [{'address': address_to_jobject(a),
-                           'value':   value_to_jobject(v)}
+                           'value':   deep_map(value_to_jobject, v)}
                           for a, v in node.arguments],
             'hints':     node.hints}
 

@@ -45,24 +45,16 @@ def deep_map(f, root):
 
 
     # stage 2: redirect links to mapped objects
-    q = [id(root)]
-    while len(q) != 0:
-        i = q.pop()
-
-        if i not in memo:
-            continue
-
-        if isinstance(memo[i], dict):
-            for k, v in memo[i].items():
+    for w in memo.values():
+        if isinstance(w, dict):
+            for k, v in w.items():
                 if id(v) in memo:
-                    memo[i][k] = memo[id(v)]
-                    q.append(id(v))
+                    w[k] = memo[id(v)]
 
-        elif isinstance(memo[i], list):
-            for k, v in enumerate(memo[i]):
+        elif isinstance(w, list):
+            for k, v in enumerate(w):
                 if id(v) in memo:
-                    memo[i][k] = memo[id(v)]
-                    q.append(id(v))
+                    w[k] = memo[id(v)]
 
     return memo.get(id(root), root)
 
