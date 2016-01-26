@@ -38,7 +38,7 @@ def saucer(host=None):
                                  'files': x._files,
                                  'module': module,
                                  'name': name},
-                    'data': x.as_dict()}
+                    'data': value_to_jobject(x.as_dict())}
 
         if isinstance(x, StorableRef):
             return x.data
