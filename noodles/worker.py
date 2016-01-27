@@ -32,22 +32,17 @@ import uuid
 import json
 from .data_json import (desaucer, saucer, jobject_to_node, value_to_jobject)
 from .run_common import run_job
-from .deepmap import deep_map
+from .utility import (deep_map, look_up)
 from contextlib import redirect_stdout
 
 
-def get_job(s):
-    #    print(s, file=sys.stderr)
-    obj = json.loads(s, object_hook=desaucer(deref=True))
-    key = obj['key']
-    node = jobject_to_node(obj['node'])
-    return (key, node)
+def get_job(registry, s):
+    obj = registry.from_json(s, deref=True)
+    return obj['key'], obj['node']
 
 
-def put_result(host, key, result):
-    return json.dumps(
-        {'key': key, 'result': deep_map(value_to_jobject, result)},
-        default=saucer(host))
+def put_result(registry, host, key, result):
+    return registry.to_json({'key': key, 'result': result}, host=host)
 
 
 def run_batch_mode(args):
@@ -56,22 +51,23 @@ def run_batch_mode(args):
 
 def run_online_mode(args):
     if args.n == 1:
+        registry = look_up(args.registry)()
         finish = None
 
         # run the init function if it is given
         if args.init:
             line = sys.stdin.readline()
-            key, job = get_job(line)
+            key, job = get_job(registry, line)
             if key != 'init':
                 raise RuntimeError("Expected init function.")
 
             with redirect_stdout(sys.stderr):
                 result = run_job(job)
-            print(put_result(args.name, key, result), flush=True)
+            print(put_result(registry, args.name, key, result), flush=True)
 
         if args.finish:
             line = sys.stdin.readline()
-            key, job = get_job(line)
+            key, job = get_job(registry, line)
             if key != 'finish':
                 raise RuntimeError("Expected finish function.")
             finish = job
@@ -81,7 +77,7 @@ def run_online_mode(args):
                 print("============\nraw json: ", line,
                       file=sys.stderr, flush=True)
 
-            key, job = get_job(line)
+            key, job = get_job(registry, line)
 
             if args.jobdirs:
                 # make a directory
@@ -101,13 +97,13 @@ def run_online_mode(args):
 
             if args.verbose:
                 print("result: ", result, file=sys.stderr, flush=True)
-                print("json: ", put_result(args.name, key, result), file=sys.stderr, flush=True)
+                print("json: ", put_result(registry, args.name, key, result), file=sys.stderr, flush=True)
 
             if args.jobdirs:
                 # parent directory
                 os.chdir("..")
 
-            print(put_result(args.name, key, result), flush=True)
+            print(put_result(registry, args.name, key, result), flush=True)
 
         if finish:
             run_job(finish)
@@ -139,6 +135,9 @@ if __name__ == "__main__":
 
     online_parser = subparsers.add_parser(
         "online", help="stream jobs from standard input.")
+    online_parser.add_argument(
+        "-registry", type=str,
+        help="the serialisation registry")
     online_parser.add_argument(
         "-n", type=int,
         help="the number of threads.", default=1)

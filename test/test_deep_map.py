@@ -1,5 +1,4 @@
-from noodles.deepmap import deep_map
-import json
+from noodles.utility import deep_map
 
 
 class A:

@@ -4,6 +4,7 @@ from .logger import log
 from .run_hybrid import hybrid_threaded_worker
 from .run_common import Scheduler
 from .datamodel import get_workflow
+from .utility import object_name
 
 import threading
 from subprocess import Popen, PIPE
@@ -13,8 +14,8 @@ import random
 import sys
 
 
-def read_result(s):
-    obj = json.loads(s, object_hook=desaucer())
+def read_result(registry, s):
+    obj = registry.from_json(s)
     key = obj['key']
     try:
         key = uuid.UUID(key)
@@ -24,21 +25,19 @@ def read_result(s):
     return key, obj['result']
 
 
-def put_job(host, key, job):
+def put_job(registry, host, key, job):
     obj = {'key': key if isinstance(key, str) else key.hex,
-           'node': node_to_jobject(job.node())}
-    # print(obj, file=sys.stderr, flush=True)
-    return json.dumps(obj, default=saucer(host))
-
-# processes = {}
+           'node': job}
+    return registry.to_json(obj, host=host)
 
 
-def process_worker(
-        verbose=False, jobdirs=False, init=None, finish=None,
-        status=True):
+def process_worker(registry,
+                   verbose=False, jobdirs=False,
+                   init=None, finish=None, status=True):
     name = "process-" + str(uuid.uuid4())
 
-    cmd = ["python3.5", "-m", "noodles.worker", "online", "-name", name]
+    cmd = ["python3.5", "-m", "noodles.worker", "online",
+           "-name", name, "-registry", object_name(registry)]
     if verbose:
         cmd.append("-verbose")
     if jobdirs:
@@ -66,13 +65,15 @@ def process_worker(
 
     @coroutine_sink
     def send_job():
+        reg = registry()
         while True:
             key, job = yield
-            print(put_job(name, key, job), file=p.stdin, flush=True)
+            print(put_job(reg, name, key, job), file=p.stdin, flush=True)
 
     def get_result():
+        reg = registry()
         for line in p.stdout:
-            key, result = read_result(line)
+            key, result = read_result(reg, line)
             yield (key, result)
 
     if init is not None:
@@ -87,7 +88,7 @@ def process_worker(
     return Connection(get_result, send_job, name=name)
 
 
-def run_process(wf, n_processes,
+def run_process(wf, n_processes, registry,
                 verbose=False, jobdirs=False, init=None, finish=None):
     """Run the workflow using a number of new python processes. Use this
     runner to test the workflow in a situation where data serialisation
@@ -99,6 +100,9 @@ def run_process(wf, n_processes,
 
     :param n_processes:
         Number of processes to start.
+
+    :param registry:
+        The serialisation registry.
 
     :param verbose:
         Request verbose output on worker side
@@ -118,7 +122,7 @@ def run_process(wf, n_processes,
     """
     workers = {}
     for i in range(n_processes):
-        new_worker = process_worker(verbose, jobdirs, init, finish)
+        new_worker = process_worker(registry, verbose, jobdirs, init, finish)
         workers[new_worker.name] = new_worker
 
     worker_names = list(workers.keys())

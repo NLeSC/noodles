@@ -1,4 +1,6 @@
-from noodles import (schedule, run_process, Storable, gather)
+from noodles import (schedule, run_process, Storable, gather,
+                     base_registry, Registry)
+from noodles.serialisation.registry import Serialiser
 import sys
 
 

@@ -15,12 +15,13 @@ from .data_arguments import (ref_argument, set_argument, format_address,
                              serialize_arguments)
 from .data_node import FunctionNode, from_call
 from .data_graph import invert_links
+from .data_workflow import reset_workflow
 
 
 __all__ = ['Workflow', 'Node',
            'FunctionNode', 'from_call', 'get_workflow',
            'is_workflow', 'get_workflow', 'Empty',
-           'ArgumentAddress', 'ArgumentKind',
+           'ArgumentAddress', 'ArgumentKind', 'reset_workflow',
            'insert_result', 'is_node_ready', 'invert_links']
 
 

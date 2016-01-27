@@ -18,7 +18,7 @@ from .data_types import (Workflow, ArgumentAddress, ArgumentKind, Node,
 from .data_node import FunctionNode, importable, module_and_name, look_up
 from .data_workflow import reset_workflow
 from .storable import storable, StorableRef
-from .deepmap import deep_map
+from noodles.utility import deep_map
 
 import json
 from itertools import count

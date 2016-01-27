@@ -6,6 +6,7 @@ from .data_arguments import (bind_arguments, get_arguments,
 from inspect import signature, getmodule, Parameter
 from importlib import import_module
 from copy import deepcopy
+from .utility import look_up
 
 
 def unwrap(f):
@@ -13,15 +14,6 @@ def unwrap(f):
         return f.__wrapped__
     except AttributeError:
         return f
-
-
-def look_up(module, name):
-    """
-    Import the object named by `name` from the module named by
-    `module`.
-    """
-    M = import_module(module)
-    return getattr(M, name)
 
 
 def module_and_name(f):
