@@ -1,5 +1,4 @@
 from .coroutines import coroutine_sink, Connection
-from .data_json import saucer, desaucer, node_to_jobject
 from .logger import log
 from .run_hybrid import hybrid_threaded_worker
 from .run_common import Scheduler
@@ -91,7 +90,7 @@ def process_worker(registry,
 def run_process(wf, n_processes, registry,
                 verbose=False, jobdirs=False, init=None, finish=None):
     """Run the workflow using a number of new python processes. Use this
-    runner to test the workflow in a situation where data serialisation
+    runner to test the workflow in a situation where data serial
     is needed.
 
     :param wf:
@@ -102,7 +101,7 @@ def run_process(wf, n_processes, registry,
         Number of processes to start.
 
     :param registry:
-        The serialisation registry.
+        The serial registry.
 
     :param verbose:
         Request verbose output on worker side

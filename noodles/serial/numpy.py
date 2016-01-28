@@ -9,7 +9,7 @@ class SerNumpyArray(Serialiser):
         super(SerNumpyArray, self).__init__(numpy.ndarray)
 
     def encode(self, obj, make_rec):
-        filename = uuid.uuid4() + '.npy'
+        filename = str(uuid.uuid4()) + '.npy'
         numpy.save(filename, obj)
         return make_rec(filename, ref=True, files=[filename])
 
@@ -35,12 +35,13 @@ def _numpy_hook(obj):
     return None
 
 
-numpy_registry = Registry(
-    types={
-        numpy.ndarray: SerNumpyArray()
-    },
-    hooks={
-        '<ufunc>': SerUFunc()
-    },
-    hook_fn=_numpy_hook
-)
+def registry():
+    return Registry(
+        types={
+            numpy.ndarray: SerNumpyArray()
+        },
+        hooks={
+            '<ufunc>': SerUFunc()
+        },
+        hook_fn=_numpy_hook
+    )

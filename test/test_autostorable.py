@@ -1,7 +1,10 @@
-from noodles import (schedule, run_process, Storable, gather,
-                     base_registry, Registry)
-from noodles.serialisation.registry import Serialiser
-import sys
+from noodles import (
+    schedule, run_process, gather, Registry, Serialiser, serial
+)
+
+
+def registry():
+    return serial.pickle() + serial.base()
 
 
 class A(object):
@@ -16,7 +19,7 @@ class A(object):
         return {'a': self.a}
 
 
-class B(Storable):
+class B(object):
     def __init__(self):
         super(B, self).__init__()
 
@@ -44,7 +47,7 @@ def test_autostorable():
     c = h(b)
     d = gather(c, a)
 
-    result = run_process(d, n_processes=1)
+    result = run_process(d, 1, registry)
     assert result[0] == 42
     assert result[1].a == 7
 

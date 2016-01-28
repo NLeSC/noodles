@@ -137,7 +137,7 @@ if __name__ == "__main__":
         "online", help="stream jobs from standard input.")
     online_parser.add_argument(
         "-registry", type=str,
-        help="the serialisation registry")
+        help="the serial registry")
     online_parser.add_argument(
         "-n", type=int,
         help="the number of threads.", default=1)

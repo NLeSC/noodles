@@ -46,5 +46,5 @@ def is_node_ready(node):
     """
     Returns True if none of the argument holders contain any `Empty` object.
     """
-    return all(ref_argument(node.bound_args, a) != Parameter.empty
+    return all(ref_argument(node.bound_args, a) is not Parameter.empty
                for a in serialize_arguments(node.bound_args))

@@ -1,4 +1,5 @@
-from noodles import schedule, run_process, base_registry
+from noodles import schedule, run_process, serial
+
 
 @schedule
 def init():
@@ -19,7 +20,7 @@ def checker():
 
 def test_globals():
     a = checker()
-    result = run_process(a, n_processes=1, registry=base_registry,
+    result = run_process(a, n_processes=1, registry=serial.base,
                          init=init, finish=finish)
     assert result
 

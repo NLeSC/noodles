@@ -1,12 +1,12 @@
 from noodles import (
     schedule, Scheduler, gather,
-    base_registry, Registry, AsDict)
+    serial, Registry, AsDict)
 
 from noodles.datamodel import get_workflow
 from noodles.run_process import process_worker
 
 def registry():
-    return Registry(parent=base_registry(), default=AsDict)
+    return Registry(parent=serial.base(), default=AsDict)
 
 
 @schedule
@@ -24,7 +24,7 @@ def test_worker():
     b = ssum(gather(*a))
 
     result = Scheduler().run(
-        process_worker(registry, verbose=True),
+        process_worker(registry),
         get_workflow(b))
     assert result == 100
 

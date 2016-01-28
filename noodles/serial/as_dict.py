@@ -1,5 +1,6 @@
 from .registry import (Serialiser)
 
+
 class AsDict(Serialiser):
     def __init__(self, cls):
         super(AsDict, self).__init__(cls)

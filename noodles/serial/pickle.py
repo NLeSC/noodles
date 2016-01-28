@@ -1,4 +1,4 @@
-from .registry import (Serialiser)
+from .registry import (Serialiser, Registry)
 
 import base64
 import pickle
@@ -15,3 +15,8 @@ class PickleString(Serialiser):
     def decode(self, cls, data):
         return pickle.loads(base64.b64decode(data.encode('ascii')))
 
+
+def registry():
+    return Registry(
+        default=PickleString(object)
+    )

@@ -78,7 +78,7 @@ class FunctionNode:
 
     def node(self):
         """
-        Convert to a :py:class:`Node` for subsequent serialisation.
+        Convert to a :py:class:`Node` for subsequent serial.
         """
         arguments = get_arguments(self.bound_args)
         self._node = Node(self.foo, arguments, self.hints)

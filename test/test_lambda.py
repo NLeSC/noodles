@@ -1,6 +1,4 @@
-from noodles import Scheduler, schedule, Lambda
-from noodles.datamodel import get_workflow
-from noodles.run_process import process_worker
+from noodles import Scheduler, schedule, Lambda, run_process, serial
 from noodles.tutorial import accumulate
 
 
@@ -20,5 +18,5 @@ def test_lambda():
     c = accumulate(b)
 
     # result = run(c)
-    result = Scheduler().run(process_worker(), get_workflow(c))
+    result = run_process(c, 1, serial.base)
     assert result == 0.55

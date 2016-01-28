@@ -90,7 +90,7 @@ def format_address(address):
 def get_arguments(bound_args):
     return [(address, ref_argument(bound_args, address))
             for address in serialize_arguments(bound_args)
-            if ref_argument(bound_args, address) != Empty]
+            if ref_argument(bound_args, address) is not Empty]
 
 
 def bind_arguments(f, arguments):

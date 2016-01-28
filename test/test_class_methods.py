@@ -1,10 +1,12 @@
-from noodles import schedule, has_scheduled_methods, run, Scheduler, Storable
-from noodles.run_process import process_worker
-from noodles.datamodel import get_workflow
+from noodles import schedule, has_scheduled_methods, run, run_process, Scheduler, serial
+
+
+def registry():
+    return serial.pickle() + serial.base()
 
 
 @has_scheduled_methods
-class A(Storable):
+class A:
     def __init__(self, x):
         super(A, self).__init__()
         self.x = x
@@ -26,5 +28,5 @@ def test_class_methods_01():
     a = A(7)
     b = a(6)
 
-    result = Scheduler().run(process_worker(), get_workflow(b))
+    result = run_process(b, 1, registry)
     assert result == 42

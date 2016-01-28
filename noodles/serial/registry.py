@@ -18,10 +18,7 @@ def _chain_fn(a, b):
 class Registry(object):
     def __init__(self, parent=None, types=None, hooks=None, hook_fn=None,
                  default=None):
-        self._sers = parent._sers if parent else {}
-        self[object] = default(object) if default \
-            else parent.default if parent \
-            else Serialiser(object)
+        self._sers = parent._sers.copy() if parent else {}
 
         if types:
             for k, v in types.items():
@@ -29,6 +26,10 @@ class Registry(object):
 
         if hooks:
             self._sers.update(hooks)
+
+        self[object] = default if default \
+            else parent.default if parent \
+            else Serialiser(object)
 
         if hook_fn and parent and parent._hook:
             self._hook = _chain_fn(hook_fn, parent._hook)
@@ -40,7 +41,9 @@ class Registry(object):
     def __add__(self, other):
         reg = Registry(
             parent=self, hooks=other._sers,
-            hook_fn=other._hook, default=other.default)
+            hook_fn=other._hook, default=self.default)
+
+        return reg
 
     @property
     def default(self):
