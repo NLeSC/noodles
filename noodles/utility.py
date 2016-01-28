@@ -1,5 +1,6 @@
 from importlib import import_module
 import sys
+from copy import copy
 
 
 def object_name(obj):

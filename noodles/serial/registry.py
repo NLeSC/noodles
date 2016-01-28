@@ -15,6 +15,11 @@ def _chain_fn(a, b):
     return f
 
 
+class RefObject:
+    def __init__(self, rec):
+        self.rec = rec
+
+
 class Registry(object):
     def __init__(self, parent=None, types=None, hooks=None, hook_fn=None,
                  default=None):
@@ -78,6 +83,9 @@ class Registry(object):
         if type(obj) in [dict, list, str, int, float, bool, tuple]:
             return obj
 
+        if isinstance(obj, RefObject):
+            return obj.rec
+
         hook = self._hook(obj) if self._hook else None
         typename = hook if hook else object_name(type(obj))
 
@@ -105,6 +113,9 @@ class Registry(object):
     def decode(self, rec, deref=False):
         if not '_noodles' in rec:
             return rec
+
+        if rec.get('ref', False) and not deref:
+            return RefObject(rec)
 
         typename = rec['type']
         if typename[0] == '<' and typename[-1] == '>':

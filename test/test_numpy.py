@@ -1,12 +1,12 @@
 from noodles import schedule, run_process, serial
-from noodles.storable import PickleString
 
+import os
 import numpy as np
 from numpy import (random, fft, exp)
 
 
 def registry():
-    return serial.base() + serial.numpy()
+    return serial.base() + serial.numpy(file_prefix='test-')
 
 
 @schedule
@@ -39,8 +39,21 @@ def test_pickle():
     k = make_kernel(256, 10)
     x_smooth = do_ifft(apply_filter(do_fft(x), k))
 
+    os.mkdir("./test-numpy")
+    os.chdir("./test-numpy")
+
     result = run_process(x_smooth, 1, registry)
 
     assert isinstance(result, np.ndarray)
     assert result.size == 256
-    # np.savetxt("curve.txt", result.data)
+
+    # above workflow has five steps
+    lst = os.listdir(".")
+    assert len(lst) == 5
+
+    # remove the .npy files
+    for f in lst:
+        os.remove(f)
+
+    os.chdir("..")
+    os.rmdir("./test-numpy")

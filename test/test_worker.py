@@ -1,6 +1,6 @@
 from noodles import (
     schedule, Scheduler, gather,
-    serial, Registry, AsDict)
+    serial, Registry, AsDict, Storable)
 
 from noodles.datamodel import get_workflow
 from noodles.run_process import process_worker
@@ -29,7 +29,7 @@ def test_worker():
     assert result == 100
 
 
-class A(object):
+class A(Storable):
     def __init__(self, **kwargs):
         self.__dict__.update(kwargs)
 

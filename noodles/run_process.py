@@ -4,6 +4,7 @@ from .run_hybrid import hybrid_threaded_worker
 from .run_common import Scheduler
 from .datamodel import get_workflow
 from .utility import object_name
+from noodles import serial
 
 import threading
 from subprocess import Popen, PIPE
@@ -130,4 +131,9 @@ def run_process(wf, n_processes, registry,
         return random.choice(worker_names)
 
     master_worker = hybrid_threaded_worker(random_selector, workers)
-    return Scheduler().run(master_worker, get_workflow(wf))
+    result = Scheduler().run(master_worker, get_workflow(wf))
+
+    if isinstance(result, serial.RefObject):
+        return registry().decode(result.rec, deref=True)
+    else:
+        return result

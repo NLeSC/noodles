@@ -5,11 +5,12 @@ import uuid
 
 
 class SerNumpyArray(Serialiser):
-    def __init__(self):
+    def __init__(self, file_prefix=None):
         super(SerNumpyArray, self).__init__(numpy.ndarray)
+        self.file_prefix = file_prefix if file_prefix else ''
 
     def encode(self, obj, make_rec):
-        filename = str(uuid.uuid4()) + '.npy'
+        filename = self.file_prefix + str(uuid.uuid4()) + '.npy'
         numpy.save(filename, obj)
         return make_rec(filename, ref=True, files=[filename])
 
@@ -22,7 +23,7 @@ class SerUFunc(Serialiser):
         super(SerUFunc, self).__init__(None)
 
     def encode(self, obj, make_rec):
-        return 'numpy.' + obj.name
+        return make_rec('numpy.' + obj.name)
 
     def decode(self, cls, data):
         return look_up(data)
@@ -35,10 +36,10 @@ def _numpy_hook(obj):
     return None
 
 
-def registry():
+def registry(file_prefix=None):
     return Registry(
         types={
-            numpy.ndarray: SerNumpyArray()
+            numpy.ndarray: SerNumpyArray(file_prefix)
         },
         hooks={
             '<ufunc>': SerUFunc()

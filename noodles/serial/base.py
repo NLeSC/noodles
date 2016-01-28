@@ -2,6 +2,7 @@ from .registry import (Registry, Serialiser)
 from ..utility import (object_name, look_up, importable)
 from ..datamodel import (Workflow, Node, FunctionNode, ArgumentAddress,
                          ArgumentKind, reset_workflow)
+from ..storable import Storable
 
 from enum import Enum
 from inspect import isfunction
@@ -100,7 +101,23 @@ class SerImportable(Serialiser):
 
 class SerStorable(Serialiser):
     def __init__(self):
-        super(SerStorable, self).__init__(object)
+        super(SerStorable, self).__init__(Storable)
+
+    def encode(self, obj, make_rec):
+        return make_rec(
+            {'type': object_name(type(obj)),
+             'dict': obj.as_dict()},
+            ref=obj._noodles.ref,
+            files=obj._noodles.files)
+
+    def decode(self, _, data):
+        cls = look_up(data['type'])
+        return cls.from_dict(**data['dict'])
+
+
+class SerAutoStorable(Serialiser):
+    def __init__(self):
+        super(SerAutoStorable, self).__init__(object)
 
     def encode(self, obj, make_rec):
         return make_rec({'type': object_name(type(obj)),
@@ -145,12 +162,13 @@ def registry():
             ArgumentKind: SerEnum(ArgumentKind),
             FunctionNode: SerNode(),
             ArgumentAddress: SerNamedTuple(ArgumentAddress),
-            Workflow: SerWorkflow()
+            Workflow: SerWorkflow(),
+            Storable: SerStorable(),
         },
         hooks={
             '<method>': SerMethod(),
             '<importable>': SerImportable(),
-            '<auto-storable>': SerStorable()
+            '<auto-storable>': SerAutoStorable()
         },
         hook_fn=_noodles_hook,
         default=Serialiser(object),

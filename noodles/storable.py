@@ -31,16 +31,22 @@ def from_dict(cls, **kwargs):
     return obj
 
 
+class StorableTraits:
+    def __init__(self, ref, files):
+        self.ref = ref
+        self.files = files if files else []
+
+
 class Storable:
-    def __init__(self, use_ref=False, files=None):
+    def __init__(self, ref=False, files=None):
         """Storable constructor
 
-        :param use_ref:
+        :param ref:
             if this is True, the Storable is loaded as a
             :py:class:`StorableRef`, only to be restored when the data is
             really needed. This should be set to True for any object that
             carries a lot of data; the default is False.
-        :type use_ref: bool
+        :type ref: bool
 
         :param files:
             the list of filenames that this object uses for
@@ -48,13 +54,12 @@ class Storable:
             relevant data if this object is needed on another host.
         :type files: [str]
         """
-        self._use_ref = use_ref
-        self._files = files if files else []
+        self._noodles = StorableTraits(ref, files)
 
     @property
     def files(self):
         """List of files that this object saves to."""
-        return self._files
+        return self._noodles.files
 
     def as_dict(self):
         """Converts the object to a `dict` containing the members
@@ -95,37 +100,6 @@ class Storable:
             return schedule(from_dict)(cls, **tmp)
         else:
             return cls.from_dict(**tmp)
-
-
-class PickleString(Storable):
-    def __init__(self):
-        super(PickleString, self).__init__()
-
-    def as_dict(self):
-        str_data = base64.b64encode(pickle.dumps(self)).decode('ascii')
-        return {"pickle_string": str_data}
-
-    @classmethod
-    def from_dict(cls, pickle_string):
-        return pickle.loads(base64.b64decode(pickle_string.encode('ascii')))
-
-
-class PickleFile(Storable):
-    def __init__(self, filename=None):
-        self._filename = filename if filename \
-            else str(uuid.uuid4()) + ".pickle"
-        super(PickleFile, self).__init__(use_ref=True, files=[self._filename])
-
-    def as_dict(self):
-        with open(self._filename, 'wb') as f:
-            pickle.dump(self, f)
-
-        return {"pickle_file": self._filename}
-
-    @classmethod
-    def from_dict(cls, pickle_file):
-        with open(pickle_file, 'rb') as f:
-            return pickle.load(f)
 
 
 class StorableRef:

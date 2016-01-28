@@ -1,6 +1,8 @@
 from .coroutines import coroutine_sink, Connection
-from .data_json import saucer, desaucer, node_to_jobject
+# from .data_json import saucer, desaucer, node_to_jobject
 from .logger import log
+from .utility import object_name
+from noodles import serial
 
 import json
 import uuid
@@ -14,8 +16,8 @@ xenon.init(log_level='ERROR')  # noqa
 from jnius import autoclass
 
 
-def read_result(s):
-    obj = json.loads(s, object_hook=desaucer())
+def read_result(registry, s):
+    obj = registry.from_json(s)
     key = obj['key']
     try:
         key = uuid.UUID(key)
@@ -25,10 +27,10 @@ def read_result(s):
     return key, obj['result']
 
 
-def put_job(host, key, job):
+def put_job(registry, host, key, job):
     obj = {'key': key if isinstance(key, str) else key.hex,
-           'node': node_to_jobject(job.node())}
-    return json.dumps(obj, default=saucer(host))
+           'node': job}
+    return registry.to_json(obj, host=host)
 
 
 jPrintStream = autoclass('java.io.PrintStream')
@@ -86,6 +88,7 @@ class XenonKeeper:
 
 class XenonConfig:
     def __init__(self):
+        self.registry = serial.base
         self.jobs_scheme = 'local'
         self.files_scheme = 'local'
         self.location = None
@@ -113,11 +116,18 @@ def xenon_interactive_worker(config=None, init=None, finish=None):
 
     Jobs are read from stdin, and results written to stdout.
 
-    :param config: The configuration for Xenon. This includes the kind
-    of Xenon adaptor to use along with authentication credentials and the
-    hostname of the machine.
-
+    :param config:
+        The configuration for Xenon. This includes the kind
+        of Xenon adaptor to use along with authentication credentials and the
+        hostname of the machine.
     :type config: :py:class:`XenonConfig`
+
+    :param init:
+        Run this function on the remote worker once before doing jobs
+
+    :param finish:
+        Run this function after everything has finished, probably not
+        very useful.
     """
 
     if config is None:
@@ -129,7 +139,8 @@ def xenon_interactive_worker(config=None, init=None, finish=None):
         else ['/bin/bash',
               config.working_dir + '/worker.sh',
               config.prefix,
-              'online', '-name', K.name]
+              'online', '-name', K.name,
+              '-registry', object_name(config.registry)]
 
     if init:
         cmd.append("-init")
@@ -150,18 +161,20 @@ def xenon_interactive_worker(config=None, init=None, finish=None):
     K.stderr_thread.daemon = True
     K.stderr_thread.start()
 
+    registry = config.registry()
+
     @coroutine_sink
     def send_job():
         out = jPrintStream(J.streams.getStdin())
 
         while True:
             key, ujob = yield
-            out.println(put_job(K.name, key, ujob))
+            out.println(put_job(registry, K.name, key, ujob))
             out.flush()
 
     def get_result():
         for line in java_lines(J.streams.getStdout()):
-            key, result = read_result(line)
+            key, result = read_result(registry, line)
             yield (key, result)
 
     if init is not None:
