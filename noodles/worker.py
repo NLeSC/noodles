@@ -26,14 +26,12 @@ of these modes, the rule is **one object per line**.
 
 import argparse
 import sys
-import os
 import uuid
-
-import json
-from .data_json import (desaucer, saucer, jobject_to_node, value_to_jobject)
-from .run_common import run_job
-from .utility import (deep_map, look_up)
 from contextlib import redirect_stdout
+
+import os
+from noodles.run.scheduler import run_job
+from .utility import (look_up)
 
 
 def get_job(registry, s):

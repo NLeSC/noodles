@@ -1,4 +1,4 @@
-from noodles import schedule, run, unwrap
+from noodles import schedule, run_single, unwrap
 from nose.tools import raises
 
 
@@ -47,7 +47,7 @@ class B:
 def test_class_decorator():
     a = A(5).multiply(10)
     a.second = 7
-    result = run(a)
+    result = run_single(a)
     assert result.value == 50
     assert result.second == 7
 
@@ -60,7 +60,7 @@ def test_class_property():
     b.first = a.attr
     b.second = a.mul_attr(3)
 
-    result = run(b)
+    result = run_single(b)
     assert result.first == 0.25
     assert result.second == 1.5
 
@@ -105,5 +105,5 @@ def test_unwrap():
 def test_class_decorator2():
     a = A(6).multiply(7)
     b = a.divide(0)
-    result = run(b)
+    result = run_single(b)
     print(dir(result))

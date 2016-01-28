@@ -1,4 +1,4 @@
-from noodles import schedule, run, run_parallel, gather
+from noodles import schedule, run_single, run_parallel, gather
 import time
 
 
@@ -32,7 +32,7 @@ def test_runner_01():
     B = value(1)
     C = add(A, B)
 
-    assert run(C) == 2
+    assert run_single(C) == 2
 
 
 def test_runner_02():
@@ -42,7 +42,7 @@ def test_runner_02():
     multiples = [mul(add(i, B), A) for i in range(6)]
     C = sum(gather(*multiples))
 
-    assert run(C) == 42
+    assert run_single(C) == 42
 
 
 def test_parallel_runner_01():

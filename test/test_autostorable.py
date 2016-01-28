@@ -1,5 +1,5 @@
 from noodles import (
-    schedule, run_process, gather, Registry, Serialiser, serial
+    schedule, run_process, gather, serial
 )
 
 

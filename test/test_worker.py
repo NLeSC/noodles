@@ -3,7 +3,7 @@ from noodles import (
     serial, Registry, AsDict, Storable)
 
 from noodles.datamodel import get_workflow
-from noodles.run_process import process_worker
+from noodles.run.process import process_worker
 
 def registry():
     return Registry(parent=serial.base(), default=AsDict)

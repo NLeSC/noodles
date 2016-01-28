@@ -1,13 +1,12 @@
-from noodles import schedule, schedule_hint, gather
-from noodles.run_local import single_worker, threaded_worker
-from noodles.run_hybrid import run_hybrid
-
-from noodles.run_hybrid import hybrid_coroutine_worker
-from noodles.run_common import Scheduler, run_job
-from noodles.datamodel import get_workflow
-from noodles.coroutines import IOQueue, Connection
-
 import time
+
+from noodles import schedule, schedule_hint, gather
+from noodles.datamodel import get_workflow
+from noodles.run.coroutines import IOQueue, Connection
+from noodles.run.scheduler import Scheduler, run_job
+from noodles.run.hybrid import hybrid_coroutine_worker
+from noodles.run.hybrid import run_hybrid
+from noodles.run.local import single_worker, threaded_worker
 
 
 @schedule_hint(1)

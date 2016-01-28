@@ -1,17 +1,17 @@
-from .coroutines import coroutine_sink, Connection
-from .logger import log
-from .run_hybrid import hybrid_threaded_worker
-from .run_common import Scheduler
-from .datamodel import get_workflow
-from .utility import object_name
-from noodles import serial
-
-import threading
-from subprocess import Popen, PIPE
-import json
-import uuid
-import random
 import sys
+import threading
+import uuid
+from subprocess import Popen, PIPE
+
+import os
+import random
+from noodles.datamodel import get_workflow
+from noodles.logger import log
+from noodles.run.coroutines import coroutine_sink, Connection
+from noodles.serial.registry import RefObject
+from noodles.utility import object_name
+from .scheduler import Scheduler
+from .hybrid import hybrid_threaded_worker
 
 
 def read_result(registry, s):
@@ -36,7 +36,7 @@ def process_worker(registry,
                    init=None, finish=None, status=True):
     name = "process-" + str(uuid.uuid4())
 
-    cmd = ["python3.5", "-m", "noodles.worker", "online",
+    cmd = ["/bin/bash", os.getcwd() + "/worker.sh", sys.prefix, "online",
            "-name", name, "-registry", object_name(registry)]
     if verbose:
         cmd.append("-verbose")
@@ -133,7 +133,7 @@ def run_process(wf, n_processes, registry,
     master_worker = hybrid_threaded_worker(random_selector, workers)
     result = Scheduler().run(master_worker, get_workflow(wf))
 
-    if isinstance(result, serial.RefObject):
+    if isinstance(result, RefObject):
         return registry().decode(result.rec, deref=True)
     else:
         return result

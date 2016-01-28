@@ -1,6 +1,6 @@
-from .data_types import is_workflow, get_workflow, Empty
-from .data_graph import invert_links
-from .datamodel import insert_result, is_node_ready
+from noodles.data_types import is_workflow, get_workflow, Empty
+from noodles.data_graph import invert_links
+from noodles.datamodel import insert_result, is_node_ready
 from collections import namedtuple
 import uuid
 import sys

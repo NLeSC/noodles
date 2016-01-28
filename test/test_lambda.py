@@ -1,4 +1,4 @@
-from noodles import Scheduler, schedule, Lambda, run_process, serial
+from noodles import schedule, Lambda, run_process, serial
 from noodles.tutorial import accumulate
 
 

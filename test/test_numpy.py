@@ -3,10 +3,11 @@ from noodles import schedule, run_process, serial
 import os
 import numpy as np
 from numpy import (random, fft, exp)
+from shutil import (copyfile, rmtree)
 
 
 def registry():
-    return serial.base() + serial.numpy(file_prefix='test-')
+    return serial.base() + serial.numpy(file_prefix='test-numpy/')
 
 
 @schedule
@@ -39,8 +40,10 @@ def test_pickle():
     k = make_kernel(256, 10)
     x_smooth = do_ifft(apply_filter(do_fft(x), k))
 
+    if os.path.exists("./test-numpy"):
+        rmtree("./test-numpy")
+
     os.mkdir("./test-numpy")
-    os.chdir("./test-numpy")
 
     result = run_process(x_smooth, 1, registry)
 
@@ -48,12 +51,11 @@ def test_pickle():
     assert result.size == 256
 
     # above workflow has five steps
-    lst = os.listdir(".")
+    lst = os.listdir("./test-numpy")
     assert len(lst) == 5
 
     # remove the .npy files
     for f in lst:
-        os.remove(f)
+        os.remove("./test-numpy/" + f)
 
-    os.chdir("..")
     os.rmdir("./test-numpy")

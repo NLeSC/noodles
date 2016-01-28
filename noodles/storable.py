@@ -101,20 +101,3 @@ class Storable:
         else:
             return cls.from_dict(**tmp)
 
-
-class StorableRef:
-    """A reference to a storable object, containing
-    only the JSON content needed to restore the original.
-
-    When a Storable is recieved by the scheduler in  JSON form,
-    the JSON is first stored in a StorableRef. Only when loaded by
-    a worker it is converted back to the Storable.
-    """
-
-    def __init__(self, data):
-        self.data = data
-
-    def make(self):
-        meta = self.data['_noodles']
-        cls = look_up(meta['module'], meta['name'])
-        return cls.from_dict(**self.data['data'])

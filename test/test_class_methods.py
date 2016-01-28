@@ -1,4 +1,6 @@
-from noodles import schedule, has_scheduled_methods, run, run_process, Scheduler, serial
+from noodles import (
+    schedule, has_scheduled_methods, run_single,
+    run_process, serial)
 
 
 def registry():
@@ -20,7 +22,7 @@ def test_class_methods_00():
     a = A(7)
     b = a(6)
 
-    result = run(b)
+    result = run_single(b)
     assert result == 42
 
 

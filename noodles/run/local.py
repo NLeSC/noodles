@@ -1,7 +1,8 @@
-from .datamodel import get_workflow
-from .coroutines import IOQueue, Connection, QueueConnection
-from .run_common import run_job, Scheduler
 import threading
+
+from noodles.datamodel import get_workflow
+from noodles.run.coroutines import IOQueue, Connection, QueueConnection
+from .scheduler import run_job, Scheduler
 
 
 def single_worker():
@@ -52,7 +53,7 @@ def threaded_worker(n_threads):
     return scheduler_connection
 
 
-def run(wf):
+def run_single(wf):
     """
     Returns the result of evaluting the workflow
 

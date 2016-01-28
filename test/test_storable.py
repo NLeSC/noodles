@@ -1,4 +1,4 @@
-from noodles import schedule, run
+from noodles import schedule, run_single
 from noodles.storable import Storable, storable
 
 from nose.tools import raises
@@ -32,7 +32,7 @@ def test_storable():
     b.x = f(3, 4)
 
     c = g(a, b)
-    result = run(c)
+    result = run_single(c)
     assert result == 8
 
 
@@ -47,5 +47,5 @@ def test_nonstorable():
     b.x = f(3, 4)
 
     c = g(a, b)
-    result = run(c)
+    result = run_single(c)
     assert result == 8

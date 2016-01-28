@@ -1,9 +1,9 @@
-from .datamodel import get_workflow
-from .run_common import run_job, Scheduler
-from .coroutines import IOQueue, Connection, patch, coroutine_sink
-from .utility import map_dict, unzip_dict
-
 import threading
+
+from noodles.datamodel import get_workflow
+from noodles.run.coroutines import IOQueue, Connection, patch, coroutine_sink
+from noodles.utility import map_dict, unzip_dict
+from .scheduler import run_job, Scheduler
 
 
 def hybrid_coroutine_worker(selector, workers):

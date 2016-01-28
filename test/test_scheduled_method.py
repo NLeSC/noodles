@@ -1,7 +1,7 @@
-from noodles import (schedule, Scheduler, Storable, has_scheduled_methods,
+from noodles import (schedule, Scheduler, has_scheduled_methods,
                      Registry, serial, AsDict)
 from noodles.datamodel import get_workflow
-from noodles.run_process import process_worker
+from noodles.run.process import process_worker
 
 
 def registry():

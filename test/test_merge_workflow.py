@@ -2,7 +2,7 @@ from nose.tools import raises
 from noodles.datamodel import (
     Empty, ArgumentAddress,
     ArgumentKind, is_workflow, get_workflow, Workflow)
-from noodles import run, schedule, gather
+from noodles import run_single, schedule, gather
 
 
 def dummy(a, b, c, *args, **kwargs):
@@ -36,7 +36,7 @@ def test_private():
     a = add(1, 1)
     a._private = 3
     assert a._private == 3
-    assert not hasattr(run(a), '_private')
+    assert not hasattr(run_single(a), '_private')
 
 
 def test_merge_workflow():
@@ -108,7 +108,7 @@ def test_arg_by_ref():
     n.x = 5
     s.y = n
 
-    result = run(s)
+    result = run_single(s)
     assert result.x.x == 4
     assert result.y.x == 5
 
@@ -130,6 +130,6 @@ def test_tuple_unpack():
     a.x, a.y = 2, 3
     b.x, b.y = sub(a.x, a.y), sub(a.y, a.x)
 
-    result = run(b)
+    result = run_single(b)
     assert result.x == -1
     assert result.y == 1
