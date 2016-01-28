@@ -58,7 +58,7 @@ class SerWorkflow(Serialiser):
     def encode(self, obj, make_rec):
         remap = dict(zip(obj.nodes.keys(), count()))
         return make_rec({'root': remap[obj.root],
-                         'nodes': obj.nodes.values(),
+                         'nodes': list(obj.nodes.values()),
                          'links': _remap_links(remap, obj.links)})
 
     def decode(self, cls, data):
@@ -120,6 +120,7 @@ def _noodles_hook(obj):
         return '<importable>'
 
     return None
+
 
 def base_registry():
     return Registry(

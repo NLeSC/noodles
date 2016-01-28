@@ -4,6 +4,17 @@ import noodles
 import json
 
 
+def _chain_fn(a, b):
+    def f(obj):
+        first = a(obj)
+        if first:
+            return first
+
+        return b(obj)
+
+    return f
+
+
 class Registry(object):
     def __init__(self, parent=None, types=None, hooks=None, hook_fn=None,
                  default=None):
@@ -19,9 +30,17 @@ class Registry(object):
         if hooks:
             self._sers.update(hooks)
 
-        self._hook = hook_fn if hook_fn \
-            else parent._hook if parent \
-            else None
+        if hook_fn and parent and parent._hook:
+            self._hook = _chain_fn(hook_fn, parent._hook)
+        else:
+            self._hook = hook_fn if hook_fn \
+                else parent._hook if parent \
+                else None
+
+    def __add__(self, other):
+        reg = Registry(
+            parent=self, hooks=other._sers,
+            hook_fn=other._hook, default=other.default)
 
     @property
     def default(self):
