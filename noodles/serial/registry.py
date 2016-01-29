@@ -16,13 +16,60 @@ def _chain_fn(a, b):
 
 
 class RefObject:
+    """Placeholder object to delay decoding a serialised object
+    until needed by a worker."""
     def __init__(self, rec):
         self.rec = rec
 
 
 class Registry(object):
+    """Serialisation registry, keeps a record of `Serialiser` objects.
+
+    The Registry keeps a dictionary mapping (qualified) class names to
+    :py:class:`Serialiser` objects. Given an object, the `__getitem__`
+    method looks for the highest base class that it has a serialiser for.
+    As a fall-back we install a Serialiser matching the Python
+    `object` class.
+
+    Detection by object type is not always meaningful or even possible.
+    Before scannning for known base classes the look-up function passes
+    the object through the `hook` function, which should return a string
+    or `None`. If a string is returned that string is used to look-up
+    the serialiser.
+
+    Registries can be combined using the '+' operator. The left side argument
+    is than used as `parent` to the new Registry, while the right-hand argument
+    overrides and augments the Serialisers present. The `hook` functions
+    are being chained, such that the right-hand registry takes precedence.
+    The default serialiser is inherrited from the left-hand argument.
+    """
     def __init__(self, parent=None, types=None, hooks=None, hook_fn=None,
                  default=None):
+        """Constructor
+
+        :param parent:
+            The new Registry takes the dictionary and hook from the parent.
+            If no other argumentns are given, we get a copy of `parent`.
+        :type parent: `Registry`
+
+        :param types:
+            A dictionary of types to Serialiser objects. Each of these
+            are added to the new Registry.
+
+        :param hooks:
+            A dictionary of strings to Serialiser objects. These are added
+            directly to the dictionary internal to the new Registry.
+
+        :param hook_fn:
+            A function taking an object returning a string. The string should
+            match a string in the hook dictionary. It should not be possible
+            to confuse the returned string with a qualified Python name.
+            One way to do this, is by enclosing the string with
+            '<' '>' characters.
+
+        :param default:
+            The default fall-back for the new Registry.
+        :type default: `Serialiser`"""
         self._sers = parent._sers.copy() if parent else {}
 
         if types:
@@ -32,7 +79,7 @@ class Registry(object):
         if hooks:
             self._sers.update(hooks)
 
-        self[object] = default if default \
+        self.default = default if default \
             else parent.default if parent \
             else Serialiser(object)
 
@@ -44,6 +91,8 @@ class Registry(object):
                 else None
 
     def __add__(self, other):
+        """Merge two registries. Right-side takes presedence over left-side
+        argument, with exception of the default (fall-back) serialiser."""
         reg = Registry(
             parent=self, hooks=other._sers,
             hook_fn=other._hook, default=self.default)
@@ -59,6 +108,8 @@ class Registry(object):
         self[object] = ser
 
     def __getitem__(self, key):
+        """Searches the most fitting serialiser based on the inheritance tree
+        of the given class. We search this tree breadth-first."""
         q = Queue()  # use a queue for breadth-first decent
 
         q.put(key)
@@ -73,10 +124,27 @@ class Registry(object):
                     q.put(base)
 
     def __setitem__(self, cls, value):
+        """Sets a new Serialiser for the given class."""
         m_n = object_name(cls)
         self._sers[m_n] = value
 
     def encode(self, obj, host=None):
+        """Encode an object using the serialisers available
+        in this registry. Objects that have a type that is one of
+        [dict, list, str, int, float, bool, tuple] are send back unchanged.
+
+        A host-name can be given as an additional argument to identify the
+        host in the resulting record if the encoder yields any filenames.
+
+        This function only treats the object for one layer deep.
+
+        :param obj:
+            The object that needs encoding.
+
+        :param host:
+            The name of the encoding host.
+        :type host: str
+        """
         if obj is None:
             return None
 
@@ -111,6 +179,20 @@ class Registry(object):
         return result
 
     def decode(self, rec, deref=False):
+        """Decode a record to return an object that could be considered
+        equivalent to the original.
+
+        The record is not touched if `_noodles` is not an item in the record.
+
+        :param rec:
+            A dictionary record to be decoded.
+        :type rec: dict
+
+        :param deref:
+            Wether to decode a RefObject. If the encoder wrote files on a
+            remote host, reading this file will be slow and result in an
+            error if the file is not present.
+        :type deref: bool"""
         if not '_noodles' in rec:
             return rec
 
@@ -125,23 +207,89 @@ class Registry(object):
         return self[cls].decode(cls, rec['data'])
 
     def to_json(self, obj, host=None):
+        """Recursively encode `obj` and convert it to a JSON string.
+
+        :param obj:
+            Object to encode.
+
+        :param host:
+            hostname where this object is being encoded.
+        :type host: str"""
         return json.dumps(deep_map_2(lambda o: self.encode(o, host), obj))
 
     def from_json(self, data, deref=False):
+        """Decode the string from JSON to return the original object (if
+        `deref` is true. Uses the `json.loads` function with `self.decode`
+        as object_hook.
+
+        :param data:
+            JSON encoded string.
+        :type data: str
+
+        :param deref:
+            Whether to decode records that gave `ref=True` at encoding.
+        :type deref: bool"""
         return json.loads(data, object_hook=lambda o: self.decode(o, deref))
 
 
 class Serialiser(object):
+    """Serialiser base class.
+
+    Serialisation classes should derive from `Serialiser` and overload the
+    `encode` and `decode` methods.
+
+    :param base:
+        The type that this class is supposed to serialise. This may differ
+        from the type of the object actually being serialised if its class
+        was derived from `base`. The supposed base-class is kept here for
+        reference but serves no immediate purpose.
+    :type base: type"""
     def __init__(self, base):
         self.base = base
 
     def encode(self, obj, make_rec):
+        """Should encode an object of type `self.base` (or derived).
+
+        This method receives the object and a function `make_rec`. This
+        function has signature:
+
+        .. code-block:: python
+
+            def make_rec(rec, ref=False, files=None):
+                ...
+
+        If encoding and decoding is somewhat cosuming on resources, the
+        encoder may call with `ref=True`. Then the resulting record won't
+        be decoded until needed by the next job. This is most certainly
+        the case when an external file was written. In this case the filename(s)
+        should be passed as a list by `files=[...]`.
+
+        The `files` list is not passed back to the decoder. Rather it is used
+        by noodles to keep track of written files and copy them between hosts
+        if needed. It is the responsibily of the encoder to include
+        the filename information in the passed record as well.
+
+        :param obj:
+            Object to be encoded.
+
+        :param make_rec:
+            Function used to pack the encoded data with some meta-data."""
         msg = "Cannot encode {}: encoder for type `{}` is not implemented." \
             .format(obj, type(obj).__name__)
 
         raise NotImplementedError(msg)
 
     def decode(self, cls, data):
+        """Should decode the data to an object of type 'cls'.
+
+        :param cls:
+            The class is retrieved by the qualified name of the type
+            of the object that was encoded; restored by importing it.
+        :type cls: type
+
+        :param data:
+            The data is the record that was passed to `make_rec` by
+            the encoder."""
         msg = "Decoder for type `{}` is not implemented." \
             .format(cls.__name__)
 

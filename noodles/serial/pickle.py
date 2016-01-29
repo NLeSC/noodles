@@ -17,6 +17,11 @@ class PickleString(Serialiser):
 
 
 def registry():
+    """Returns a serialisation registry that "just pickles everything".
+
+    This registry can be used to bolt-on other registries and keep the
+    pickle as the default. The objects are first pickled to a byte-array,
+    which is subsequently encoded with base64."""
     return Registry(
         default=PickleString(object)
     )

@@ -156,6 +156,7 @@ def _noodles_hook(obj):
 
 
 def registry():
+    """Returns the Noodles base serialisation registry."""
     return Registry(
         types={
             dict: SerDict(),

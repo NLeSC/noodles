@@ -37,6 +37,9 @@ def _numpy_hook(obj):
 
 
 def registry(file_prefix=None):
+    """Returns a serialisation registry for serialising NumPy data and
+    as well as any UFuncs that have no normal way of retrieving
+    qualified names."""
     return Registry(
         types={
             numpy.ndarray: SerNumpyArray(file_prefix)

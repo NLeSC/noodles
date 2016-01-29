@@ -86,8 +86,7 @@ class FunctionNode:
 
 
 def from_call(foo, args, kwargs, hints):
-    """
-    Takes a function and a set of arguments it needs to run on. Returns a newly
+    """Takes a function and a set of arguments it needs to run on. Returns a newly
     constructed workflow representing the promised value from the evaluation of
     the function with said arguments.
 
@@ -95,9 +94,7 @@ def from_call(foo, args, kwargs, hints):
     signature of the given function `f`. That is, bound_args was constructed
     by doing:
 
-    .. code-block:: python
-
-        inspect.signature(foo).bind(*args, **kwargs)
+        >>> inspect.signature(foo).bind(*args, **kwargs)
 
     The arguments stored in the `bound_args` object are filtered on being
     either 'plain', or 'promised'. If an argument is promised, the value
@@ -110,7 +107,7 @@ def from_call(foo, args, kwargs, hints):
     are copied to the new workflow, and a new entry is made into the link
     dictionary. Then the links in the old workflow are also added to the
     link dictionary. Since the link dictionary points from nodes to a `set`
-    of `ArgumentAddress`es, no links are duplicated.
+    of `ArgumentAddress` es, no links are duplicated.
 
     In the `bound_args` object the promised value is replaced by the `Empty`
     object, so that we can see which arguments still have to be evaluated.
@@ -119,14 +116,19 @@ def from_call(foo, args, kwargs, hints):
     results in a new workflow with all the correct dependencies represented
     as links in the graph.
 
-    :param bound_args:
-        Object containing the argument bindings for the function that is
-        being called.
-    :type bound_args: BoundArguments
+    :param foo:
+        Function (or object) being called.
+    :type foo: Callable
 
-    :param f:
-        Function being called.
-    :type f: Callable
+    :param args:
+        Normal arguments to call
+
+    :param kwargs:
+        Keyword arguments to call
+
+    :param hints:
+        Hints that can be passed to the scheduler on where or how
+        to schedule this job.
 
     :returns:
         New workflow.
