@@ -28,6 +28,10 @@ def threaded_worker(n_threads):
     """
     Sets up a number of threads, each polling for jobs.
 
+    :param n_threads:
+        Number of threads to spawn.
+    :type n_threads: int
+
     :returns:
         Connection to the job and result queues
     :rtype: :py:class:`Connection`
@@ -57,9 +61,9 @@ def run_single(wf):
     """
     Returns the result of evaluting the workflow
 
-    :param workflow:
+    :param wf:
         Workflow to compute
-    :type workflow: :py:class:`Workflow` or :py:class:`PromisedObject`
+    :type wf: :py:class:`Workflow` or :py:class:`PromisedObject`
     """
     worker = single_worker()
     return Scheduler().run(worker, get_workflow(wf))
@@ -69,9 +73,9 @@ def run_parallel(wf, n_threads):
     """
     Returns the result of evaluating the workflow; runs in several threads.
 
-    :param workflow:
+    :param wf:
         Workflow to compute
-    :type workflow: :py:class:`Workflow` or :py:class:`PromisedObject`
+    :type wf: :py:class:`Workflow` or :py:class:`PromisedObject`
 
     :param n_threads:
         Number of threads to use

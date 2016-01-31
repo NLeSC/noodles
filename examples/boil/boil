@@ -1,0 +1,211 @@
+#!/usr/bin/env python3.5
+
+import noodles
+
+import os
+import sys
+import re
+from itertools import chain
+
+import configparser
+import argparse
+import subprocess
+
+
+def find_files(path, ext):
+    """Find all files in `path` with extension `ext`. Returns an 
+    iterator giving tuples (folder, (files...)).
+
+    :param path:
+        search path
+    :param ext:
+        extension of files to find"""
+    for folder, _, files in os.walk(path):
+        for f in files:
+            if f[-len(ext):] == ext:
+                yield (folder, f)
+
+
+def is_out_of_date(f, deps):
+    """Check if file `f` needs to be updated. Returns True if any
+    of the dependencies are newer than `f`.
+
+    :param f:
+        file to check
+    :param deps:
+        dependencies"""
+    if not os.path.exists(f):
+        return True
+
+    f_stat = os.stat(f)
+
+    for d in deps:
+        d_stat = os.stat(d)
+        
+        if d_stat.st_mtime_ns > f_stat.st_mtime_ns:
+            return True
+
+    return False
+
+
+def dependencies(source_file, config):
+    """Find dependencies of source file.
+
+    :param source_file:
+        source file
+    :param config:
+        boil configuration"""
+    cmm = subprocess.run(
+        [config['cc'], '-MM', source_file] + config['cflags'].split(),
+        stdout=subprocess.PIPE, universal_newlines=True)
+    deps = re.sub('^.*: ', '', cmm.stdout) \
+        .replace('\\', '').replace('\n', '').split()
+
+    return deps
+
+
+def object_filename(srcdir, filename, config):
+    """Create the object filename.
+
+    :param srcdir:
+        directory of source file
+    :param filename:
+        filename of source
+    :param config:
+        boil configuration"""
+    target_dir = os.path.join(config['objdir'], srcdir)
+    
+    # if target directory doesn't exists, create it
+    if not os.path.exists(target_dir):
+        os.makedirs(target_dir)
+
+    # construct name of object file
+    basename = os.path.splitext(filename)[0]
+    return os.path.join(target_dir, basename + '.o')
+    
+
+@noodles.schedule
+def compile_source(source_file, object_file, config):
+    """(scheduled) Compile a source file.
+
+    :param source_file:
+        source file
+    :param object_file:
+        target object file
+    :param config:
+        boil configuration"""
+    p = subprocess.run(
+        [config['cc'], '-c'] + config['cflags'].split() \
+            + [source_file, '-o', object_file],
+        stderr=subprocess.PIPE, universal_newlines=True)
+    p.check_returncode()
+
+    return object_file
+
+
+def get_obj_file(src_dir, src_file, config):
+    """Ensures existence of up-to-date object file.
+
+    :param src_dir:
+        source directory
+    :param src_file:
+        source file
+    :param config:
+        boil configuration"""
+    obj_path = object_filename(src_dir, src_file, config)
+    src_path = os.path.join(src_dir, src_file)
+
+    deps = dependencies(src_path, config)
+    if is_out_of_date(obj_path, deps):
+        return compile_source(src_path, obj_path, config)
+    else:
+        return obj_path
+
+
+@noodles.schedule
+def link(object_files, config):
+    """(scheduled) Link object files to executable.
+
+    :param object_files:
+        list of object files
+    :param config:
+        boil configuration"""
+    p = subprocess.run(
+        [config['cc']] + object_files + ['-o', config['target']] \
+            + config['ldflags'].split(),
+        stderr=subprocess.PIPE, universal_newlines=True)
+    p.check_returncode()
+
+    return config['target']
+
+
+@noodles.schedule
+def get_target(obj_files, config):
+    """Ensures that target is up-to-date.
+
+    :param obj_files:
+        list of object files
+    :param config:
+        boil configuration"""
+    if is_out_of_date(config['target'], obj_files):
+        return link(obj_files, config)
+    
+    return None
+
+    
+def make_target(config, n_threads):
+    """Make a target. First compiles the source files, then
+    links the object files to create an executable.
+
+    :param config:
+        boil configuration
+    :param n_threads:
+        number of threads to run in"""
+    dirs = [config['srcdir']] + [
+        os.path.normpath(os.path.join(config['srcdir'], d))
+        for d in config['modules'].split()
+    ]
+
+    files = chain(*(
+        find_files(d, config['ext'])
+        for d in dirs)
+    )
+
+    obj_files = [
+        get_obj_file(src_dir, src_file, config)
+        for src_dir, src_file in files
+    ]
+
+    work = get_target(noodles.gather(*obj_files), config)
+
+    if work:
+        noodles.run_logging(work, n_threads=n_threads)
+
+
+def read_config(filename):
+    """Read configuration.
+
+    :param filename:
+        name of an .ini file to read"""
+    reader = configparser.ConfigParser(
+        interpolation=configparser.ExtendedInterpolation())
+    reader.read(filename)
+
+    return {k: dict(reader[k]) for k in reader.sections()}
+
+
+if __name__ == '__main__':
+    parser = argparse.ArgumentParser(description='Compile software.')
+    parser.add_argument('-j', dest='n_threads', type=int, default=1, help='number of threads')
+    parser.add_argument('target', type=str, help='target to build')
+    args = parser.parse_args(sys.argv[1:])
+
+    bconfig = read_config('boil.ini')
+
+    if 'command' in bconfig[args.target]:
+        os.system(bconfig[args.target]['command'])
+    else:
+        target_config = bconfig['generic']
+        target_config.update(bconfig[args.target])
+        make_target(target_config, n_threads=args.n_threads)
+

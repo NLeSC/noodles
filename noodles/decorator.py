@@ -124,3 +124,8 @@ def gather(*a):
     `gather` obsolete.
     """
     return list(a)
+
+
+@schedule
+def delay(value):
+    return value

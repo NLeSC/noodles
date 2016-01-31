@@ -1,9 +1,10 @@
 from noodles import (
     schedule, Scheduler, gather,
-    serial, Registry, AsDict, Storable)
-
+    serial, Storable)
+from noodles.serial import (Registry, AsDict)
 from noodles.datamodel import get_workflow
 from noodles.run.process import process_worker
+
 
 def registry():
     return Registry(parent=serial.base(), default=AsDict)

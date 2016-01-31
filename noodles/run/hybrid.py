@@ -94,9 +94,9 @@ def run_hybrid(wf, selector, workers):
     Returns the result of evaluating the workflow; runs through several
     supplied workers in as many threads.
 
-    :param workflow:
+    :param wf:
         Workflow to compute
-    :type workflow: :py:class:`Workflow` or :py:class:`PromisedObject`
+    :type wf: :py:class:`Workflow` or :py:class:`PromisedObject`
 
     :param selector:
         A function selecting the worker that should be run, given a hint.

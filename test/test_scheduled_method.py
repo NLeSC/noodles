@@ -1,5 +1,5 @@
-from noodles import (schedule, Scheduler, has_scheduled_methods,
-                     Registry, serial, AsDict)
+from noodles import (schedule, Scheduler, has_scheduled_methods, serial)
+from noodles.serial import (Registry, AsDict)
 from noodles.datamodel import get_workflow
 from noodles.run.process import process_worker
 
