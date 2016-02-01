@@ -49,5 +49,5 @@ class Display:
 
 def test_single_node():
     display = Display()
-    assert run_logging(g(5), 1, display) == 5
+    assert run_logging(g(5), 1, display, None) == 5
     display.wait()

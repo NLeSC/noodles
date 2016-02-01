@@ -1,7 +1,6 @@
 from noodles.data_types import is_workflow, get_workflow, Empty
 from noodles.data_graph import invert_links
 from noodles.datamodel import insert_result, is_node_ready
-from collections import namedtuple
 import uuid
 import sys
 
@@ -10,17 +9,23 @@ def run_job(node):
     return node.foo(*node.bound_args.args, **node.bound_args.kwargs)
 
 
-# def get_hints(node):
-#     return node.hints
+class Job:
+    def __init__(self, workflow, node):
+        self.workflow = workflow
+        self.node = node
 
-Job = namedtuple('Job', ['workflow', 'node'])
+    def __iter__(self):
+        return iter((self.workflow, self.node))
 
-# class Job:
-#     def __init__(self, workflow, node):
-#         self.workflow = workflow
-#         self.node = node
 
-DynamicLink = namedtuple('DynamicLink', ['source', 'target', 'node'])
+class DynamicLink:
+    def __init__(self, source, target, node):
+        self.source = source
+        self.target = target
+        self.node = node
+
+    def __iter__(self):
+        return iter((self.source, self.target, self.node))
 
 
 class Scheduler:
@@ -56,12 +61,15 @@ class Scheduler:
 
         # schedule work
         self.add_workflow(master, master, master.root, sink)
+        graceful_exit = False
 
         # process results
         for job_key, status, result in source:
             if status == 'error':
                 if self.handle_error:
-                    self.handle_error(self.jobs[job_key], result)
+                    wf, n = self.jobs[job_key]
+                    graceful_exit = self.handle_error(
+                        wf.nodes[n], result)
                 else:
                     raise result
 
@@ -70,6 +78,10 @@ class Scheduler:
                       result,
                       file=sys.stderr, flush=True)
             wf, n = self.jobs[job_key]
+
+            del self.jobs[job_key]
+            if len(self.jobs) == 0 and graceful_exit:
+                return
 
             # if we retrieve a workflow, push a child
             if is_workflow(result):
@@ -89,7 +101,7 @@ class Scheduler:
             # and insert it in the nodes that need it
             for (tgt, address) in wf.links[n]:
                 insert_result(wf.nodes[tgt], address, result)
-                if is_node_ready(wf.nodes[tgt]):
+                if is_node_ready(wf.nodes[tgt]) and not graceful_exit:
                     self.schedule(Job(workflow=wf, node=tgt), sink)
 
             # see if we're done

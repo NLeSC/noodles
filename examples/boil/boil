@@ -223,9 +223,7 @@ def make_target(config):
         for src_dir, src_file in files
     ]
 
-    return message(
-        "╰─(success)",
-        get_target(noodles.gather(*obj_files), config))
+    return get_target(noodles.gather(*obj_files), config)
 
 
 def read_config(filename):
@@ -255,13 +253,11 @@ if __name__ == '__main__':
     else:
         display = Display()
 
+        errors = []
         def error_handler(job, xcptn):
             if isinstance(xcptn, subprocess.CalledProcessError):
-                display.wait()
-                display.out << "╰─(" << ['fg', 240, 100, 60] << "ERROR!" \
-                            << ['reset'] << ") ⇒ output shown below.\n\n"
-                print(xcptn.stderr)
-                sys.exit(1)
+                errors.append((job, xcptn.stderr))
+                return True
             else:
                 raise xcptn
 
@@ -272,4 +268,15 @@ if __name__ == '__main__':
         noodles.run_logging(work, n_threads=args.n_threads, display=display,
                             error_handler=error_handler)
         display.wait()
+
+        if len(errors) > 0:
+            display.out << "╰─(" << ['fg', 240, 100, 60] << "ERROR!" \
+                        << ['reset'] << ") ⇒ output shown below.\n\n"
+            for e in errors:
+                msg = 'ERROR ' + e[0].hints['display'].format(**e[0].bound_args.arguments)
+                print(msg, '─'*(max(80-len(msg), 0)))
+                print(e[1])
+                print()
+        else:
+            display.out << "╰─(success)\n"
 

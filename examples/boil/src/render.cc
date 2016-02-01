@@ -1,8 +1,8 @@
 #include "types.hh"
 #include <iostream>
 
-void render(predicate pred, complex a, complex b) {
-    int width = 80, height = 24;
+void render(predicate pred, complex a, complex b, int width) {
+    int height = width/3;
     double scale_real = (b.real() - a.real()) / width;
     double scale_imag = (b.imag() - a.imag()) / height;
 
@@ -37,8 +37,8 @@ Colour colour_map(double x) {
     return Colour(int(r*255), int(g*255), int(b*255));
 }
 
-void render_double_colour(unit_map f, complex a, complex b) {
-    int width = 80, height = 48;
+void render_double_colour(unit_map f, complex a, complex b, int width) {
+    int height = (width * 10) / 16;
     double scale_real = (b.real() - a.real()) / width;
     double scale_imag = (b.imag() - a.imag()) / height;
 
@@ -50,13 +50,9 @@ void render_double_colour(unit_map f, complex a, complex b) {
                  clr2 = colour_map(f(c2));
 
             std::cout << "\033[38;2;" << clr1.r << ";"
-                      << clr1.g << ";"
-                      << clr1.b << "m"
+                      << clr1.g << ";" << clr1.b << "m"
                       << "\033[48;2;" << clr2.r << ";"
-                      << clr2.g << ";"
-                      << clr2.b
-                      << "m▀";
-                      //<< "m\0xe2\0x96\0x80";
+                      << clr2.g << ";" << clr2.b << "m▀";
         }
         std::cout << "\033[m\n";
     }
