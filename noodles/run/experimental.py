@@ -2,7 +2,6 @@ from .coroutines import (IOQueue, QueueConnection, coroutine_sink)
 from .scheduler import (run_job, Scheduler)
 from ..datamodel import (get_workflow)
 import threading
-import subprocess
 
 
 @coroutine_sink
@@ -19,28 +18,23 @@ def siphon_source(source, sink):
         yield value
 
 
-class Logger:
+class Logger(IOQueue):
     def __init__(self):
-        self.msg_q = IOQueue()
+        super(Logger, self).__init__()
 
     @coroutine_sink
     def job_sink(self):
-        msg_sink = self.msg_q.sink()
+        msg_sink = self.sink()
         while True:
             key, job = yield
-            msg_sink.send(('start', key))
+            msg_sink.send(('start', key, job))
 
     @coroutine_sink
     def result_sink(self):
-        msg_sink = self.msg_q.sink()
+        msg_sink = self.sink()
         while True:
-            key, result = yield
-            msg_sink.send(('finish', key))
-
-    def run(self):
-        source = self.msg_q.source()
-        for key, args in source:
-            print(key, args)
+            key, status, result = yield
+            msg_sink.send((status, key, result))
 
 
 def logging_worker(n_threads, display):
@@ -85,15 +79,14 @@ def logging_worker(n_threads, display):
         t.daemon = True
         t.start()
 
-    t_log = threading.Thread(
-        target=log.run, args=display)
+    t_log = threading.Thread(target=display, args=(log,))
     t_log.daemon = True
     t_log.start()
 
     return scheduler_connection
 
 
-def run_logging(wf, n_threads, display):
+def run_logging(wf, n_threads, display, error_handler):
     """
     Returns the result of evaluating the workflow; runs in several threads.
 
@@ -109,6 +102,10 @@ def run_logging(wf, n_threads, display):
     :param n_threads:
         Number of threads to use
     :type n_threads: int
+
+    :param error_handler:
+        Function to run in case a worker returns an error.
     """
     worker = logging_worker(n_threads, display)
-    return Scheduler().run(worker, get_workflow(wf))
+    return Scheduler(error_handler=error_handler)\
+        .run(worker, get_workflow(wf))

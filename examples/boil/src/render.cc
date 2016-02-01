@@ -37,21 +37,28 @@ Colour colour_map(double x) {
     return Colour(int(r*255), int(g*255), int(b*255));
 }
 
-void render_colour(unit_map f, complex a, complex b) {
-    int width = 80, height = 24;
+void render_double_colour(unit_map f, complex a, complex b) {
+    int width = 80, height = 48;
     double scale_real = (b.real() - a.real()) / width;
     double scale_imag = (b.imag() - a.imag()) / height;
 
-    for (unsigned j = 0; j < height; ++j) {
+    for (unsigned j = 0; j < height; j += 2) {
         for (unsigned i = 0; i < width; ++i) {
-            complex c = a + complex(i * scale_real, j * scale_imag);
-            auto colour = colour_map(f(c));
+            complex c1 = a + complex(i * scale_real, j * scale_imag);
+            complex c2 = a + complex(i * scale_real, (j+1) * scale_imag);
+            auto clr1 = colour_map(f(c1)),
+                 clr2 = colour_map(f(c2));
 
-            std::cout << "\033[38;2;" << colour.r << ";"
-                      << colour.g << ";"
-                      << colour.b << "m#";
+            std::cout << "\033[38;2;" << clr1.r << ";"
+                      << clr1.g << ";"
+                      << clr1.b << "m"
+                      << "\033[48;2;" << clr2.r << ";"
+                      << clr2.g << ";"
+                      << clr2.b
+                      << "m▀";
+                      //<< "m\0xe2\0x96\0x80";
         }
-        std::cout << std::endl;
+        std::cout << "\033[m\n";
     }
-    std::cout << "\033[m";
 }
+

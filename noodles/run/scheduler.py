@@ -29,13 +29,14 @@ class Scheduler:
     become ready to compute. This class communicates with a pool of workers
     by means of coroutines.
     """
-    def __init__(self, verbose=False):
+    def __init__(self, verbose=False, error_handler=None):
         self.dynamic_links = {}
         self.results = {}
         self.jobs = {}
         self.count = 0
         self.key_map = {}
         self.verbose = verbose
+        self.handle_error = error_handler
 
     def run(self, connection, master):
         """
@@ -58,6 +59,12 @@ class Scheduler:
 
         # process results
         for job_key, status, result in source:
+            if status == 'error':
+                if self.handle_error:
+                    self.handle_error(self.jobs[job_key], result)
+                else:
+                    raise result
+
             if self.verbose:
                 print("sched result [{0}]: ".format(self.key_map[job_key]),
                       result,
@@ -71,8 +78,10 @@ class Scheduler:
                 continue
 
             # if this result is the root of a workflow, pop to parent
-            if n == wf.root:
+            while n == wf.root:
                 _, wf, n = self.dynamic_links[id(wf)]
+                if wf == master and n == master.root:
+                    return result
 
             # save the result
             self.results[id(wf)][n] = result

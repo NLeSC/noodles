@@ -57,7 +57,7 @@ def threaded_worker(n_threads):
     return scheduler_connection
 
 
-def run_single(wf):
+def run_single(wf, verbose=False):
     """
     Returns the result of evaluting the workflow
 
@@ -66,7 +66,7 @@ def run_single(wf):
     :type wf: :py:class:`Workflow` or :py:class:`PromisedObject`
     """
     worker = single_worker()
-    return Scheduler().run(worker, get_workflow(wf))
+    return Scheduler(verbose).run(worker, get_workflow(wf))
 
 
 def run_parallel(wf, n_threads):

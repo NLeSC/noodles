@@ -9,12 +9,12 @@ from noodles.run.hybrid import run_hybrid
 from noodles.run.local import single_worker, threaded_worker
 
 
-@schedule_hint(1)
+@schedule_hint(n=1)
 def f(x):
     return 2*x
 
 
-@schedule_hint(2)
+@schedule_hint(n=2)
 def g(x):
     return 3*x
 
@@ -26,12 +26,12 @@ def h(x, y):
 
 def selector(job):
     if job.hints:
-        return job.hints[0]
+        return job.hints['n']
     else:
         return None
 
 
-@schedule_hint(1)
+@schedule_hint(n=1)
 def delayed(a, dt):
     time.sleep(dt)
     return a

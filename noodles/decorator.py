@@ -31,8 +31,8 @@ def has_scheduled_methods(cls):
     return cls
 
 
-def schedule_hint(*hints):
-    return scheduled_function(f, hints)
+def schedule_hint(**hints):
+    return lambda f: scheduled_function(f, hints)
 
 
 def unwrap(f):

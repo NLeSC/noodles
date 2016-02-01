@@ -10,7 +10,7 @@ int main(int argc_, char **argv_) {
 
     if (argv.size() >= 2 and argv[1] == "mandelbrot") {
         if (argv.size() >= 3 and argv[2] == "-c") {
-            render_colour(mandelbrot_c(256), complex(-2.15, -1), complex(0.85, 1));
+            render_double_colour(mandelbrot_c(256), complex(-2.15, -1), complex(0.85, 1));
         } else {
             render(mandelbrot(256), complex(-2, -1), complex(1, 1));
         }
@@ -20,7 +20,7 @@ int main(int argc_, char **argv_) {
     if (argv.size() >= 4 and argv[1] == "julia") {
         complex c(read<double>(argv[2]), read<double>(argv[3]));
         if (argv.size() >= 5 and argv[4] == "-c") {
-            render_colour(julia_c(c, 256), complex(-2, -1.2), complex(2, 1.2));
+            render_double_colour(julia_c(c, 256), complex(-2, -1.2), complex(2, 1.2));
         } else {
             render(julia(c, 256), complex(-2, -1.2), complex(2, 1.2));
         }

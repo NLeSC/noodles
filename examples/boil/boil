@@ -1,6 +1,7 @@
 #!/usr/bin/env python3.5
 
 import noodles
+from noodles.pretty_term import (OutStream)
 
 import os
 import sys
@@ -12,8 +13,48 @@ import argparse
 import subprocess
 
 
+class Display:
+    def __init__(self):
+        self.jobs = {}
+        self.out = OutStream(sys.stdout)
+
+    def start(self, key, job):
+        if job.hints and 'display' in job.hints:
+            self.add_job(key, job.hints)
+            self.out << job.hints['display'].format(
+                **job.bound_args.arguments) << "\n"
+
+    def done(self, key, data):
+        if key in self.jobs and 'confirm' in self.jobs[key]:
+            self.out << ['save'] << ['up', self.jobs[key]['line']] \
+                     << ['forward', 50]
+            self.out << "(" << ['fg', 60, 180, 100] << "✔" << ['reset'] \
+                     << ")" << ['restore']
+
+    def error(self, key, data):
+        if key in self.jobs and 'confirm' in self.jobs[key]:
+            self.out << ['save'] << ['up', self.jobs[key]['line']] \
+            << ['forward', 50]
+            self.out << "(" << ['fg', 240, 100, 60] << "✘" << ['reset'] \
+            << ")" << ['restore']
+
+    def add_job(self, key, hints):
+        for k in self.jobs:
+            self.jobs[k]['line'] += 1
+        self.jobs[key] = {'line': 1}
+        self.jobs[key].update(hints)
+
+    def __call__(self, q):
+        self.q = q
+        for status, key, data in q.source():
+            getattr(self, status)(key, data)
+
+    def wait(self):
+        self.q.wait()
+
+
 def find_files(path, ext):
-    """Find all files in `path` with extension `ext`. Returns an 
+    """Find all files in `path` with extension `ext`. Returns an
     iterator giving tuples (folder, (files...)).
 
     :param path:
@@ -41,7 +82,7 @@ def is_out_of_date(f, deps):
 
     for d in deps:
         d_stat = os.stat(d)
-        
+
         if d_stat.st_mtime_ns > f_stat.st_mtime_ns:
             return True
 
@@ -74,7 +115,7 @@ def object_filename(srcdir, filename, config):
     :param config:
         boil configuration"""
     target_dir = os.path.join(config['objdir'], srcdir)
-    
+
     # if target directory doesn't exists, create it
     if not os.path.exists(target_dir):
         os.makedirs(target_dir)
@@ -82,9 +123,10 @@ def object_filename(srcdir, filename, config):
     # construct name of object file
     basename = os.path.splitext(filename)[0]
     return os.path.join(target_dir, basename + '.o')
-    
 
-@noodles.schedule
+
+@noodles.schedule_hint(display="│   Compiling {source_file} ... ",
+                       confirm=True)
 def compile_source(source_file, object_file, config):
     """(scheduled) Compile a source file.
 
@@ -122,7 +164,8 @@ def get_obj_file(src_dir, src_file, config):
         return obj_path
 
 
-@noodles.schedule
+@noodles.schedule_hint(display="│   Linking ... ",
+                       confirm=True)
 def link(object_files, config):
     """(scheduled) Link object files to executable.
 
@@ -139,6 +182,11 @@ def link(object_files, config):
     return config['target']
 
 
+@noodles.schedule_hint(display="{msg}")
+def message(msg, value=0):
+    return value
+
+
 @noodles.schedule
 def get_target(obj_files, config):
     """Ensures that target is up-to-date.
@@ -149,18 +197,17 @@ def get_target(obj_files, config):
         boil configuration"""
     if is_out_of_date(config['target'], obj_files):
         return link(obj_files, config)
-    
-    return None
+    else:
+        return message("│   target is up-to-date.")
 
-    
-def make_target(config, n_threads):
+
+@noodles.schedule_hint(display="╭─(Building target {config[target]})")
+def make_target(config):
     """Make a target. First compiles the source files, then
     links the object files to create an executable.
 
     :param config:
-        boil configuration
-    :param n_threads:
-        number of threads to run in"""
+        boil configuration"""
     dirs = [config['srcdir']] + [
         os.path.normpath(os.path.join(config['srcdir'], d))
         for d in config['modules'].split()
@@ -176,10 +223,9 @@ def make_target(config, n_threads):
         for src_dir, src_file in files
     ]
 
-    work = get_target(noodles.gather(*obj_files), config)
-
-    if work:
-        noodles.run_logging(work, n_threads=n_threads)
+    return message(
+        "╰─(success)",
+        get_target(noodles.gather(*obj_files), config))
 
 
 def read_config(filename):
@@ -196,7 +242,8 @@ def read_config(filename):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Compile software.')
-    parser.add_argument('-j', dest='n_threads', type=int, default=1, help='number of threads')
+    parser.add_argument('-j', dest='n_threads', type=int,
+                        default=1, help='number of threads')
     parser.add_argument('target', type=str, help='target to build')
     args = parser.parse_args(sys.argv[1:])
 
@@ -204,8 +251,25 @@ if __name__ == '__main__':
 
     if 'command' in bconfig[args.target]:
         os.system(bconfig[args.target]['command'])
+
     else:
+        display = Display()
+
+        def error_handler(job, xcptn):
+            if isinstance(xcptn, subprocess.CalledProcessError):
+                display.wait()
+                display.out << "╰─(" << ['fg', 240, 100, 60] << "ERROR!" \
+                            << ['reset'] << ") ⇒ output shown below.\n\n"
+                print(xcptn.stderr)
+                sys.exit(1)
+            else:
+                raise xcptn
+
         target_config = bconfig['generic']
         target_config.update(bconfig[args.target])
-        make_target(target_config, n_threads=args.n_threads)
+        work = make_target(target_config)
+
+        noodles.run_logging(work, n_threads=args.n_threads, display=display,
+                            error_handler=error_handler)
+        display.wait()
 
