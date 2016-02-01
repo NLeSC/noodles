@@ -17,12 +17,14 @@ from .hybrid import hybrid_threaded_worker
 def read_result(registry, s):
     obj = registry.from_json(s)
     key = obj['key']
+    status = obj['status']
+
     try:
         key = uuid.UUID(key)
     except ValueError:
         pass
 
-    return key, obj['result']
+    return key, status, obj['result']
 
 
 def put_job(registry, host, key, job):
@@ -73,12 +75,12 @@ def process_worker(registry,
     def get_result():
         reg = registry()
         for line in p.stdout:
-            key, result = read_result(reg, line)
-            yield (key, result)
+            key, status, result = read_result(reg, line)
+            yield (key, status, result)
 
     if init is not None:
         send_job().send(("init", init()._workflow.root_node))
-        key, result = next(get_result())
+        key, status, result = next(get_result())
         if key != "init" or not result:
             raise RuntimeError("The initializer function did not succeed on worker.")
 

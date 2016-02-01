@@ -15,6 +15,11 @@ def run_job(node):
 
 Job = namedtuple('Job', ['workflow', 'node'])
 
+# class Job:
+#     def __init__(self, workflow, node):
+#         self.workflow = workflow
+#         self.node = node
+
 DynamicLink = namedtuple('DynamicLink', ['source', 'target', 'node'])
 
 
@@ -52,7 +57,7 @@ class Scheduler:
         self.add_workflow(master, master, master.root, sink)
 
         # process results
-        for job_key, result in source:
+        for job_key, status, result in source:
             if self.verbose:
                 print("sched result [{0}]: ".format(self.key_map[job_key]),
                       result,

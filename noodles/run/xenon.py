@@ -17,13 +17,14 @@ from jnius import autoclass
 
 def read_result(registry, s):
     obj = registry.from_json(s)
+    status = obj['status']
     key = obj['key']
     try:
         key = uuid.UUID(key)
     except ValueError:
         pass
 
-    return key, obj['result']
+    return key, status, obj['result']
 
 
 def put_job(registry, host, key, job):
@@ -173,8 +174,8 @@ def xenon_interactive_worker(config=None, init=None, finish=None):
 
     def get_result():
         for line in java_lines(J.streams.getStdout()):
-            key, result = read_result(registry, line)
-            yield (key, result)
+            key, status, result = read_result(registry, line)
+            yield (key, status, result)
 
     if init is not None:
         send_job().send(("init", init()._workflow.root_node))

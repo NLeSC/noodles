@@ -39,8 +39,12 @@ def get_job(registry, s):
     return obj['key'], obj['node']
 
 
-def put_result(registry, host, key, result):
-    return registry.to_json({'key': key, 'result': result}, host=host)
+def put_result(registry, host, key, status, result):
+    return registry.to_json({
+        'key': key,
+        'status': status,
+        'result': result
+    }, host=host)
 
 
 def run_batch_mode(args):
@@ -61,7 +65,7 @@ def run_online_mode(args):
 
             with redirect_stdout(sys.stderr):
                 result = run_job(job)
-            print(put_result(registry, args.name, key, result), flush=True)
+            print(put_result(registry, args.name, key, 'success', result), flush=True)
 
         if args.finish:
             line = sys.stdin.readline()
@@ -101,7 +105,7 @@ def run_online_mode(args):
                 # parent directory
                 os.chdir("..")
 
-            print(put_result(registry, args.name, key, result), flush=True)
+            print(put_result(registry, args.name, key, 'success', result), flush=True)
 
         if finish:
             run_job(finish)

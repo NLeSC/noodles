@@ -19,7 +19,7 @@ def single_worker():
         source = jobs.source()
 
         for key, job in source:
-            yield (key, run_job(job))
+            yield (key, 'done', run_job(job))
 
     return Connection(get_result, jobs.sink)
 
@@ -44,7 +44,7 @@ def threaded_worker(n_threads):
 
     def worker(source, sink):
         for key, job in source:
-            sink.send((key, run_job(job)))
+            sink.send((key, 'done', run_job(job)))
 
     for i in range(n_threads):
         t = threading.Thread(

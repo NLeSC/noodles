@@ -22,7 +22,6 @@ def siphon_source(source, sink):
 class Logger:
     def __init__(self):
         self.msg_q = IOQueue()
-        self.jobs = {}
 
     @coroutine_sink
     def job_sink(self):
@@ -44,12 +43,17 @@ class Logger:
             print(key, args)
 
 
-def logging_worker(n_threads):
+def logging_worker(n_threads, display):
     """Sets up a number of threads, each polling for jobs.
 
     :param n_threads:
         Number of threads to spawn.
     :type n_threads: int
+
+    :param display:
+        Display routine; gets passed information about jobs
+        running.
+    :type display: coroutine sink
 
     :returns:
         Connection to the job and result queues
@@ -68,11 +72,10 @@ def logging_worker(n_threads):
         for key, job in siphon_source(source, log.job_sink()):
             try:
                 result = run_job(job)
-                splice.send((key, result))
+                splice.send((key, 'done', result))
 
-            except subprocess.CalledProcessError as err_msg:
-                print(err_msg.stderr)
-                splice.send((key, 'ERROR!'))
+            except Exception as error:
+                splice.send((key, 'error', error))
 
     for i in range(n_threads):
         t = threading.Thread(
@@ -82,14 +85,15 @@ def logging_worker(n_threads):
         t.daemon = True
         t.start()
 
-    t_log = threading.Thread(target=log.run)
+    t_log = threading.Thread(
+        target=log.run, args=display)
     t_log.daemon = True
     t_log.start()
 
     return scheduler_connection
 
 
-def run_logging(wf, n_threads):
+def run_logging(wf, n_threads, display):
     """
     Returns the result of evaluating the workflow; runs in several threads.
 
@@ -97,9 +101,14 @@ def run_logging(wf, n_threads):
         Workflow to compute
     :type wf: :py:class:`Workflow` or :py:class:`PromisedObject`
 
+    :param display:
+        Display routine; gets passed information about jobs
+        running.
+    :type display: coroutine sink
+
     :param n_threads:
         Number of threads to use
     :type n_threads: int
     """
-    worker = logging_worker(n_threads)
+    worker = logging_worker(n_threads, display)
     return Scheduler().run(worker, get_workflow(wf))

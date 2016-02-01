@@ -3,7 +3,7 @@ from functools import wraps
 from .datamodel import from_call, get_workflow
 
 
-def schedule(f, hints=None):
+def scheduled_function(f, hints=None):
     """
     The Noodles schedule function decorator.
 
@@ -19,6 +19,10 @@ def schedule(f, hints=None):
     return wrapped
 
 
+def schedule(f):
+    return scheduled_function(f)
+
+
 def has_scheduled_methods(cls):
     for name, member in cls.__dict__.items():
         if hasattr(member, '__wrapped__'):
@@ -28,10 +32,7 @@ def has_scheduled_methods(cls):
 
 
 def schedule_hint(*hints):
-    def g(f):
-        return schedule(f, hints)
-
-    return g
+    return scheduled_function(f, hints)
 
 
 def unwrap(f):
@@ -102,7 +103,7 @@ class PromisedObject:
         self._workflow = get_workflow(_setattr(self._workflow, attr, value))
         # self._set_history[attr] = self._workflow
 
-    def __deepcopy__(self, memo):
+    def __deepcopy__(self, _):
         rnode = self._workflow.nodes[self._workflow.root]
         raise TypeError("A PromisedObject cannot be deepcopied.\n"
                         "hint: Derive your data class from Storable.\n"

@@ -38,7 +38,7 @@ Colour colour_map(double x) {
 }
 
 void render_colour(unit_map f, complex a, complex b) {
-    int width = 240, height = 72;
+    int width = 80, height = 24;
     double scale_real = (b.real() - a.real()) / width;
     double scale_imag = (b.imag() - a.imag()) / height;
 

@@ -70,7 +70,7 @@ def tic_worker(tic):
 
         for key, job in source:
             tic()
-            yield (key, run_job(job))
+            yield (key, 'done', run_job(job))
 
     return Connection(get_result, jobs.sink)
 

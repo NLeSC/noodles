@@ -5,7 +5,7 @@
 int __assert_fail(std::string const &expr, std::string const &file, int lineno)
 {
     std::ostringstream oss;
-    oss << file, ":", lineno, ": Assertion failed: ", expr;
+    oss << file << ":" << lineno << ": Assertion failed: " << expr;
     throw oss.str();
     return 0;
 }

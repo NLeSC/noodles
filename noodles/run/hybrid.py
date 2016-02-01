@@ -29,7 +29,7 @@ def hybrid_coroutine_worker(selector, workers):
         for key, job in source:
             worker = selector(job)
             if worker is None:
-                yield (key, run_job(job))
+                yield (key, 'done', run_job(job))
             else:
                 # send the worker a job and wait for it to return
                 worker_sink[worker].send((key, job))
@@ -77,7 +77,7 @@ def hybrid_threaded_worker(selector, workers):
                 worker_sink[worker].send((key, job))
             else:
                 result = run_job(job)
-                default_sink.send((key, result))
+                default_sink.send((key, 'done', result))
 
     for k, source in worker_source.items():
         t = threading.Thread(
