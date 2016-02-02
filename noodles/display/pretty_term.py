@@ -1,7 +1,7 @@
 
 term_codes = {
-    'fg':        (38, lambda r, g, b: ";2;{0};{1};{2}".format(r, g, b), 'm'),
-    'bg':        (48, lambda r, g, b: ";2;{0};{1};{2}".format(r, g, b), 'm'),
+    'fg':        (38, lambda r, g, b: ';2;{0};{1};{2}'.format(r, g, b), 'm'),
+    'bg':        (48, lambda r, g, b: ';2;{0};{1};{2}'.format(r, g, b), 'm'),
     'bold':      (1,  'm'),
     'underline': (4,  'm'),
     'regular':   (23, 'm'),
@@ -10,11 +10,11 @@ term_codes = {
     'back':      (lambda n=1: str(n), 'D'),
     'forward':   (lambda n=1: str(n), 'C'),
     'newline':   ('1E',),
-    'up':        ("{0}".format, 'A'),
-    'down':      ("{0}".format, 'B'),
+    'up':        ('{0}'.format, 'A'),
+    'down':      ('{0}'.format, 'B'),
     'save':      ('s',),
     'restore':   ('u',),
-    'move':      ("{0};{1}".format, 'H'),
+    'move':      ('{0};{1}'.format, 'H'),
     'clear':     ('2J',),
     'reverse':   ('7m',)}
 
@@ -26,7 +26,7 @@ def make_escape(cmd, *args):
         else:
             return str(x)
 
-    return "\033[" + ''.join(map(f, term_codes[cmd]))
+    return '\033[' + ''.join(map(f, term_codes[cmd]))
 
 
 class OutStream:
@@ -34,6 +34,7 @@ class OutStream:
         self.f = f
 
     def __lshift__(self, x):
+        """Emulate the much liked C++ syntax for chaining output."""
         if isinstance(x, list):
             self.f.write(make_escape(*x))
             self.f.flush()

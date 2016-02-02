@@ -41,7 +41,7 @@ class Display:
     def __call__(self, q):
         self.q = q
         for status, key, data in q.source():
-            print(status, key, data, file=sys.stderr)
+            print(status, key, data, file=sys.stdout)
 
     def wait(self):
         self.q.wait()

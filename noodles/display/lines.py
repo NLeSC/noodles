@@ -5,6 +5,7 @@
 """
 
 import sys
+
 from .pretty_term import OutStream
 
 

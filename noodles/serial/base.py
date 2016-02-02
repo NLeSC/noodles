@@ -103,8 +103,8 @@ class SerStorable(Serialiser):
     def __init__(self):
         super(SerStorable, self).__init__(Storable)
 
-    def encode(self, obj, make_rec):
-        return make_rec(
+    def encode(self, obj, make_reca):
+        return make_reca(
             {'type': object_name(type(obj)),
              'dict': obj.as_dict()},
             ref=obj._noodles.ref,
@@ -143,8 +143,8 @@ def _noodles_hook(obj):
     if hasattr(obj, '__member_of__') and obj.__member_of__:
         return '<method>'
 
-    if hasattr(obj, 'as_dict') and hasattr(type(obj), 'from_dict'):
-        return '<auto-storable>'
+    # if hasattr(obj, 'as_dict') and hasattr(type(obj), 'from_dict'):
+    #    return '<auto-storable>'
 
     if importable(obj):
         return '<importable>'
@@ -168,8 +168,8 @@ def registry():
         },
         hooks={
             '<method>': SerMethod(),
-            '<importable>': SerImportable(),
-            '<auto-storable>': SerAutoStorable()
+            '<importable>': SerImportable()
+            # '<auto-storable>': SerAutoStorable()
         },
         hook_fn=_noodles_hook,
         default=Serialiser(object),

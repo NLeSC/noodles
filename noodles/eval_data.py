@@ -1,7 +1,7 @@
 from .storable import Storable
 
 
-class Lambda:
+class Lambda(Storable):
     """Serializable storage for a lambda-expression.
 
     The user may want to sprinkle her/his code with little lambda-functions.

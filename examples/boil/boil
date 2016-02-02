@@ -1,56 +1,16 @@
 #!/usr/bin/env python3.5
 
-import noodles
-from noodles.pretty_term import (OutStream)
-
-import os
+import argparse
+import configparser
+import subprocess
 import sys
-import re
 from itertools import chain
 
-import configparser
-import argparse
-import subprocess
+import noodles
+import os
+import re
 
-
-class Display:
-    def __init__(self):
-        self.jobs = {}
-        self.out = OutStream(sys.stdout)
-
-    def start(self, key, job):
-        if job.hints and 'display' in job.hints:
-            self.add_job(key, job.hints)
-            self.out << job.hints['display'].format(
-                **job.bound_args.arguments) << "\n"
-
-    def done(self, key, data):
-        if key in self.jobs and 'confirm' in self.jobs[key]:
-            self.out << ['save'] << ['up', self.jobs[key]['line']] \
-                     << ['forward', 50]
-            self.out << "(" << ['fg', 60, 180, 100] << "✔" << ['reset'] \
-                     << ")" << ['restore']
-
-    def error(self, key, data):
-        if key in self.jobs and 'confirm' in self.jobs[key]:
-            self.out << ['save'] << ['up', self.jobs[key]['line']] \
-            << ['forward', 50]
-            self.out << "(" << ['fg', 240, 100, 60] << "✘" << ['reset'] \
-            << ")" << ['restore']
-
-    def add_job(self, key, hints):
-        for k in self.jobs:
-            self.jobs[k]['line'] += 1
-        self.jobs[key] = {'line': 1}
-        self.jobs[key].update(hints)
-
-    def __call__(self, q):
-        self.q = q
-        for status, key, data in q.source():
-            getattr(self, status)(key, data)
-
-    def wait(self):
-        self.q.wait()
+from noodles.display import SimpleDisplay
 
 
 def find_files(path, ext):
@@ -128,14 +88,6 @@ def object_filename(srcdir, filename, config):
 @noodles.schedule_hint(display="│   Compiling {source_file} ... ",
                        confirm=True)
 def compile_source(source_file, object_file, config):
-    """(scheduled) Compile a source file.
-
-    :param source_file:
-        source file
-    :param object_file:
-        target object file
-    :param config:
-        boil configuration"""
     p = subprocess.run(
         [config['cc'], '-c'] + config['cflags'].split() \
             + [source_file, '-o', object_file],
@@ -167,12 +119,6 @@ def get_obj_file(src_dir, src_file, config):
 @noodles.schedule_hint(display="│   Linking ... ",
                        confirm=True)
 def link(object_files, config):
-    """(scheduled) Link object files to executable.
-
-    :param object_files:
-        list of object files
-    :param config:
-        boil configuration"""
     p = subprocess.run(
         [config['cc']] + object_files + ['-o', config['target']] \
             + config['ldflags'].split(),
@@ -251,9 +197,10 @@ if __name__ == '__main__':
         os.system(bconfig[args.target]['command'])
 
     else:
-        display = Display()
+        display = SimpleDisplay()
 
         errors = []
+
         def error_handler(job, xcptn):
             if isinstance(xcptn, subprocess.CalledProcessError):
                 errors.append((job, xcptn.stderr))
