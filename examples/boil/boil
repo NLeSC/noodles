@@ -5,11 +5,11 @@ import configparser
 import subprocess
 import sys
 from itertools import chain
-
-import noodles
 import os
 import re
 
+
+import noodles
 from noodles.display import SimpleDisplay
 
 
@@ -27,6 +27,7 @@ def find_files(path, ext):
                 yield (folder, f)
 
 
+# @noodles.schedule
 def is_out_of_date(f, deps):
     """Check if file `f` needs to be updated. Returns True if any
     of the dependencies are newer than `f`.
@@ -97,7 +98,7 @@ def compile_source(source_file, object_file, config):
     return object_file
 
 
-def get_obj_file(src_dir, src_file, config):
+def get_object_file(src_dir, src_file, config):
     """Ensures existence of up-to-date object file.
 
     :param src_dir:
@@ -134,6 +135,14 @@ def message(msg, value=0):
 
 
 @noodles.schedule
+def cond(pred, when_true, when_false):
+    if pred:
+        return when_true
+    else:
+        return when_false
+
+
+@noodles.schedule
 def get_target(obj_files, config):
     """Ensures that target is up-to-date.
 
@@ -164,19 +173,28 @@ def make_target(config):
         for d in dirs)
     )
 
-    obj_files = [
-        get_obj_file(src_dir, src_file, config)
+    obj_files = noodles.gather(*[
+        get_object_file(src_dir, src_file, config)
         for src_dir, src_file in files
-    ]
+        ])
 
-    return get_target(noodles.gather(*obj_files), config)
+    # return cond(
+    #     is_out_of_date(config['target'], obj_files),
+    #     noodles.delay(link(obj_files, config)),
+    #     noodles.delay(message("│   target is up-to-date."))
+    # )
+
+    return get_target(obj_files, config)
 
 
 def read_config(filename):
-    """Read configuration.
+    """Read configuration from `filename` and convert it to a nested dict.
 
     :param filename:
-        name of an .ini file to read"""
+        name of an .ini file to read
+
+    :returns:
+        dictionary."""
     reader = configparser.ConfigParser(
         interpolation=configparser.ExtendedInterpolation())
     reader.read(filename)
@@ -184,46 +202,48 @@ def read_config(filename):
     return {k: dict(reader[k]) for k in reader.sections()}
 
 
+def error_filter(xcptn):
+    if isinstance(xcptn, subprocess.CalledProcessError):
+        return xcptn.stderr
+    else:
+        return None
+
+
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser(description='Compile software.')
-    parser.add_argument('-j', dest='n_threads', type=int,
-                        default=1, help='number of threads')
-    parser.add_argument('target', type=str, help='target to build')
+    parser = argparse.ArgumentParser(
+        description="Compile software. Configuration is in 'boil.ini'.")
+    parser.add_argument(
+        '-j', dest='n_threads', type=int, default=1,
+        help='number of threads to run simultaneously.')
+    parser.add_argument(
+        'target', type=str,
+        help='target to build, give \'list\' to list targets.')
     args = parser.parse_args(sys.argv[1:])
 
+    if not os.path.exists('boil.ini'):
+        print("No boil.ini in current directory.")
+        sys.exit(1)
+
     bconfig = read_config('boil.ini')
+
+    if 'generic' not in bconfig:
+        print("Error: Configuration has no 'generic' section.")
+        sys.exit(1)
+
+    if args.target == 'list':
+        targets = list(bconfig.keys())
+        targets.remove('generic')
+        print("Possible targets: ", ', '.join(targets))
+        sys.exit(0)
 
     if 'command' in bconfig[args.target]:
         os.system(bconfig[args.target]['command'])
 
     else:
-        display = SimpleDisplay()
-
-        errors = []
-
-        def error_handler(job, xcptn):
-            if isinstance(xcptn, subprocess.CalledProcessError):
-                errors.append((job, xcptn.stderr))
-                return True
-            else:
-                raise xcptn
-
         target_config = bconfig['generic']
         target_config.update(bconfig[args.target])
         work = make_target(target_config)
 
-        noodles.run_logging(work, n_threads=args.n_threads, display=display,
-                            error_handler=error_handler)
-        display.wait()
-
-        if len(errors) > 0:
-            display.out << "╰─(" << ['fg', 240, 100, 60] << "ERROR!" \
-                        << ['reset'] << ") ⇒ output shown below.\n\n"
-            for e in errors:
-                msg = 'ERROR ' + e[0].hints['display'].format(**e[0].bound_args.arguments)
-                print(msg, '─'*(max(80-len(msg), 0)))
-                print(e[1])
-                print()
-        else:
-            display.out << "╰─(success)\n"
+        with SimpleDisplay(error_filter) as display:
+            noodles.run_logging(work, args.n_threads, display)
 

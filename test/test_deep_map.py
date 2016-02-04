@@ -1,4 +1,4 @@
-from noodles.utility import deep_map_2
+from noodles.utility import deep_map
 
 
 class A:
@@ -26,7 +26,7 @@ def test_deep_map():
     d = B([a, b])
     e = A({'one': c, 'two': d})
 
-    result = deep_map_2(translate, e)
+    result = deep_map(translate, e)
     print(result)
     assert result['value']['two']['value'][0]['value'] == 5
     assert result['value']['one']['type'] == 'B'

@@ -1,5 +1,5 @@
 from queue import Queue
-from ..utility import object_name, look_up, deep_map_2
+from ..utility import object_name, look_up, deep_map
 import noodles
 import json
 import sys
@@ -216,7 +216,7 @@ class Registry(object):
         :param host:
             hostname where this object is being encoded.
         :type host: str"""
-        return json.dumps(deep_map_2(lambda o: self.encode(o, host), obj))
+        return json.dumps(deep_map(lambda o: self.encode(o, host), obj))
 
     def from_json(self, data, deref=False):
         """Decode the string from JSON to return the original object (if

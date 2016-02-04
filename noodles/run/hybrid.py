@@ -2,7 +2,7 @@ import threading
 
 from noodles.datamodel import get_workflow
 from noodles.run.coroutines import IOQueue, Connection, patch, coroutine_sink
-from noodles.utility import map_dict, unzip_dict
+from noodles.utility import unzip_dict
 from .scheduler import run_job, Scheduler
 
 
@@ -21,7 +21,7 @@ def hybrid_coroutine_worker(selector, workers):
     jobs = IOQueue()
 
     worker_source, worker_sink = unzip_dict(
-        map_dict(lambda w: w.setup(), workers))
+        {k: w.setup() for k, w in workers.items()})
 
     def get_result():
         source = jobs.source()
@@ -64,7 +64,7 @@ def hybrid_threaded_worker(selector, workers):
     results = IOQueue()
 
     worker_source, worker_sink = unzip_dict(
-        map_dict(lambda w: w.setup(), workers))
+        {k: w.setup() for k, w in workers.items()})
 
     @coroutine_sink
     def dispatch_job():

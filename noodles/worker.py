@@ -99,7 +99,9 @@ def run_online_mode(args):
 
             if args.verbose:
                 print("result: ", result, file=sys.stderr, flush=True)
-                print("json: ", put_result(registry, args.name, key, result), file=sys.stderr, flush=True)
+                print("json: ", put_result(
+                    registry, args.name, key,
+                    'success', result), file=sys.stderr, flush=True)
 
             if args.jobdirs:
                 # parent directory

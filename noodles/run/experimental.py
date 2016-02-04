@@ -86,7 +86,7 @@ def logging_worker(n_threads, display):
     return scheduler_connection
 
 
-def run_logging(wf, n_threads, display, error_handler):
+def run_logging(wf, n_threads, display):
     """
     Returns the result of evaluating the workflow; runs in several threads.
 
@@ -107,5 +107,5 @@ def run_logging(wf, n_threads, display, error_handler):
         Function to run in case a worker returns an error.
     """
     worker = logging_worker(n_threads, display)
-    return Scheduler(error_handler=error_handler)\
+    return Scheduler(error_handler=display.error_handler)\
         .run(worker, get_workflow(wf))

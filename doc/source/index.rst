@@ -14,6 +14,7 @@ Contents:
    Introduction <self>
    eating
    cooking
+   boil_tutorial
    development
    scheduler
 

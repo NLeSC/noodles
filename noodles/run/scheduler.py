@@ -68,8 +68,8 @@ class Scheduler:
             if status == 'error':
                 if self.handle_error:
                     wf, n = self.jobs[job_key]
-                    graceful_exit = self.handle_error(
-                        wf.nodes[n], result)
+                    self.handle_error(wf.nodes[n], result)
+                    graceful_exit = True
                 else:
                     raise result
 

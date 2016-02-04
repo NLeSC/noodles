@@ -46,8 +46,17 @@ class Display:
     def wait(self):
         self.q.wait()
 
+    def error_handler(self, job, xcptn):
+        pass
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        self.wait()
+        return False
+
 
 def test_single_node():
-    display = Display()
-    assert run_logging(g(5), 1, display, None) == 5
-    display.wait()
+    with Display() as display:
+        assert run_logging(g(5), 1, display) == 5
