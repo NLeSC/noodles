@@ -2,7 +2,8 @@ from .registry import (Registry, Serialiser)
 from ..utility import (object_name, look_up, importable)
 from ..datamodel import (Workflow, Node, FunctionNode, ArgumentAddress,
                          ArgumentKind, reset_workflow)
-from ..storable import Storable
+from ..storable import (Storable, StorableTraits)
+from .as_dict import (AsDict)
 
 from enum import Enum
 from inspect import isfunction
@@ -107,8 +108,8 @@ class SerStorable(Serialiser):
         return make_reca(
             {'type': object_name(type(obj)),
              'dict': obj.as_dict()},
-            ref=obj._noodles.ref,
-            files=obj._noodles.files)
+            ref=obj._storable.ref,
+            files=obj._storable.files)
 
     def decode(self, _, data):
         cls = look_up(data['type'])
@@ -165,6 +166,7 @@ def registry():
             ArgumentAddress: SerNamedTuple(ArgumentAddress),
             Workflow: SerWorkflow(),
             Storable: SerStorable(),
+            StorableTraits: AsDict(StorableTraits)
         },
         hooks={
             '<method>': SerMethod(),

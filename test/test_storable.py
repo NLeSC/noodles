@@ -1,11 +1,12 @@
-from noodles import schedule, run_single
+from noodles import schedule, run_single, run_process, serial
 from noodles.storable import Storable, storable
 
 from nose.tools import raises
 
 
 class A(Storable):
-    pass
+    def __init__(self):
+        super(A, self).__init__()
 
 
 class M(object):
@@ -32,7 +33,7 @@ def test_storable():
     b.x = f(3, 4)
 
     c = g(a, b)
-    result = run_single(c)
+    result = run_process(c, n_processes=1, registry=serial.base)
     assert result == 8
 
 

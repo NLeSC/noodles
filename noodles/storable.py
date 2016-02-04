@@ -16,14 +16,11 @@ def storable(obj):
     return isinstance(obj, Storable)
 
 
-def copy_if_normal(memo):
-    def f(obj):
-        if isinstance(obj, PromisedObject):
-            return obj
-        else:
-            return deepcopy(obj, memo)
-
-    return f
+def copy_if_normal(obj, memo):
+    if isinstance(obj, PromisedObject):
+        return obj
+    else:
+        return deepcopy(obj, memo)
 
 
 def from_dict(cls, **kwargs):
@@ -54,12 +51,12 @@ class Storable:
             relevant data if this object is needed on another host.
         :type files: [str]
         """
-        self._noodles = StorableTraits(ref, files)
+        self._storable = StorableTraits(ref, files)
 
     @property
     def files(self):
         """List of files that this object saves to."""
-        return self._noodles.files
+        return self._storable.files
 
     def as_dict(self):
         """Converts the object to a `dict` containing the members
@@ -76,7 +73,8 @@ class Storable:
         an external file. In this case the corresponding filename needs
         to be appended to `self.files`.
         """
-        return self.__dict__
+        d = dict(self.__dict__)
+        return d
 
     @classmethod
     def from_dict(cls, **kwargs):
@@ -94,7 +92,7 @@ class Storable:
 
     def __deepcopy__(self, memo):
         cls = self.__class__
-        tmp = map_dict(copy_if_normal(memo), self.as_dict())
+        tmp = {k: copy_if_normal(v, memo) for k, v in self.as_dict().items()}
 
         if any(isinstance(x, PromisedObject) for x in tmp.values()):
             return schedule(from_dict)(cls, **tmp)
