@@ -81,7 +81,6 @@ class SerMethod(Serialiser):
         super(SerMethod, self).__init__('<method>')
 
     def encode(self, obj, make_rec):
-        print("Encoder: ", obj, file=sys.stderr, flush=True)
         return make_rec({'class': object_name(obj.__member_of__),
                          'method': obj.__name__})
 
@@ -142,7 +141,7 @@ class SerNode(Serialiser):
 
 
 def _noodles_hook(obj):
-    if hasattr(obj, '__member_of__') and obj.__member_of__:
+    if '__member_of__' in dir(obj) and obj.__member_of__:
         return '<method>'
 
     # if hasattr(obj, 'as_dict') and hasattr(type(obj), 'from_dict'):
