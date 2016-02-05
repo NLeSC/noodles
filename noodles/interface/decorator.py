@@ -1,4 +1,5 @@
 from functools import wraps
+from itertools import count
 
 from noodles.datamodel import from_call, get_workflow
 
@@ -102,6 +103,11 @@ class PromisedObject:
 
         self._workflow = get_workflow(_setattr(self._workflow, attr, value))
         # self._set_history[attr] = self._workflow
+
+    def __iter__(self):
+        """Emulates iteration of object by using ``__getitem__`` with
+        a numeric index. This covers at least unpacking of lists and tuples."""
+        return map(lambda i: _getitem(self._workflow, i), count())
 
     def __deepcopy__(self, _):
         rnode = self._workflow.nodes[self._workflow.root]

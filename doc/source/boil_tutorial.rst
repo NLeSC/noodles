@@ -1,8 +1,13 @@
 .. highlight:: python
     :linenothreshold: 5
 
+
 Real World Tutorial 1: Boil, a make tool.
 =========================================
+
+.. toctree::
+
+    boil_source
 
 This tutorial should teach you the basics of using Noodles to parallelise a Python program. We will see some of the quirks that come with programming in a strict functional environment.
 
@@ -48,7 +53,7 @@ The function for linking object files to an executable looks very similar:
 
 In this case the function takes a list of object file names and the same configuration object that we saw before. Again, this function returns the name of the target executable file. The caller of this function already knows the name of the target file, but we need it to track dependencies.
 
-Since both the `link` and the `compile_source` functions do actual work that we'd like to see being done in a concurrent environment, they need to be decorated with the `@schedule` decorator.
+Since both the `link` and the `compile_source` functions do actual work that we'd like to see being done in a concurrent environment, they need to be decorated with the :py:func:`schedule` decorator.
 
 One of the great perks of using Make, is that it skips building any files that are already up-to-date with the source code. If our little build script is to compete with such efficiency, we should do the same!
 
@@ -95,7 +100,7 @@ In this case we have the function `is_out_of_date` that determines whether we ne
         else:
             return message("target is up-to-date.")
 
-Since we need the answer to `is_out_of_date` now and not tomorrow, the `is_out_of_date` function cannot be a scheduled function. Python doesn't know the truth value of a `PromisedObject`. The `message` function is not a special function; it just prints a message and returns a value (optional second argument). We still need to optionalise the compilation step. Since all of the information needed to decide whether to compile or not is already present, we can make this a normal Python function; there is no need to schedule anything.
+Since we need the answer to `is_out_of_date` now and not tomorrow, the `is_out_of_date` function cannot be a scheduled function. Python doesn't know the truth value of a :py:class:`PromisedObject`. The `message` function is not a special function; it just prints a message and returns a value (optional second argument). We still need to optionalise the compilation step. Since all of the information needed to decide whether to compile or not is already present, we can make this a normal Python function; there is no need to schedule anything.
 
 ::
 
@@ -136,11 +141,11 @@ We are now ready to put these functions together in a workflow!
 
 Let's go through this step-by-step. The `make_target` function takes one argument, the config object. We obtain from the configuration the directories to search for source files. We then search these directories for any files with the correct file extension, stored in `config['ext']`. The variable `files` now contains a list of pairs, each pair having a directory and file name. So far we have not yet used any Noodles code.
 
-Next we pass each source file through the `get_object_file` function in a list comprehension. The resulting list contains both `PromisedObject`s and strings; strings for all the object files that are already up-to-date. To pass this list to the linking stage we have to make sure that Noodles understands that the list is something that is being promised. If we were to pass it as is, Noodles just sees a list as an argument to `get_target` and doesn't look any deeper.
+Next we pass each source file through the `get_object_file` function in a list comprehension. The resulting list contains both :py:class:`PromisedObject` and string values; strings for all the object files that are already up-to-date. To pass this list to the linking stage we have to make sure that Noodles understands that the list is something that is being promised. If we were to pass it as is, Noodles just sees a list as an argument to `get_target` and doesn't look any deeper.
 
 .. NOTE:: Every `PromisedObject` has to be passed as an argument to a scheduled function in order to be evaluated. To pass a list to a scheduled function, we have to convert the list of promises into a promise of a list.
 
-The function `gather` solves this little problem; it's definition is very simple:
+The function :py:func:`gather` solves this little problem; it's definition is very simple:
 
 ::
 
@@ -148,9 +153,42 @@ The function `gather` solves this little problem; it's definition is very simple
     def gather(*args):
         return list(args)
 
-Now that the variable `obj_files` is a `PromisedObject`, we can pass it to `get_target`, giving us the final workflow. Running this workflow can be as simple as `run_single(wf)` or `run_parallel(wf, n_threads=4)`.
+Now that the variable `obj_files` is a :py:class:`PromisedObject`, we can pass it to `get_target`, giving us the final workflow. Running this workflow can be as simple as ``run_single(wf)`` or ``run_parallel(wf, n_threads=4)``.
 
 Friendly output and error handling
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-The code as defined above will run, but if the compiler gives error messages it will crash in a very ugly manner. Noodles has some features that will make our fledgeling Make utility much prettier.
+The code as defined above will run, but if the compiler gives error messages it will crash in a very ugly manner. Noodles has some features that will make our fledgeling Make utility much prettier. We can decorate our functions further with information on how to notify the user of things happening.
+
+::
+
+    @schedule_hint(display="Compiling {source_file} ... ",
+                   confirm=True)
+    def compile_source(source_file, object_file, config):
+        pass
+
+The :py:func:`schedule_hint` decorator attaches hints to the scheduled function. These hints can be used in any fashion we like, depending on the workers that we use to evaluate the workflow. In this case we use the :py:func:`run_logging` worker, with the :py:class:`SimpleDisplay` class to take care of screen output.
+
+::
+
+    with SimpleDisplay(error_filter) as display:
+        noodles.run_logging(work, args.n_threads, display)
+
+The ``error_filter`` function determines what errors are expected and how we print the exceptions that are caught. In our case we expect exceptions of type :py:exc:`subprocess.CalledProcessError` in the case of a compiler error. Otherwise the exception is unexpected and should be treated as a bug in Boil!
+
+::
+
+    def error_filter(xcptn):
+        if isinstance(xcptn, subprocess.CalledProcessError):
+            return xcptn.stderr
+        else:
+            return None
+
+The ``display`` tag in the hinst tells the ``display`` object to print a text when the job is started.
+The ``confirm`` flag in the hints tells the ``display`` object that a function is error-prone and to draw a green checkmark on success and a red X in case of failure.
+
+Conclusion
+~~~~~~~~~~
+
+You should now be able to fully understand the sourcecode of Boil!
+

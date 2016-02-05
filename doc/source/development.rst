@@ -10,7 +10,7 @@ Internal Specs
 
 Promised object
 ---------------
-.. automodule:: noodles.decorator
+.. automodule:: noodles.interface
     :members: PromisedObject
 
 Runners
