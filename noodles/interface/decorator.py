@@ -73,7 +73,6 @@ class PromisedObject:
     """
     def __init__(self, workflow):
         self._workflow = workflow
-        # self._set_history = {}
 
     def __call__(self, *args, **kwargs):
         return _do_call(self._workflow, *args, **kwargs)
@@ -82,18 +81,6 @@ class PromisedObject:
         return _getitem(self._workflow, name)
 
     def __getattr__(self, attr):
-        # apparently these lines are completely superfluous, but I don't know
-        # why. There was no way in which I could trigger the if statement to
-        # evaluate True.
-        # if attr[0] == '_':
-        #     return self.__dict__[attr]
-
-        # # if we know when an attribute was set, take that version
-        # # of the workflow.
-        # if attr in self._set_history:
-        #     return _getattr(self._set_history[attr], attr)
-        #
-        # # otherwise take the most recent version.
         return _getattr(self._workflow, attr)
 
     def __setattr__(self, attr, value):
@@ -102,17 +89,19 @@ class PromisedObject:
             return
 
         self._workflow = get_workflow(_setattr(self._workflow, attr, value))
-        # self._set_history[attr] = self._workflow
 
     def __iter__(self):
-        """Emulates iteration of object by using ``__getitem__`` with
-        a numeric index. This covers at least unpacking of lists and tuples."""
-        return map(lambda i: _getitem(self._workflow, i), count())
+        raise TypeError(
+            "You tried to iterate (or unpack) a PromisedObject. "
+            "There is currently no possible way to learn the arity"
+            "or length of a PromisedObject so, sadly, this is not "
+            "implemented.")
 
     def __deepcopy__(self, _):
         rnode = self._workflow.nodes[self._workflow.root]
-        raise TypeError("A PromisedObject cannot be deepcopied.\n"
-                        "hint: Derive your data class from Storable.\n"
-                        "info: {0} {1}".format(rnode.foo, rnode.node()))
+        raise TypeError(
+            "A PromisedObject cannot be deepcopied.\n"
+            "hint: Derive your data class from Storable.\n"
+            "info: {0} {1}".format(rnode.foo, rnode.node()))
 
 
