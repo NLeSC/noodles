@@ -245,8 +245,14 @@ class Serialiser(object):
         was derived from `base`. The supposed base-class is kept here for
         reference but serves no immediate purpose.
     :type base: type"""
-    def __init__(self, base):
-        self.base = base
+    def __init__(self, name):
+        if isinstance(name, str):
+            self.name = name
+        else:
+            try:
+                self.name = name.__name__
+            except AttributeError:
+                self.name = '<unknown>'
 
     def encode(self, obj, make_rec):
         """Should encode an object of type `self.base` (or derived).
@@ -275,6 +281,9 @@ class Serialiser(object):
 
         :param make_rec:
             Function used to pack the encoded data with some meta-data."""
+        if obj is None:
+            raise RuntimeError("Object None should not reach encoder.")
+
         msg = "Cannot encode {}: encoder for type `{}` is not implemented." \
             .format(obj, type(obj).__name__)
 

@@ -78,7 +78,7 @@ class SerWorkflow(Serialiser):
 
 class SerMethod(Serialiser):
     def __init__(self):
-        super(SerMethod, self).__init__(None)
+        super(SerMethod, self).__init__('<method>')
 
     def encode(self, obj, make_rec):
         return make_rec({'class': object_name(obj.__member_of__),
@@ -91,7 +91,7 @@ class SerMethod(Serialiser):
 
 class SerImportable(Serialiser):
     def __init__(self):
-        super(SerImportable, self).__init__(None)
+        super(SerImportable, self).__init__('<importable>')
 
     def encode(self, obj, make_rec):
         return make_rec(object_name(obj))
@@ -118,7 +118,7 @@ class SerStorable(Serialiser):
 
 class SerAutoStorable(Serialiser):
     def __init__(self):
-        super(SerAutoStorable, self).__init__(object)
+        super(SerAutoStorable, self).__init__('<autostorable>')
 
     def encode(self, obj, make_rec):
         return make_rec({'type': object_name(type(obj)),
