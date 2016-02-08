@@ -12,7 +12,7 @@ with open(path.join(here, 'README.rst'), encoding='utf-8') as f:
 
 setup(
     name='Noodles',
-    version='0.1.9224',
+    version='0.1.9225',
     description='Workflow Engine',
     author='Johan Hidding',
     url='https://github.com/NLeSC/noodles',
@@ -30,7 +30,7 @@ setup(
         'Programming Language :: Python :: 3.5',
         'Topic :: System :: Distributed Computing'],
 
-    install_requires=['pyxenon'],
+#    install_requires=['pyxenon'],
 
     extras_require={
         'test': ['nose', 'coverage', 'pyflakes', 'pep8']
