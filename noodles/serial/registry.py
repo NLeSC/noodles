@@ -2,7 +2,7 @@ from queue import Queue
 from ..utility import object_name, look_up, deep_map
 import noodles
 import json
-import sys
+# import sys
 
 
 def _chain_fn(a, b):
@@ -231,6 +231,11 @@ class Registry(object):
             Whether to decode records that gave `ref=True` at encoding.
         :type deref: bool"""
         return json.loads(data, object_hook=lambda o: self.decode(o, deref))
+
+    def dereference(self, data, host):
+        """Dereferences RefObjects stuck in the hierarchy. This is a bit
+        of an ugly hack."""
+        return self.from_json(self.to_json(data, host), deref=True)
 
 
 class Serialiser(object):

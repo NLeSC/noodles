@@ -1,8 +1,8 @@
 import threading
 
-from noodles.datamodel import get_workflow
-from noodles.run.coroutines import IOQueue, Connection, patch, coroutine_sink
-from noodles.utility import unzip_dict
+from ..workflow import get_workflow
+from .coroutines import IOQueue, Connection, patch, coroutine_sink
+from ..utility import unzip_dict
 from .scheduler import run_job, Scheduler
 
 

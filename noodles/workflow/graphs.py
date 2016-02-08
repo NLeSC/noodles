@@ -14,9 +14,9 @@ def find_links_to(links, node):
         dictionary of sources for each argument
     :rtype: Mapping[(ArgumentType, [int|str]), NodeId]
     """
-    return dict((address, src)
-                for src, (tgt, address) in _all_valid(links)
-                if tgt == node)
+    return {address: src
+            for src, (tgt, address) in _all_valid(links)
+            if tgt == node}
 
 
 def _all_valid(links):
@@ -41,4 +41,4 @@ def invert_links(links):
         inverted graph, giving dependency of jobs.
     :rtype: Mapping[NodeId, Mapping[(ArgumentType, [int|str]), NodeId]]
     """
-    return dict((node, find_links_to(links, node)) for node in links)
+    return {node: find_links_to(links, node) for node in links}

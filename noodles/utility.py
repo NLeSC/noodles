@@ -31,6 +31,13 @@ def unzip_dict(d):
     return a, b
 
 
+def unwrap(f):
+    try:
+        return f.__wrapped__
+    except AttributeError:
+        return f
+
+
 def deep_map(f, root):
     result = f(root)
 

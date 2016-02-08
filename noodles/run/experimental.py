@@ -1,6 +1,6 @@
 from .coroutines import (IOQueue, QueueConnection, coroutine_sink)
 from .scheduler import (run_job, Scheduler)
-from ..datamodel import (get_workflow)
+from ..workflow import (get_workflow)
 import threading
 
 

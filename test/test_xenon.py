@@ -1,5 +1,5 @@
 from noodles import schedule, Scheduler, gather
-from noodles.datamodel import get_workflow
+from noodles.workflow import get_workflow
 from noodles.run.xenon import xenon_interactive_worker, XenonConfig
 
 

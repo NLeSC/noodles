@@ -1,5 +1,5 @@
 from nose.tools import raises
-from noodles.datamodel import (
+from noodles.workflow import (
     Empty, ArgumentAddress,
     ArgumentKind, is_workflow, get_workflow, Workflow)
 from noodles import run_single, schedule, gather

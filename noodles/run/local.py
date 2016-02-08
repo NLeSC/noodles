@@ -1,7 +1,7 @@
 import threading
 
-from noodles.datamodel import get_workflow
-from noodles.run.coroutines import IOQueue, Connection, QueueConnection
+from ..workflow import get_workflow
+from .coroutines import IOQueue, Connection, QueueConnection
 from .scheduler import run_job, Scheduler
 
 

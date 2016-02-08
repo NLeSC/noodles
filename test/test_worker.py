@@ -2,7 +2,7 @@ from noodles import (
     schedule, Scheduler, gather,
     serial, Storable)
 from noodles.serial import (Registry, AsDict)
-from noodles.datamodel import get_workflow
+from noodles.workflow import get_workflow
 from noodles.run.process import process_worker
 
 

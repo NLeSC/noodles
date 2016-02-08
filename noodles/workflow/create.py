@@ -1,88 +1,10 @@
-from .data_types import Node, Workflow, Empty, is_workflow, get_workflow
-from .data_arguments import (bind_arguments, get_arguments,
-                             serialize_arguments, ref_argument,
-                             set_argument)
+from inspect import (signature, Parameter)
+from .model import (
+    Workflow, FunctionNode, get_workflow, is_workflow)
+from .arguments import (
+    ref_argument, serialize_arguments, set_argument, Empty)
 
-from inspect import signature, getmodule, Parameter
-from importlib import import_module
 from copy import deepcopy
-from .utility import look_up
-
-
-def unwrap(f):
-    try:
-        return f.__wrapped__
-    except AttributeError:
-        return f
-
-
-def module_and_name(f):
-    """
-    Retrieve the module and name of the given object.
-    """
-    return getmodule(f).__name__, f.__qualname__
-
-
-def importable(x):
-    """
-    Checks whether we can get import the object and get the same.
-
-    .. code-block:: python
-
-        x == look_up(*module_and_name(x))
-
-    :param x:
-        Any object.
-
-    :returns:
-        True if `x` can be imported.
-    :rtype: bool
-    """
-    try:
-        module, name = module_and_name(x)
-        # return look_up(module, name) == x
-        # the previous expression doesn't actually work, there
-        # seems to be no reasonable way to implement this function.
-        return True
-
-    except:
-        return False
-
-
-class FunctionNode:
-    """
-    Captures a function call as a combination of function and arguments.
-    Some of these arguments may be set to :py:obj:`Empty`, these need to be
-    filled in by the workflow before the function can be applied.
-
-    .. py:attribute:: foo
-
-    The function (or object) that is being called.
-
-    .. py:attribute:: bound_args
-
-    A :py:class:`BoundArguments` object storing the arguments to
-    the function.
-    """
-    @staticmethod
-    def from_node(node):
-        foo = unwrap(node.function)
-        bound_args = bind_arguments(foo, node.arguments)
-        return FunctionNode(foo, bound_args, node.hints, node)
-
-    def __init__(self, foo, bound_args, hints, node=None):
-        self.foo = foo
-        self.bound_args = bound_args
-        self.hints = hints
-        self._node = node
-
-    def node(self):
-        """
-        Convert to a :py:class:`Node` for subsequent serial.
-        """
-        arguments = get_arguments(self.bound_args)
-        self._node = Node(self.foo, arguments, self.hints)
-        return self._node
 
 
 def from_call(foo, args, kwargs, hints):
@@ -94,7 +16,9 @@ def from_call(foo, args, kwargs, hints):
     signature of the given function `f`. That is, bound_args was constructed
     by doing:
 
-        >>> inspect.signature(foo).bind(*args, **kwargs)
+    ..
+
+        inspect.signature(foo).bind(*args, **kwargs)
 
     The arguments stored in the `bound_args` object are filtered on being
     either 'plain', or 'promised'. If an argument is promised, the value
@@ -138,8 +62,8 @@ def from_call(foo, args, kwargs, hints):
     bound_args.apply_defaults()
 
     variadic = next((x.name
-                    for x in bound_args.signature.parameters.values()
-                    if x.kind == Parameter.VAR_POSITIONAL), None)
+                     for x in bound_args.signature.parameters.values()
+                     if x.kind == Parameter.VAR_POSITIONAL), None)
 
     # *HACK*
     # the BoundArguments class uses a tuple to store the

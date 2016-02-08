@@ -1,7 +1,7 @@
-from noodles.run.coroutines import coroutine_sink, Connection
+from .coroutines import coroutine_sink, Connection
 # from .data_json import saucer, desaucer, node_to_jobject
-from noodles.logger import log
-from noodles.utility import object_name
+from ..logger import log
+from ..utility import object_name
 from noodles import serial
 
 import uuid

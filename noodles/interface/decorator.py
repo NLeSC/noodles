@@ -1,7 +1,6 @@
 from functools import wraps
-from itertools import count
 
-from noodles.datamodel import from_call, get_workflow
+from ..workflow import (from_call, get_workflow)
 
 
 def scheduled_function(f, hints=None):
@@ -102,6 +101,6 @@ class PromisedObject:
         raise TypeError(
             "A PromisedObject cannot be deepcopied.\n"
             "hint: Derive your data class from Storable.\n"
-            "info: {0} {1}".format(rnode.foo, rnode.node()))
+            "info: {0} {1}".format(rnode.foo, rnode.data))
 
 

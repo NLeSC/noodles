@@ -1,6 +1,6 @@
 from .registry import (Registry, Serialiser)
 from ..utility import (object_name, look_up, importable)
-from ..datamodel import (Workflow, Node, FunctionNode, ArgumentAddress,
+from ..workflow import (Workflow, NodeData, FunctionNode, ArgumentAddress,
                          ArgumentKind, reset_workflow)
 from ..storable import (Storable, StorableTraits)
 from .as_dict import (AsDict)
@@ -134,10 +134,10 @@ class SerNode(Serialiser):
         super(SerNode, self).__init__(FunctionNode)
 
     def encode(self, obj, make_rec):
-        return make_rec(dict(obj.node()._asdict()))
+        return make_rec(dict(obj.data._asdict()))
 
     def decode(self, cls, data):
-        return FunctionNode.from_node(Node(**data))
+        return FunctionNode.from_node_data(NodeData(**data))
 
 
 def _noodles_hook(obj):
