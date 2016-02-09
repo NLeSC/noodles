@@ -89,3 +89,4 @@ def is_node_ready(node):
     """
     return all(ref_argument(node.bound_args, a) is not Empty
                for a in serialize_arguments(node.bound_args))
+

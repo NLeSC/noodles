@@ -100,7 +100,7 @@ In this case we have the function `is_out_of_date` that determines whether we ne
         else:
             return message("target is up-to-date.")
 
-Since we need the answer to `is_out_of_date` now and not tomorrow, the `is_out_of_date` function cannot be a scheduled function. Python doesn't know the truth value of a :py:class:`PromisedObject`. The `message` function is not a special function; it just prints a message and returns a value (optional second argument). We still need to optionalise the compilation step. Since all of the information needed to decide whether to compile or not is already present, we can make this a normal Python function; there is no need to schedule anything.
+Since we need the answer to :py:func:`is_out_of_date` in the present, the :py:func:`is_out_of_date` function cannot be a scheduled function. Python doesn't know the truth value of a :py:class:`PromisedObject`. The `message` function is not a special function; it just prints a message and returns a value (optional second argument). We still need to optionalise the compilation step. Since all of the information needed to decide whether to compile or not is already present, we can make this a normal Python function; there is no need to schedule anything (even though everything would still work if we did).
 
 ::
 
@@ -191,4 +191,3 @@ Conclusion
 ~~~~~~~~~~
 
 You should now be able to fully understand the sourcecode of Boil!
-

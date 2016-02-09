@@ -2,6 +2,8 @@ from functools import wraps
 
 from ..workflow import (from_call, get_workflow)
 
+from noodles.config import config
+
 
 def scheduled_function(f, hints=None):
     """
@@ -14,7 +16,9 @@ def scheduled_function(f, hints=None):
     """
     @wraps(f)
     def wrapped(*args, **kwargs):
-        return PromisedObject(from_call(f, args, kwargs, hints))
+        return PromisedObject(from_call(
+            f, args, kwargs, hints, 
+            call_by_value = config['call_by_value']))
 
     return wrapped
 

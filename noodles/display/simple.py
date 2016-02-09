@@ -57,7 +57,7 @@ class Display:
 
             for job, e in self.errors:
                 msg = 'ERROR '
-                if 'display' in job.hints:
+                if job.hints and 'display' in job.hints:
                     msg += job.hints['display'].format(
                         **job.bound_args.arguments)
                 else:

@@ -7,21 +7,21 @@ from .arguments import (
 from copy import deepcopy
 
 
-def from_call(foo, args, kwargs, hints):
+def from_call(foo, args, kwargs, hints, call_by_value=True):
     """Takes a function and a set of arguments it needs to run on. Returns a newly
     constructed workflow representing the promised value from the evaluation of
     the function with said arguments.
 
     These arguments are stored in a BoundArguments object matching to the
-    signature of the given function `f`. That is, bound_args was constructed
+    signature of the given function ``foo``. That is, bound_args was constructed
     by doing:
 
-    ..
+    ::
 
         inspect.signature(foo).bind(*args, **kwargs)
 
-    The arguments stored in the `bound_args` object are filtered on being
-    either 'plain', or 'promised'. If an argument is promised, the value
+    The arguments stored in the ``bound_args`` object are filtered on being
+    either plain, or promised. If an argument is promised, the value
     it represents is not actually available and needs to be computed by
     evaluating a workflow.
 
@@ -30,10 +30,11 @@ def from_call(foo, args, kwargs, hints):
     if not already present in the new workflow from an earlier argument,
     are copied to the new workflow, and a new entry is made into the link
     dictionary. Then the links in the old workflow are also added to the
-    link dictionary. Since the link dictionary points from nodes to a `set`
-    of `ArgumentAddress` es, no links are duplicated.
+    link dictionary. Since the link dictionary points from nodes to a 
+    :py:class:`set` of :py:class:`ArgumentAddress` es, no links are 
+    duplicated.
 
-    In the `bound_args` object the promised value is replaced by the `Empty`
+    In the ``bound_args`` object the promised value is replaced by the ``Empty``
     object, so that we can see which arguments still have to be evaluated.
 
     Doing this for all promised value arguments in the bound_args object,
@@ -83,7 +84,7 @@ def from_call(foo, args, kwargs, hints):
 
         # the argument may still become a workflow if it
         # is a Storable and it contains a promised object
-        if not is_workflow(arg):
+        if not is_workflow(arg) and call_by_value:
             arg = deepcopy(arg)
 
         # if still not a workflow, we have a plain value!

@@ -8,7 +8,7 @@ def add(x, y):
 
 @schedule
 def sub(x, y):
-    return x + y
+    return x - y
 
 
 @schedule
