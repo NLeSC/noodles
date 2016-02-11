@@ -17,39 +17,61 @@ class Display:
         self.out = OutStream(sys.stdout)
         self.errors = []
         self.error_filter = error_filter
+        self.messages = []
 
-    def start(self, key, job):
+    def start(self, key, job, _):
         if job.hints and 'display' in job.hints:
-            self.add_job(key, job.hints)
+            self.add_job(key, job)
             self.out << job.hints['display'].format(
                 **job.bound_args.arguments) << "\n"
 
-    def done(self, key, data):
+    def done(self, key, data, msg):
         if key in self.jobs and 'confirm' in self.jobs[key]:
             self.out << ['save'] << ['up', self.jobs[key]['line']] \
             << ['forward', 50]
             self.out << "(" << ['fg', 60, 180, 100] << "✔" << ['reset'] \
             << ")" << ['restore']
 
-    def error(self, key, data):
+        if key in self.jobs and msg:
+            self.message_handler(self.jobs[key], msg)
+
+    def error(self, key, _, data):
         if key in self.jobs and 'confirm' in self.jobs[key]:
             self.out << ['save'] << ['up', self.jobs[key]['line']] \
             << ['forward', 50]
             self.out << "(" << ['fg', 240, 100, 60] << "✘" << ['reset'] \
             << ")" << ['restore']
 
-    def add_job(self, key, hints):
+    def add_job(self, key, job):
         for k in self.jobs:
             self.jobs[k]['line'] += 1
-        self.jobs[key] = {'line': 1}
-        self.jobs[key].update(hints)
+        self.jobs[key] = {'line': 1, 'job': job}
+        self.jobs[key].update(job.hints)
 
     def error_handler(self, job, xcptn):
         self.errors.append((job, xcptn))
 
+    def message_handler(self, job, warning):
+        self.messages.append((job['job'], warning))
+
     def report(self):
         if len(self.errors) == 0:
             self.out << "╰─(success)\n"
+
+            if len(self.messages) != 0:
+                self.out << "There were warnings: \n\n"
+
+                for job, w in self.messages:
+                    msg = 'WARNING '
+                    if job.hints and 'display' in job.hints:
+                        msg += job.hints['display'].format(
+                            **job.bound_args.arguments)
+                    else:
+                        msg += 'calling {} with {}'.format(
+                            job.foo.__name__, dict(job.bound_args.arguments)
+                        )
+                    print(msg)
+                    print(w)
 
         else:
             self.out << "╰─(" << ['fg', 240, 100, 60] << "ERROR!" \
@@ -74,8 +96,8 @@ class Display:
 
     def __call__(self, q):
         self.q = q
-        for status, key, data in q.source():
-            getattr(self, status)(key, data)
+        for status, key, data, err_msg in q.source():
+            getattr(self, status)(key, data, err_msg)
 
     def __enter__(self):
         return self

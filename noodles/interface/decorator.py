@@ -65,7 +65,7 @@ def _setattr(obj, attr, value):
 @schedule
 def _do_call(obj, *args, **kwargs):
     return obj(*args, **kwargs)
-
+    
 
 class PromisedObject:
     """

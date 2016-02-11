@@ -1,12 +1,14 @@
-from noodles.workflow import (
+from .coroutines import (Connection)
+from ..workflow import (
     is_workflow, get_workflow, Empty, invert_links, insert_result,
-    is_node_ready)
+    is_node_ready, Workflow)
 import uuid
 import sys
 
 
 def run_job(node):
-    return node.foo(*node.bound_args.args, **node.bound_args.kwargs)
+    return node.foo(*node.bound_args.args,
+                    **node.bound_args.kwargs)
 
 
 class Job:
@@ -43,9 +45,8 @@ class Scheduler:
         self.verbose = verbose
         self.handle_error = error_handler
 
-    def run(self, connection, master):
-        """
-        Run a workflow.
+    def run(self, connection: Connection, master: Workflow):
+        """Run a workflow.
 
         :param connection:
             A connection giving a sink to the job-queue and a source yielding
@@ -64,14 +65,14 @@ class Scheduler:
         graceful_exit = False
 
         # process results
-        for job_key, status, result in source:
+        for job_key, status, result, err_msg in source:
             if status == 'error':
                 if self.handle_error:
                     wf, n = self.jobs[job_key]
-                    self.handle_error(wf.nodes[n], result)
+                    self.handle_error(wf.nodes[n], err_msg)
                     graceful_exit = True
                 else:
-                    raise result
+                    raise err_msg
 
             if self.verbose:
                 print("sched result [{0}]: ".format(self.key_map[job_key]),

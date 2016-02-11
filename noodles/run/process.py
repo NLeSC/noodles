@@ -24,7 +24,7 @@ def read_result(registry, s):
     except ValueError:
         pass
 
-    return key, status, obj['result']
+    return key, status, obj['result'], obj['err_msg']
 
 
 def put_job(registry, host, key, job):
@@ -75,14 +75,15 @@ def process_worker(registry,
     def get_result():
         reg = registry()
         for line in p.stdout:
-            key, status, result = read_result(reg, line)
-            yield (key, status, result)
+            result = read_result(reg, line)
+            yield result
 
     if init is not None:
         send_job().send(("init", init()._workflow.root_node))
-        key, status, result = next(get_result())
+        key, status, result, err_msg = next(get_result())
         if key != "init" or not result:
-            raise RuntimeError("The initializer function did not succeed on worker.")
+            raise RuntimeError(
+                "The initializer function did not succeed on worker.")
 
     if finish is not None:
         send_job().send(("finish", finish()._workflow.root_node))

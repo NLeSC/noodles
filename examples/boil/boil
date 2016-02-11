@@ -27,7 +27,6 @@ def find_files(path, ext):
                 yield (folder, f)
 
 
-# @noodles.schedule
 def is_out_of_date(f, deps):
     """Check if file `f` needs to be updated. Returns True if any
     of the dependencies are newer than `f`.
@@ -88,7 +87,8 @@ def object_filename(srcdir, filename, config):
 
 
 @noodles.schedule_hint(display="│   Compiling {source_file} ... ",
-                       confirm=True)
+                       confirm=True,
+                       annotated=True)
 def compile_source(source_file, object_file, config):
     p = subprocess.run(
         [config['cc'], '-c'] + config['cflags'].split() \
@@ -96,10 +96,9 @@ def compile_source(source_file, object_file, config):
         stderr=subprocess.PIPE, universal_newlines=True)
     p.check_returncode()
 
-    return object_file
+    return object_file, p.stderr
 
 
-@noodles.schedule
 def get_object_file(src_dir, src_file, config):
     """Ensures existence of up-to-date object file.
 
@@ -120,7 +119,8 @@ def get_object_file(src_dir, src_file, config):
 
 
 @noodles.schedule_hint(display="│   Linking ... ",
-                       confirm=True)
+                       confirm=True,
+                       annotated=True)
 def link(object_files, config):
     p = subprocess.run(
         [config['cc']] + object_files + ['-o', config['target']] \
@@ -128,20 +128,12 @@ def link(object_files, config):
         stderr=subprocess.PIPE, universal_newlines=True)
     p.check_returncode()
 
-    return config['target']
+    return config['target'], p.stderr
 
 
 @noodles.schedule_hint(display="{msg}")
 def message(msg, value=0):
     return value
-
-
-@noodles.schedule
-def cond(pred, when_true, when_false):
-    if pred:
-        return when_true
-    else:
-        return when_false
 
 
 @noodles.schedule
@@ -179,12 +171,6 @@ def make_target(config):
         get_object_file(src_dir, src_file, config)
         for src_dir, src_file in files
         ])
-
-    # return cond(
-    #     is_out_of_date(config['target'], obj_files),
-    #     noodles.delay(link(obj_files, config)),
-    #     noodles.delay(message("│   target is up-to-date."))
-    # )
 
     return get_target(obj_files, config)
 

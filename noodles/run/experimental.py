@@ -1,21 +1,8 @@
-from .coroutines import (IOQueue, QueueConnection, coroutine_sink)
+from .coroutines import (
+    IOQueue, QueueConnection, coroutine_sink, splice_sink, siphon_source)
 from .scheduler import (run_job, Scheduler)
 from ..workflow import (get_workflow)
 import threading
-
-
-@coroutine_sink
-def splice_sink(a, b):
-    while True:
-        value = yield
-        b.send(value)
-        a.send(value)
-
-
-def siphon_source(source, sink):
-    for value in source:
-        sink.send(value)
-        yield value
 
 
 class Logger(IOQueue):
@@ -27,14 +14,14 @@ class Logger(IOQueue):
         msg_sink = self.sink()
         while True:
             key, job = yield
-            msg_sink.send(('start', key, job))
+            msg_sink.send(('start', key, job, None))
 
     @coroutine_sink
     def result_sink(self):
         msg_sink = self.sink()
         while True:
-            key, status, result = yield
-            msg_sink.send((status, key, result))
+            key, status, result, errmsg = yield
+            msg_sink.send((status, key, result, errmsg))
 
 
 def logging_worker(n_threads, display):
@@ -65,11 +52,15 @@ def logging_worker(n_threads, display):
         splice = splice_sink(sink, log.result_sink())
         for key, job in siphon_source(source, log.job_sink()):
             try:
-                result = run_job(job)
-                splice.send((key, 'done', result))
+                if job.hints and 'annotated' in job.hints:
+                    result, annot = run_job(job)
+                    splice.send((key, 'done', result, annot))
+                else:
+                    result = run_job(job)
+                    splice.send((key, 'done', result, None))
 
             except Exception as error:
-                splice.send((key, 'error', error))
+                splice.send((key, 'error', None, error))
 
     for i in range(n_threads):
         t = threading.Thread(
@@ -87,8 +78,7 @@ def logging_worker(n_threads, display):
 
 
 def run_logging(wf, n_threads, display):
-    """
-    Returns the result of evaluating the workflow; runs in several threads.
+    """Returns the result of evaluating the workflow; runs in several threads.
 
     :param wf:
         Workflow to compute
@@ -102,9 +92,6 @@ def run_logging(wf, n_threads, display):
     :param n_threads:
         Number of threads to use
     :type n_threads: int
-
-    :param error_handler:
-        Function to run in case a worker returns an error.
     """
     worker = logging_worker(n_threads, display)
     return Scheduler(error_handler=display.error_handler)\
