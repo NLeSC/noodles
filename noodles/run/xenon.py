@@ -87,7 +87,7 @@ class XenonKeeper:
 
 
 class XenonConfig:
-    def __init__(self):
+    def __init__(self, **kwargs):
         self.registry = serial.base
         self.jobs_scheme = 'local'
         self.files_scheme = 'local'
@@ -99,6 +99,12 @@ class XenonConfig:
         self.exec_command = None
         self.time_out = 5000  # 5 seconds
         self.prefix = sys.prefix
+
+        for key, value in kwargs.items():
+            if key in dir(self):
+                setattr(self, key, value)
+            else:
+                raise ValueError("Keyword `{}' not part of Xenon config.".format(key))
 
     @property
     def scheduler_args(self):
