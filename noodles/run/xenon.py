@@ -10,10 +10,12 @@ import os
 import sys
 import threading
 
-xenon.init(log_level='ERROR')  # noqa
+# from contextlib import redirect_stderr
+# xenon_log = open('xenon_log.txt', 'w')
+# with redirect_stderr(xenon_log):
+xenon.init()  # noqa
 
 from jnius import autoclass
-
 
 def read_result(registry, s):
     obj = registry.from_json(s)
@@ -46,53 +48,27 @@ def java_lines(inp):
         line = reader.nextLine()
         yield line
 
-
-class XenonJob:
-    def __init__(self, keeper, job, desc):
-        self.keeper = keeper
-        self.job = job
-        self.desc = desc
-
-        if self.interactive:
-            self.streams = self.get_streams()
-
-    def wait_until_running(self, timeout):
-        status = self.keeper.jobs.waitUntilRunning(
-            self.job, timeout)
-        return status
-
-    def get_streams(self):
-        return self.keeper.jobs.getStreams(self.job)
-
-    @property
-    def interactive(self):
-        return self.job.isInteractive()
+HashMap = autoclass('java.util.HashMap')
 
 
-class XenonKeeper:
-    def __init__(self, scheduler_args=('local', None, None, None)):
-        self.name = "scheduler-" + str(uuid.uuid4())
-        self.x = xenon.Xenon()
-        self.jobs = self.x.jobs()
-        self.scheduler = self.jobs.newScheduler(*scheduler_args)
+def dict2HashMap(d):
+    if d is None:
+        return None
 
-    def submit(self, command, interactive=True):
-        desc = xenon.jobs.JobDescription()
-        if interactive:
-            desc.setInteractive(True)
-        desc.setExecutable(command[0])
-        desc.setArguments(*command[1:])
-        job = self.jobs.submitJob(self.scheduler, desc)
-        return XenonJob(self, job, desc)
+    m = HashMap()
+    for k, v in d.items():
+        m.put(k, v)
+    return m
 
 
 class XenonConfig:
     def __init__(self, **kwargs):
+        self.name = "xenon-" + str(uuid.uuid4())
         self.registry = serial.base
         self.jobs_scheme = 'local'
         self.files_scheme = 'local'
         self.location = None
-        self.credentials = None
+        self.credential = None
         self.jobs_properties = None
         self.files_properties = None
         self.working_dir = os.getcwd()
@@ -108,13 +84,75 @@ class XenonConfig:
 
     @property
     def scheduler_args(self):
+        properties = dict2HashMap(self.jobs_properties)
         return (self.jobs_scheme, self.location,
-                self.credentials, self.jobs_properties)
+                self.credential, properties)
 
     @property
     def filesystem_args(self):
         return (self.files_scheme, self.location,
-                self.credentials, self.files_properties)
+                self.credential, self.files_properties)
+
+
+class XenonJob:
+    def __init__(self, keeper, job, desc):
+        self.keeper = keeper
+        self.job = job
+        self.desc = desc
+
+        if self.interactive:
+            self.streams = self.get_streams()
+
+    def wait_until_running(self, timeout):
+        status = self.keeper.jobs.waitUntilRunning(
+            self.job, timeout)
+        return status
+
+    def wait_until_done(self, timeout=0):
+        status = self.keeper.jobs.waitUntilDone(
+            self.job, timeout)
+        return status
+
+    def get_streams(self):
+        return self.keeper.jobs.getStreams(self.job)
+
+    @property
+    def interactive(self):
+        return self.job.isInteractive()
+
+
+class XenonKeeper:
+    def __init__(self):
+        self._x = xenon.Xenon()
+        self.jobs = self._x.jobs()
+        self.credentials = self._x.credentials()
+        self._schedulers = {}
+
+    def add_scheduler(self, config: XenonConfig):
+        name = config.name
+        self._schedulers[name] = XenonScheduler(self, config)
+        return name
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        self._x.close()
+
+
+class XenonScheduler:
+    def __init__(self, keeper, config):
+        self._x = keeper
+        self._s = keeper.jobs.newScheduler(*config.scheduler_args)
+
+    def submit(self, command, interactive=True):
+        desc = xenon.jobs.JobDescription()
+        if interactive:
+            desc.setInteractive(True)
+        desc.setExecutable(command[0])
+        desc.setArguments(*command[1:])
+        job = self._x.jobs.submitJob(self._s, desc)
+        return XenonJob(self._x, job, desc)
 
 
 def xenon_interactive_worker(config=None, init=None, finish=None):

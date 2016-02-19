@@ -1,9 +1,11 @@
 import docker
 import os
+import stat
 import json
 import sys
 import uuid
 import subprocess
+import time
 
 
 def build_image(client: docker.Client, path='./remote-docker', name='noodles-remote'):
@@ -35,6 +37,7 @@ def reset_container(client: docker.Client, session, n=0, image='noodles-remote')
     container = client.create_container(
         image=image, host_config=host_config, labels={'noodles': str(n), 'session': session})
     client.start(container)
+    time.sleep(0.5)
     return container
 
 
@@ -43,7 +46,7 @@ def clean_up(client, session):
         all=True, filters={'label': 'session={}'.format(session)})
 
     for c in cl:
-        client.stop(c)
+        client.stop(c, 0)
         client.remove_container(c)
 
 
@@ -62,6 +65,7 @@ class Container:
 
 def test_docker_sanity():
     path = './remote-docker'
+    os.chmod(path + '/id_rsa', stat.S_IRUSR)
     docker_client = docker.Client()
     session = str(uuid.uuid4())
     build_image(docker_client, path)
