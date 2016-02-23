@@ -10,7 +10,8 @@ class Generation(Storable):
 
     # Evaluate individuals
     def evaluate(self, fitness_evaluator):
-        evaluate = [Chromosome(fitness=fitness_evaluator.evaluate(c.values), values=c.values) for c in self.individuals]
+        evaluate = [Chromosome(fitness=fitness_evaluator.evaluate(c.values), values=c.values, sigma=c.sigma)
+                    for c in self.individuals]
         self.individuals = gather(*evaluate)
 
         return self

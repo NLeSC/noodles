@@ -96,7 +96,7 @@ class PromisedObject:
     def __iter__(self):
         raise TypeError(
             "You tried to iterate (or unpack) a PromisedObject. "
-            "There is currently no possible way to learn the arity"
+            "There is currently no possible way to learn the arity "
             "or length of a PromisedObject so, sadly, this is not "
             "implemented.")
 

@@ -1,4 +1,10 @@
-from noodles import (has_scheduled_methods, schedule)
+"""
+    This module implements a parallelized Evolutionary Strategy with Single Self-Adaptive Sigma.
+
+    
+"""
+
+from noodles import (has_scheduled_methods, schedule, schedule_hint)
 from .chromosome import (Chromosome)
 from .generation import (Generation)
 
@@ -9,10 +15,8 @@ import numpy as np
 
 @has_scheduled_methods
 class EA:
-    def __init__(self, population_size, generations, num_offspring, fitness_evaluator):
-        self.population_size = population_size
-        self.generations = generations
-        self.num_offspring = num_offspring
+    def __init__(self, config, fitness_evaluator):
+        self.config = config
         self.fitness_evaluator = fitness_evaluator
 
     def make_child(self, g: Generation) -> Chromosome:
@@ -33,25 +37,25 @@ class EA:
         return child
 
     def generate_offspring(self, g: Generation) -> Generation:
-        individuals = [self.make_child(g) for _ in range(self.num_offspring)]
+        individuals = [self.make_child(g) for _ in range(self.config['offspring'])]
         generation = Generation(individuals)
         generation.number = g.number + 1
 
         return generation
 
     def crossover(self, parents) -> Chromosome:
-        # child = Chromosome(np.zeros(parents[0].values.shape))
-        #
-        # for i, v in enumerate(parents[1].values):
-        #     child.values[i] = v if np.random.rand() > 0.5 \
-        #         else parents[0].values[i]
-
-        child = Chromosome(np.where(np.random.random(parents[0].values.shape) > 0.5,
-                                    parents[0].values, parents[1].values))
+        values = np.where(np.random.random(parents[0].values.shape) > 0.5,
+                                    parents[0].values, parents[1].values)
+        sigma = parents[0].sigma if np.random.random() > 0.5 else parents[1].sigma
+        child = Chromosome(values=values, sigma=sigma)
         return child
 
     def mutate(self, child) -> Chromosome:
-        mut = np.random.normal(0, 0.01, (len(child.values)))
+        # mutate the sigma
+        child.sigma = child.sigma + self.config['learning_rate'] * np.random.normal(0, child.sigma)
+
+        # mutate the child using the mutated sigma
+        mut = np.random.normal(0, child.sigma, (len(child.values)))
 
         child.values += mut
 
@@ -59,24 +63,24 @@ class EA:
 
     # Generate random individuals on the range [range_lower, range_upper]
     def initialize(self) -> Generation:
-        individuals = [Chromosome(values=(np.random.rand(self.fitness_evaluator.dimensions)/2-1) *
-                                         self.fitness_evaluator.range_upper) for _ in range(self.population_size)]
+        individuals = [Chromosome(values=(np.random.rand(self.fitness_evaluator.dimensions) / 2 - 1) *
+                                  self.fitness_evaluator.range_upper, sigma=self.config['initial_sigma'])
+                       for _ in range(self.config['population_size'])]
         generation = Generation(individuals)
-        generation.number = 0
+        generation.number = 1
 
         generation.evaluate(self.fitness_evaluator)
 
         return generation
 
-    @schedule
+    @schedule_hint(display="│   Generation {g.number} ... ",
+                   confirm=True)
     def next_generation(self, g: Generation) -> Generation:
-        if g.number > self.generations:
+        if g.number >= self.config['generations']:
             return g
         else:
             # Generate Children
-            print("Generation: {:d}".format(g.number))
             new_generation = self.generate_offspring(g).evaluate(fitness_evaluator=self.fitness_evaluator)
 
             return self.next_generation(new_generation)
-
 
