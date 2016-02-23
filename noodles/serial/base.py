@@ -1,6 +1,6 @@
 from .registry import (Registry, Serialiser)
 from ..utility import (object_name, look_up, importable)
-from ..datamodel import (Workflow, Node, FunctionNode, ArgumentAddress,
+from ..workflow import (Workflow, NodeData, FunctionNode, ArgumentAddress,
                          ArgumentKind, reset_workflow)
 from ..storable import (Storable, StorableTraits)
 from .as_dict import (AsDict)
@@ -10,7 +10,7 @@ from inspect import isfunction
 # from collections import namedtuple
 from itertools import count
 # import json
-
+import sys
 
 class SerDict(Serialiser):
     def __init__(self):
@@ -78,7 +78,7 @@ class SerWorkflow(Serialiser):
 
 class SerMethod(Serialiser):
     def __init__(self):
-        super(SerMethod, self).__init__(None)
+        super(SerMethod, self).__init__('<method>')
 
     def encode(self, obj, make_rec):
         return make_rec({'class': object_name(obj.__member_of__),
@@ -91,7 +91,7 @@ class SerMethod(Serialiser):
 
 class SerImportable(Serialiser):
     def __init__(self):
-        super(SerImportable, self).__init__(None)
+        super(SerImportable, self).__init__('<importable>')
 
     def encode(self, obj, make_rec):
         return make_rec(object_name(obj))
@@ -118,7 +118,7 @@ class SerStorable(Serialiser):
 
 class SerAutoStorable(Serialiser):
     def __init__(self):
-        super(SerAutoStorable, self).__init__(object)
+        super(SerAutoStorable, self).__init__('<autostorable>')
 
     def encode(self, obj, make_rec):
         return make_rec({'type': object_name(type(obj)),
@@ -134,14 +134,14 @@ class SerNode(Serialiser):
         super(SerNode, self).__init__(FunctionNode)
 
     def encode(self, obj, make_rec):
-        return make_rec(dict(obj.node()._asdict()))
+        return make_rec(dict(obj.data._asdict()))
 
     def decode(self, cls, data):
-        return FunctionNode.from_node(Node(**data))
+        return FunctionNode.from_node_data(NodeData(**data))
 
 
 def _noodles_hook(obj):
-    if hasattr(obj, '__member_of__') and obj.__member_of__:
+    if '__member_of__' in dir(obj) and obj.__member_of__:
         return '<method>'
 
     # if hasattr(obj, 'as_dict') and hasattr(type(obj), 'from_dict'):

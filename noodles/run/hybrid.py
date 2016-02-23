@@ -1,8 +1,8 @@
 import threading
 
-from noodles.datamodel import get_workflow
-from noodles.run.coroutines import IOQueue, Connection, patch, coroutine_sink
-from noodles.utility import unzip_dict
+from ..workflow import get_workflow
+from .coroutines import IOQueue, Connection, patch, coroutine_sink
+from ..utility import unzip_dict
 from .scheduler import run_job, Scheduler
 
 
@@ -29,7 +29,7 @@ def hybrid_coroutine_worker(selector, workers):
         for key, job in source:
             worker = selector(job)
             if worker is None:
-                yield (key, 'done', run_job(job))
+                yield (key, 'done', run_job(job), None)
             else:
                 # send the worker a job and wait for it to return
                 worker_sink[worker].send((key, job))
@@ -77,7 +77,7 @@ def hybrid_threaded_worker(selector, workers):
                 worker_sink[worker].send((key, job))
             else:
                 result = run_job(job)
-                default_sink.send((key, 'done', result))
+                default_sink.send((key, 'done', result, None))
 
     for k, source in worker_source.items():
         t = threading.Thread(

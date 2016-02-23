@@ -5,11 +5,11 @@ from subprocess import Popen, PIPE
 
 import os
 import random
-from noodles.datamodel import get_workflow
-from noodles.logger import log
-from noodles.run.coroutines import coroutine_sink, Connection
-from noodles.serial.registry import RefObject
-from noodles.utility import object_name
+from ..workflow import get_workflow
+from ..logger import log
+from .coroutines import coroutine_sink, Connection
+from ..serial.registry import RefObject
+from ..utility import object_name
 from .scheduler import Scheduler
 from .hybrid import hybrid_threaded_worker
 
@@ -24,7 +24,7 @@ def read_result(registry, s):
     except ValueError:
         pass
 
-    return key, status, obj['result']
+    return key, status, obj['result'], obj['err_msg']
 
 
 def put_job(registry, host, key, job):
@@ -75,14 +75,15 @@ def process_worker(registry,
     def get_result():
         reg = registry()
         for line in p.stdout:
-            key, status, result = read_result(reg, line)
-            yield (key, status, result)
+            result = read_result(reg, line)
+            yield result
 
     if init is not None:
         send_job().send(("init", init()._workflow.root_node))
-        key, status, result = next(get_result())
+        key, status, result, err_msg = next(get_result())
         if key != "init" or not result:
-            raise RuntimeError("The initializer function did not succeed on worker.")
+            raise RuntimeError(
+                "The initializer function did not succeed on worker.")
 
     if finish is not None:
         send_job().send(("finish", finish()._workflow.root_node))
@@ -91,7 +92,8 @@ def process_worker(registry,
 
 
 def run_process(wf, n_processes, registry,
-                verbose=False, jobdirs=False, init=None, finish=None):
+                verbose=False, jobdirs=False,
+                init=None, finish=None, deref=False):
     """Run the workflow using a number of new python processes. Use this
     runner to test the workflow in a situation where data serial
     is needed.
@@ -119,6 +121,11 @@ def run_process(wf, n_processes, registry,
     :param finish:
         A function that wraps up when the worker closes down.
 
+    :param deref:
+        Set this to True to pass the result through one more encoding and
+        decoding step with object derefencing turned on.
+    :type deref: bool
+
     :returns: the result of evaluating the workflow
     :rtype: any
     """
@@ -135,7 +142,7 @@ def run_process(wf, n_processes, registry,
     master_worker = hybrid_threaded_worker(random_selector, workers)
     result = Scheduler().run(master_worker, get_workflow(wf))
 
-    if isinstance(result, RefObject):
-        return registry().decode(result.rec, deref=True)
+    if deref:
+        return registry().dereference(result, host='localhost')
     else:
         return result

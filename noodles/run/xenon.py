@@ -1,7 +1,7 @@
-from noodles.run.coroutines import coroutine_sink, Connection
+from .coroutines import coroutine_sink, Connection
 # from .data_json import saucer, desaucer, node_to_jobject
-from noodles.logger import log
-from noodles.utility import object_name
+from ..logger import log
+from ..utility import object_name
 from noodles import serial
 
 import uuid
@@ -10,10 +10,12 @@ import os
 import sys
 import threading
 
-xenon.init(log_level='ERROR')  # noqa
+# from contextlib import redirect_stderr
+# xenon_log = open('xenon_log.txt', 'w')
+# with redirect_stderr(xenon_log):
+xenon.init()  # noqa
 
 from jnius import autoclass
-
 
 def read_result(registry, s):
     obj = registry.from_json(s)
@@ -24,7 +26,7 @@ def read_result(registry, s):
     except ValueError:
         pass
 
-    return key, status, obj['result']
+    return key, status, obj['result'], obj['err_msg']
 
 
 def put_job(registry, host, key, job):
@@ -46,6 +48,51 @@ def java_lines(inp):
         line = reader.nextLine()
         yield line
 
+HashMap = autoclass('java.util.HashMap')
+
+
+def dict2HashMap(d):
+    if d is None:
+        return None
+
+    m = HashMap()
+    for k, v in d.items():
+        m.put(k, v)
+    return m
+
+
+class XenonConfig:
+    def __init__(self, **kwargs):
+        self.name = "xenon-" + str(uuid.uuid4())
+        self.registry = serial.base
+        self.jobs_scheme = 'local'
+        self.files_scheme = 'local'
+        self.location = None
+        self.credential = None
+        self.jobs_properties = None
+        self.files_properties = None
+        self.working_dir = os.getcwd()
+        self.exec_command = None
+        self.time_out = 5000  # 5 seconds
+        self.prefix = sys.prefix
+
+        for key, value in kwargs.items():
+            if key in dir(self):
+                setattr(self, key, value)
+            else:
+                raise ValueError("Keyword `{}' not part of Xenon config.".format(key))
+
+    @property
+    def scheduler_args(self):
+        properties = dict2HashMap(self.jobs_properties)
+        return (self.jobs_scheme, self.location,
+                self.credential, properties)
+
+    @property
+    def filesystem_args(self):
+        return (self.files_scheme, self.location,
+                self.credential, self.files_properties)
+
 
 class XenonJob:
     def __init__(self, keeper, job, desc):
@@ -61,6 +108,11 @@ class XenonJob:
             self.job, timeout)
         return status
 
+    def wait_until_done(self, timeout=0):
+        status = self.keeper.jobs.waitUntilDone(
+            self.job, timeout)
+        return status
+
     def get_streams(self):
         return self.keeper.jobs.getStreams(self.job)
 
@@ -70,11 +122,28 @@ class XenonJob:
 
 
 class XenonKeeper:
-    def __init__(self, scheduler_args=('local', None, None, None)):
-        self.name = "scheduler-" + str(uuid.uuid4())
-        self.x = xenon.Xenon()
-        self.jobs = self.x.jobs()
-        self.scheduler = self.jobs.newScheduler(*scheduler_args)
+    def __init__(self):
+        self._x = xenon.Xenon()
+        self.jobs = self._x.jobs()
+        self.credentials = self._x.credentials()
+        self._schedulers = {}
+
+    def add_scheduler(self, config: XenonConfig):
+        name = config.name
+        self._schedulers[name] = XenonScheduler(self, config)
+        return name
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        self._x.close()
+
+
+class XenonScheduler:
+    def __init__(self, keeper, config):
+        self._x = keeper
+        self._s = keeper.jobs.newScheduler(*config.scheduler_args)
 
     def submit(self, command, interactive=True):
         desc = xenon.jobs.JobDescription()
@@ -82,33 +151,8 @@ class XenonKeeper:
             desc.setInteractive(True)
         desc.setExecutable(command[0])
         desc.setArguments(*command[1:])
-        job = self.jobs.submitJob(self.scheduler, desc)
-        return XenonJob(self, job, desc)
-
-
-class XenonConfig:
-    def __init__(self):
-        self.registry = serial.base
-        self.jobs_scheme = 'local'
-        self.files_scheme = 'local'
-        self.location = None
-        self.credentials = None
-        self.jobs_properties = None
-        self.files_properties = None
-        self.working_dir = os.getcwd()
-        self.exec_command = None
-        self.time_out = 5000  # 5 seconds
-        self.prefix = sys.prefix
-
-    @property
-    def scheduler_args(self):
-        return (self.jobs_scheme, self.location,
-                self.credentials, self.jobs_properties)
-
-    @property
-    def filesystem_args(self):
-        return (self.files_scheme, self.location,
-                self.credentials, self.files_properties)
+        job = self._x.jobs.submitJob(self._s, desc)
+        return XenonJob(self._x, job, desc)
 
 
 def xenon_interactive_worker(config=None, init=None, finish=None):
@@ -174,12 +218,12 @@ def xenon_interactive_worker(config=None, init=None, finish=None):
 
     def get_result():
         for line in java_lines(J.streams.getStdout()):
-            key, status, result = read_result(registry, line)
-            yield (key, status, result)
+            key, status, result, err_msg = read_result(registry, line)
+            yield (key, status, result, err_msg)
 
     if init is not None:
         send_job().send(("init", init()._workflow.root_node))
-        key, result = next(get_result())
+        key, status, result, err_msg = next(get_result())
         if key != "init" or not result:
             raise RuntimeError("The initializer function did not succeed on worker.")
 

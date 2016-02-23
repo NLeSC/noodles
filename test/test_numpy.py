@@ -45,7 +45,7 @@ def test_pickle():
 
     os.mkdir("./test-numpy")
 
-    result = run_process(x_smooth, 1, registry)
+    result = run_process(x_smooth, 1, registry, deref=True)
 
     assert isinstance(result, np.ndarray)
     assert result.size == 256

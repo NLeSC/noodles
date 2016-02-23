@@ -1,8 +1,8 @@
 #include "types.hh"
 #include <iostream>
 
-void render(predicate pred, complex a, complex b, int width) {
-    int height = width/3;
+void render(predicate pred, complex a, complex b, unsigned width) {
+    unsigned height = width/3;
     double scale_real = (b.real() - a.real()) / width;
     double scale_imag = (b.imag() - a.imag()) / height;
 
@@ -37,8 +37,8 @@ Colour colour_map(double x) {
     return Colour(int(r*255), int(g*255), int(b*255));
 }
 
-void render_double_colour(unit_map f, complex a, complex b, int width) {
-    int height = (width * 10) / 16;
+void render_double_colour(unit_map f, complex a, complex b, unsigned width) {
+    unsigned height = (width * 10) / 16;
     double scale_real = (b.real() - a.real()) / width;
     double scale_imag = (b.imag() - a.imag()) / height;
 

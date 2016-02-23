@@ -5,8 +5,8 @@ Development documentation
 
 Internal Specs
 --------------
-.. automodule:: noodles.datamodel
-    :members: from_call, Node, FunctionNode, Workflow
+.. automodule:: noodles.workflow
+    :members: from_call, NodeData, FunctionNode, Workflow
 
 Promised object
 ---------------

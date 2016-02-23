@@ -40,7 +40,7 @@ def f(x):
 class Display:
     def __call__(self, q):
         self.q = q
-        for status, key, data in q.source():
+        for status, key, data, err_msg in q.source():
             print(status, key, data, file=sys.stdout)
 
     def wait(self):

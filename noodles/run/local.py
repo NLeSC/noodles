@@ -1,7 +1,7 @@
 import threading
 
-from noodles.datamodel import get_workflow
-from noodles.run.coroutines import IOQueue, Connection, QueueConnection
+from ..workflow import get_workflow
+from .coroutines import IOQueue, Connection, QueueConnection
 from .scheduler import run_job, Scheduler
 
 
@@ -19,7 +19,7 @@ def single_worker():
         source = jobs.source()
 
         for key, job in source:
-            yield (key, 'done', run_job(job))
+            yield (key, 'done', run_job(job), None)
 
     return Connection(get_result, jobs.sink)
 
@@ -44,7 +44,7 @@ def threaded_worker(n_threads):
 
     def worker(source, sink):
         for key, job in source:
-            sink.send((key, 'done', run_job(job)))
+            sink.send((key, 'done', run_job(job), None))
 
     for i in range(n_threads):
         t = threading.Thread(

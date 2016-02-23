@@ -114,7 +114,25 @@ class QueueConnection(Connection):
 
 
 def patch(source, sink):
-    """Create a direct link between a source and a sink.
-    """
+    """Create a direct link between a source and a sink."""
     for v in source:
         sink.send(v)
+        
+        
+@coroutine_sink
+def splice_sink(a, b):
+    """A sink that sends its messages to both `a` and `b`."""
+    while True:
+        value = yield
+        b.send(value)
+        a.send(value)
+
+
+def siphon_source(source, sink):
+    """A source that yields from `source` and sends to `sink`. Consider this
+    to be a wiretap."""
+    for value in source:
+        sink.send(value)
+        yield value
+
+

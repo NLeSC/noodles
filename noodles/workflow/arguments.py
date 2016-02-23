@@ -1,6 +1,21 @@
-from .data_types import ArgumentKind, ArgumentAddress, Empty
+from collections import namedtuple
+from enum import Enum
 from itertools import repeat
 from inspect import Parameter, signature
+
+Empty = Parameter.empty
+
+ArgumentKind = Enum(
+    'ArgumentKind',
+    ['regular', 'variadic', 'keyword'])
+
+ArgumentAddress = namedtuple(
+    'ArgumentAddress',
+    ['kind', 'name', 'key'])
+
+Argument = namedtuple(
+    'Argument',
+    ['address', 'value'])
 
 
 def serialize_arguments(bound_args):

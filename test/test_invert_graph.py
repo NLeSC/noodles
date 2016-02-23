@@ -1,5 +1,5 @@
 from noodles import schedule
-from noodles.datamodel import (
+from noodles.workflow import (
     invert_links, get_workflow, is_workflow, Empty, ArgumentAddress,
     ArgumentKind, is_node_ready)
 
