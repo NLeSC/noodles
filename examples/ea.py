@@ -88,7 +88,7 @@ if __name__ == "__main__":
     # Evolutionary Algorithm
     pop_size = 40   # mu
     offspring = 40  # lamda
-    gens = 5
+    gens = 100
 
     ea = EA(population_size=pop_size, generations=gens, num_offspring=offspring,
             fitness_evaluator=evaluator)
@@ -96,4 +96,5 @@ if __name__ == "__main__":
 
     answer = run_parallel(g, 4)
 
-    print(answer)
+    for i in answer.individuals:
+        print(i.fitness)
