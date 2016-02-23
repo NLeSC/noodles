@@ -41,12 +41,14 @@ class EA:
         return generation
 
     def crossover(self, parents) -> Chromosome:
-        child = Chromosome(np.zeros(parents[0].values.shape))
+        # child = Chromosome(np.zeros(parents[0].values.shape))
+        #
+        # for i, v in enumerate(parents[1].values):
+        #     child.values[i] = v if np.random.rand() > 0.5 \
+        #         else parents[0].values[i]
 
-        for i, v in enumerate(parents[1].values):
-            child.values[i] = v if np.random.rand() > 0.5 \
-                else parents[0].values[i]
-
+        child = Chromosome(np.where(np.random.random(parents[0].values.shape) > 0.5,
+                                    parents[0].values, parents[1].values))
         return child
 
     def mutate(self, child) -> Chromosome:
