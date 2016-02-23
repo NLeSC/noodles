@@ -1,8 +1,9 @@
 from .registry import (Registry, Serialiser)
+from ..interface import (PromisedObject)
 from ..utility import (object_name, look_up, importable)
 from ..workflow import (Workflow, NodeData, FunctionNode, ArgumentAddress,
-                         ArgumentKind, reset_workflow)
-from ..storable import (Storable, StorableTraits)
+                         ArgumentKind, reset_workflow, get_workflow)
+from ..storable import (Storable)
 from .as_dict import (AsDict)
 
 from enum import Enum
@@ -76,6 +77,17 @@ class SerWorkflow(Serialiser):
         return reset_workflow(Workflow(root, nodes, links))
 
 
+class SerPromisedObject(Serialiser):
+    def __init__(self):
+        super(SerPromisedObject, self).__init__(PromisedObject)
+
+    def encode(self, obj, make_rec):
+        return make_rec({'workflow': get_workflow(obj)})
+
+    def decode(self, cls, data):
+        return PromisedObject(data['workflow'])
+
+
 class SerMethod(Serialiser):
     def __init__(self):
         super(SerMethod, self).__init__('<method>')
@@ -107,9 +119,7 @@ class SerStorable(Serialiser):
     def encode(self, obj, make_reca):
         return make_reca(
             {'type': object_name(type(obj)),
-             'dict': obj.as_dict()},
-            ref=obj._storable.ref,
-            files=obj._storable.files)
+             'dict': obj.as_dict()})
 
     def decode(self, _, data):
         cls = look_up(data['type'])
@@ -166,7 +176,7 @@ def registry():
             ArgumentAddress: SerNamedTuple(ArgumentAddress),
             Workflow: SerWorkflow(),
             Storable: SerStorable(),
-            StorableTraits: AsDict(StorableTraits)
+            PromisedObject: SerPromisedObject()
         },
         hooks={
             '<method>': SerMethod(),

@@ -22,36 +22,7 @@ def from_dict(cls, **kwargs):
     return obj
 
 
-class StorableTraits:
-    def __init__(self, ref, files):
-        self.ref = ref
-        self.files = files if files else []
-
-
 class Storable:
-    def __init__(self, ref=False, files=None):
-        """Storable constructor
-
-        :param ref:
-            if this is True, the Storable is loaded as a
-            :py:class:`StorableRef`, only to be restored when the data is
-            really needed. This should be set to True for any object that
-            carries a lot of data; the default is False.
-        :type ref: bool
-
-        :param files:
-            the list of filenames that this object uses for
-            storage. The property Storable.files is used by Noodles to copy
-            relevant data if this object is needed on another host.
-        :type files: [str]
-        """
-        self._storable = StorableTraits(ref, files)
-
-    @property
-    def files(self):
-        """List of files that this object saves to."""
-        return self._storable.files
-
     def as_dict(self):
         """Converts the object to a `dict` containing the members
         of the object by name.
