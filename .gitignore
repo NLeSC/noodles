@@ -6,6 +6,7 @@ cover
 .coverage
 */.ipynb_checkpoints
 */.ipynb_checkpoints/*
+*.idea
 *~
 doc/build
 venv

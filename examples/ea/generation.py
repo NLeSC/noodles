@@ -1,5 +1,5 @@
 from noodles import Storable, gather
-from ea.chromosome import Chromosome
+from ea import Chromosome
 
 
 class Generation(Storable):
@@ -10,9 +10,6 @@ class Generation(Storable):
 
     # Evaluate individuals
     def evaluate(self, fitness_evaluator):
-        for c in self.individuals:
-            c.fitness = fitness_evaluator.evaluate(c.values)
-
         evaluate = [Chromosome(fitness=fitness_evaluator.evaluate(c.values), values=c.values) for c in self.individuals]
         self.individuals = gather(*evaluate)
 

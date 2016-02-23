@@ -2,9 +2,9 @@ from noodles import gather, run_parallel, schedule, has_scheduled_methods
 
 import numpy as np
 import random
-from ea.rastrigin import Rastrigin
-from ea.chromosome import Chromosome
-from ea.generation import Generation
+from ea import Chromosome
+from ea import Generation
+from ea import Rastrigin
 
 
 @has_scheduled_methods
@@ -22,8 +22,8 @@ class EA:
         option2 = random.sample(g.individuals, 2)
 
         # Binary Tournament
-        parent = [option1[0] if option1[0].fitness > option1[1].fitness else option1[1],
-                  option2[0] if option2[0].fitness > option2[1].fitness else option2[1]]
+        parent = [option1[0] if option1[0].fitness < option1[1].fitness else option1[1],
+                  option2[0] if option2[0].fitness < option2[1].fitness else option2[1]]
 
         # Crossover
         child = self.crossover(parent)
@@ -64,6 +64,8 @@ class EA:
         generation = Generation(individuals)
         generation.number = 0
 
+        generation.evaluate(self.fitness_evaluator)
+
         return generation
 
     @schedule
@@ -92,6 +94,6 @@ if __name__ == "__main__":
             fitness_evaluator=evaluator)
     g = ea.next_generation(ea.initialize())
 
-    answer = run_parallel(g, 2)
+    answer = run_parallel(g, 4)
 
     print(answer)
