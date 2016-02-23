@@ -15,7 +15,6 @@ class EA:
         self.num_offspring = num_offspring
         self.fitness_evaluator = fitness_evaluator
 
-    @schedule
     def make_child(self, g: Generation) -> Chromosome:
         # Choose parents
         option1 = random.sample(g.individuals, 2)
@@ -50,8 +49,7 @@ class EA:
         return child
 
     def mutate(self, child) -> Chromosome:
-        mut = (np.random.rand(len(child.values)) > 0.5).astype(float)
-        mut *= np.random.normal(0, 0.01, (len(child.values)))
+        mut = np.random.normal(0, 0.01, (len(child.values)))
 
         child.values += mut
 
