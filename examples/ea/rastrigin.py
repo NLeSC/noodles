@@ -1,5 +1,7 @@
 from noodles import schedule, has_scheduled_methods
 import numpy as np
+import time
+
 
 @has_scheduled_methods
 class Rastrigin:
@@ -13,6 +15,7 @@ class Rastrigin:
         """F5 Rastrigin's function
         multimodal, symmetric, separable
         defined on range -5.12 to 5.12"""
+        time.sleep(0.01)
         fitness = 10*len(values) + np.sum(values ** 2 - (10 * np.cos(2 * np.pi * values)))
 
         return fitness

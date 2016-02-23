@@ -23,6 +23,13 @@ def g(a, b):
     return a.x + b.x
 
 
+@schedule
+def h(a, b):
+    c = A()
+    c.x = a.x - b.x
+    return c
+
+
 def test_storable():
     a = A()
     b = A()
@@ -33,8 +40,11 @@ def test_storable():
     b.x = f(3, 4)
 
     c = g(a, b)
-    result = run_process(c, n_processes=1, registry=serial.base)
-    assert result == 8
+    b.x = c
+    d = h(b, a)
+
+    result = run_process(d, n_processes=1, registry=serial.base, verbose=True)
+    assert result.x == 7
 
 
 @raises(TypeError)
