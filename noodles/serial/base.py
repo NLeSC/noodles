@@ -127,8 +127,8 @@ class SerStorable(Serialiser):
 
 
 class SerAutoStorable(Serialiser):
-    def __init__(self):
-        super(SerAutoStorable, self).__init__('<autostorable>')
+    def __init__(self, cls):
+        super(SerAutoStorable, self).__init__(cls)
 
     def encode(self, obj, make_rec):
         return make_rec({'type': object_name(type(obj)),
