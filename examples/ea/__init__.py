@@ -4,7 +4,6 @@ from .generation import Generation
 from .rastrigin import Rastrigin
 from .ea import EA
 
-
 def registry():
     return serial.pickle() + serial.base()
 
