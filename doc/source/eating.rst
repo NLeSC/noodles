@@ -4,7 +4,11 @@
 Eating of Noodles (user docs)
 =============================
 
-The purpose of Noodles is to make it easy to design *computational workflows* straight from Python. Noodles is meant to be used by scientists that want to do heavy number crunching, and need a way to organise these computations in a readable and sustainable manner. These workflows are usually associated with a *directed acyclic graph* (DAG, or just: graph). Each computation in the workflow is a represented as a node in the graph and may have several dependencies. These dependencies are the arrows; or if you think in reverse, the arrows show transport of data.
+The purpose of Noodles is to make it easy to design *computational workflows* straight from Python.
+Noodles is meant to be used by scientists that want to do heavy number crunching, and need a way to organise these computations in a readable and sustainable manner.
+These workflows are usually associated with a *directed acyclic graph* (DAG, or just: graph).
+Each computation in the workflow is a represented as a node in the graph and may have several dependencies.
+These dependencies are the arrows; or if you think in reverse, the arrows show transport of data.
 
 A first example
 ---------------
@@ -13,7 +17,7 @@ Let's look at a small example creating a diamond workflow. All the examples in t
 
 ::
 
-    from noodles import run
+    from noodles import run_single
     from noodles.tutorial import (add, sub, mul)
 
     u = add(5, 4)
@@ -21,11 +25,15 @@ Let's look at a small example creating a diamond workflow. All the examples in t
     w = sub(u, 2)
     x = mul(v, w)
 
-    answer = run(x)
+    answer = run_single(x)
 
     print("The answer is {0}.".format(answer))
 
-That allmost looks like normal Python! The only difference is the ``run`` statement at the end of this program. The catch is that none of the computation is actually done until the ``run`` statement has been given. The variables ``u``, ``v``, ``w``, and ``x`` only represent the *promise* of a value. The functions that we imported are wrapped, such that they construct the directed acyclic graph of the computation in stead of just computing the result immediately. This DAG then looks like this:
+That allmost looks like normal Python! The only difference is the ``run_single`` statement at the end of this program.
+The catch is that none of the computation is actually done until the ``run_single`` statement has been given.
+The variables ``u``, ``v``, ``w``, and ``x`` only represent the *promise* of a value.
+The functions that we imported are wrapped, such that they construct the directed acyclic graph of the computation in stead of just computing the result immediately.
+This DAG then looks like this:
 
 .. figure:: _static/images/dag1.png
     :alt: the diamond workflow DAG
@@ -34,13 +42,18 @@ That allmost looks like normal Python! The only difference is the ``run`` statem
 
     The diamond workflow.
 
-Running this program will first evaluate the result to ``add(5, 4)``. The resulting value is than inserted into the empty slots in the depending nodes. Each time a node has no empty slots left, it is scheduled for evaluation. At the end, the program should print:
+Running this program will first evaluate the result to ``add(5, 4)``.
+The resulting value is then inserted into the empty slots in the depending nodes.
+Each time a node has no empty slots left, it is scheduled for evaluation.
+At the end, the program should print:
 
 ::
 
     The answer is 42.
 
-At this point it is good to know what the module ``noodles.tutorial`` looks like. It looks very simple. However, a user should be aware of what happens behind the curtains, to understand the limitations of this approach.
+At this point it is good to know what the module ``noodles.tutorial`` looks like.
+It looks very simple.
+However, you should be aware of what happens behind the curtains, to understand the limitations of this approach.
 
 ::
 
@@ -63,7 +76,16 @@ At this point it is good to know what the module ``noodles.tutorial`` looks like
 
     ...
 
-The ``@schedule`` decorators take care that the functions actually return *promises* in stead of values. Such a ``PromisedObject`` is a placeholder for the expected result. It stores the workflow graph that is needed to compute the promise. When another `schedule`-decorated function is called with a promise, the graphs of the dependencies are merged to create a new workflow graph.
+The ``@schedule`` decorators takes care that the functions actually return *promises* instead of values.
+Such a ``PromisedObject`` is a placeholder for the expected result.
+It stores the workflow graph that is needed to compute the promise.
+When another `schedule`-decorated function is called with a promise, the graphs of the dependencies are merged to create a new workflow graph.
+
+.. NOTE:: The promised object can be of any type and can be used as a normal object.
+          You access attributes and functions of the object that is promised as you normally would.
+          Be aware, however, that it is important to program in a functional way, so changing the attributes of a promised object is not a good idea.
+          Instead, return a copy of the object with the changed values.
+
 
 Doing things parallel
 ~~~~~~~~~~~~~~~~~~~~~
@@ -99,7 +121,12 @@ This time the workflow graph will look a bit more complicated.
 
     The workflow graph of the second example.
 
-Here we see how a user can define normal python functions and use them to build a larger workflow. Furthermore, we introduce a new bit of magic: the ``gather`` function. The user builds a list of computations using a list-comprehension and storing a *list of promises* in variable ``w``. Schedule-decorated function need to know what arguments contain promised values and what arguments are plain Python. What ``gather`` does, is to convert the list of promises into a promise of a list. It is defined as follows:
+Here we see how a user can define normal python functions and use them to build a larger workflow.
+Furthermore, we introduce a new bit of magic: the ``gather`` function.
+When you build a list of computations using a list-comprehension like above, you essentially store a *list of promises* in variable ``w``.
+However, schedule-decorated functions cannot easily see which arguments contain promised values, such as ``w``, and which arguments are plain Python.
+The ``gather`` function converts the list of promises into a promise of a list, making it clear to the scheduled function this argument is a promise.
+The ``gather`` function is defined as follows:
 
 ::
 
@@ -107,22 +134,26 @@ Here we see how a user can define normal python functions and use them to build 
     def gather(*lst):
         return lst
 
-By unpacking the list (we do ``gather(*w)``) in the call to gather, each item in ``w`` becomes a dependency of the ``gather`` node in this workflow, as we can see in the figure above.
+By unpacking the list (by doing ``gather(*w)``) in the call to gather, each item in ``w`` becomes a dependency of the ``gather`` node in this workflow, as we can see in the figure above.
 
-To make use of the parallelism present in this workflow, we run in with ``run_parallel``. This runner function creates a specified number of threads, each taking jobs from the Noodles scheduler and returning results.
+To make use of the parallelism in this workflow, we run it with ``run_parallel``.
+This runner function creates a specified number of threads, each taking jobs from the Noodles scheduler and returning results.
 
 Running workflows
 -----------------
 
 Noodles ships with a few ready-made functions that run the workflow for you, depending on the amount of work that needs to be done.
 
-``run``, local single thread
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Runs your workflow in the same thread as the caller. Why are you using Noodles and not a parallel runner? This function is mainly for testing.
+``run_single``, local single thread
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Runs your workflow in the same thread as the caller.
+This function is mainly for testing.
+When running workflows you almost always want to use one of the other functions.
 
 ``run_parallel``, local multi-thread
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Runs your workflow in parallel using any number of threads. Usually, specifying the number of cores in your CPU will give optimal performance for this runner.
+Runs your workflow in parallel using any number of threads.
+Usually, specifying the number of cores in your CPU will give optimal performance for this runner.
 
 .. NOTE:: If you are very **very** certain that your workflow will never need to scale to cluster-computing, this runner is more lenient on the kinds of Python that is supported, because function arguments are not converted to and from JSON. Think of nested functions, lambda forms, generators, etc.
 
