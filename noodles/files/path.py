@@ -11,7 +11,7 @@ class SerPath(Serialiser):
         super(Serialiser, self).__init__(self, Path)
 
     def encode(self, obj, make_rec):
-        return make_rec({'path': self.path}, files=[self.path])
+        return make_rec({'path': obj.path}, files=[obj.path])
 
     def decode(self, cls, data):
         return cls(path=data['path'])
