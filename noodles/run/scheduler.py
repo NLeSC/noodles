@@ -130,8 +130,9 @@ class Scheduler:
 
         self.results[id(wf)] = dict((n, Empty) for n in wf.nodes)
 
-        depends = invert_links(wf.links)
+        #depends = invert_links(wf.links)
 
         for n in wf.nodes:
-            if depends[n] == {}:
+            #if depends[n] == {}:
+            if is_node_ready(wf.nodes[n]):
                 self.schedule(Job(workflow=wf, node=n), sink)
