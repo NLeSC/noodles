@@ -21,14 +21,14 @@ class Display:
 
     def start(self, key, job, _):
         if job.hints and 'display' in job.hints:
-            self.add_job(key, job)
-            self.out << job.hints['display'].format(
-                **job.bound_args.arguments) << "\n"
+            msg = job.hints['display'].format(**job.bound_args.arguments)[:70]
+            self.add_job(key, job, msg)
+            self.out << msg << "\n"
 
     def done(self, key, data, msg):
         if key in self.jobs and 'confirm' in self.jobs[key]:
             self.out << ['save'] << ['up', self.jobs[key]['line']] \
-            << ['forward', 50]
+            << ['forward', max(50, self.jobs[key]['length'] + 2)]
             self.out << "(" << ['fg', 60, 180, 100] << "✔" << ['reset'] \
             << ")" << ['restore']
 
@@ -38,14 +38,14 @@ class Display:
     def error(self, key, _, data):
         if key in self.jobs and 'confirm' in self.jobs[key]:
             self.out << ['save'] << ['up', self.jobs[key]['line']] \
-            << ['forward', 50]
+            << ['forward', max(50, self.jobs[key]['length'] + 2)]
             self.out << "(" << ['fg', 240, 100, 60] << "✘" << ['reset'] \
             << ")" << ['restore']
 
-    def add_job(self, key, job):
+    def add_job(self, key, job, msg):
         for k in self.jobs:
             self.jobs[k]['line'] += 1
-        self.jobs[key] = {'line': 1, 'job': job}
+        self.jobs[key] = {'line': 1, 'job': job, 'length': len(msg)}
         self.jobs[key].update(job.hints)
 
     def error_handler(self, job, xcptn):

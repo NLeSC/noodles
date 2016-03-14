@@ -49,3 +49,13 @@ def deep_map(f, root):
 
     return result
 
+
+def inverse_deep_map(f, root):
+    if isinstance(root, dict):
+        r = {k: inverse_deep_map(f, v) for k, v in root.items()}
+    elif isinstance(root, list):
+        r = [inverse_deep_map(f, v) for v in root]
+    else:
+        r = root
+
+    return f(r)

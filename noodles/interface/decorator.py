@@ -1,4 +1,5 @@
 from functools import wraps
+from copy import deepcopy
 
 from ..workflow import (from_call, get_workflow)
 
@@ -17,7 +18,7 @@ def scheduled_function(f, hints=None):
     @wraps(f)
     def wrapped(*args, **kwargs):
         return PromisedObject(from_call(
-            f, args, kwargs, hints, 
+            f, args, kwargs, deepcopy(hints),
             call_by_value = config['call_by_value']))
 
     return wrapped
@@ -65,7 +66,12 @@ def _setattr(obj, attr, value):
 @schedule
 def _do_call(obj, *args, **kwargs):
     return obj(*args, **kwargs)
-    
+
+
+def update_hints(obj, data):
+    root = obj._workflow.root
+    obj._workflow.nodes[root].hints.update(data)
+
 
 class PromisedObject:
     """

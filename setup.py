@@ -12,13 +12,13 @@ with open(path.join(here, 'README.rst'), encoding='utf-8') as f:
 
 setup(
     name='Noodles',
-    version='0.1.9238',
+    version='0.1.9244',
     description='Workflow Engine',
     author='Johan Hidding',
     url='https://github.com/NLeSC/noodles',
     packages=[
         'noodles', 'noodles.serial', 'noodles.run', 'noodles.display',
-        'noodles.interface', 'noodles.workflow'],
+        'noodles.interface', 'noodles.workflow', 'noodles.files'],
 
     classifiers=[
         'License :: OSI Approved :: '
