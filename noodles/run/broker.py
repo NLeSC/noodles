@@ -3,21 +3,42 @@ import threading
 
 
 class Broker(object):
-    def __init__(self, master, slave):
+    def __init__(self, master=None):
         self.master = master
-        self.slave = slave
+        self.slave = None
 
-    def __or__(self, other):
+    def __gt__(self, other):
         if isinstance(other, tuple):
-            return self | ThreadPool(*other)
+            return self > ThreadPool(*other)
+        else:
+            other.master = self.slave
+            return Chain(self.master, end=other)
+
+    def setup(self):
+        return self.master.setup()
 
 
+class Chain(Broker):
+    def __init__(self, master, end):
+        super(Chain, self).__init__(master=master)
+        self.end = end
 
-    def __lt__(self, others):
-        pass
+    @property
+    def slave(self):
+        return self.end.slave
 
 
-class LocalWorker()
+class LocalWorker:
+    def __init__(self):
+        self.master = None
+
+    def __call__(self):
+        source, sink = self.master()
+
+        def get_result():
+            for key, job in source:
+                yield (key, 'done', run_job(job), None)
+
 
 class ThreadPool(Broker):
     def __init__(self, *stealers):
@@ -26,13 +47,17 @@ class ThreadPool(Broker):
         job_q = IOQueue()
         result_q = IOQueue()
 
+        self.slave=QueueConnection(job_q, result_q)
+
         super(ThreadPool, self).__init__(
-            slave=QueueConnection(job_q, result_q),
             master=QueueConnection(result_q, job_q))
 
-    def __call__(self):
         for s in self.stealers:
-            t = threading.Thread(target=(self | s))
+            t = threading.Thread(target=(self > s))
             t.deamon = True
             t.start()
 
+    def __or__(self, other):
+        other.master = self.slave
+        def f():
+            return patch()

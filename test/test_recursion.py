@@ -28,6 +28,6 @@ def registry():
 
 def test_recursion_process():
     f100 = factorial(100)
-    result = run_process(f100, n_processes=1, registry=registry, verbose=True)
+    result = run_process(f100, n_processes=1, registry=registry, verbose=False)
     print(result)
     assert floor(log(result)) == 363

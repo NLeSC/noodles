@@ -51,13 +51,6 @@ class IOQueue:
             yield v
             self.Q.task_done()
 
-            # try:
-            #     v = self.Q.get(self.blocking)
-            #     yield v
-            #     self.Q.task_done()
-            # except:
-            #     yield
-
     def wait(self):
         self.Q.join()
 
@@ -117,8 +110,8 @@ def patch(source, sink):
     """Create a direct link between a source and a sink."""
     for v in source:
         sink.send(v)
-        
-        
+
+
 @coroutine_sink
 def splice_sink(a, b):
     """A sink that sends its messages to both `a` and `b`."""

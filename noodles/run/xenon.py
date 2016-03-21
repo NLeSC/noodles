@@ -3,7 +3,13 @@ from .coroutines import coroutine_sink, Connection
 from ..logger import log
 from ..utility import object_name
 from noodles import serial
+from .hybrid import hybrid_threaded_worker
+from .scheduler import Scheduler
+from ..workflow import get_workflow
 
+from copy import copy
+
+import random
 import uuid
 import xenon
 import os
@@ -16,6 +22,7 @@ import threading
 xenon.init()  # noqa
 
 from jnius import autoclass
+
 
 def read_result(registry, s):
     obj = registry.from_json(s)
@@ -64,17 +71,12 @@ def dict2HashMap(d):
 class XenonConfig:
     def __init__(self, **kwargs):
         self.name = "xenon-" + str(uuid.uuid4())
-        self.registry = serial.base
         self.jobs_scheme = 'local'
         self.files_scheme = 'local'
         self.location = None
         self.credential = None
         self.jobs_properties = None
         self.files_properties = None
-        self.working_dir = os.getcwd()
-        self.exec_command = None
-        self.time_out = 5000  # 5 seconds
-        self.prefix = sys.prefix
 
         for key, value in kwargs.items():
             if key in dir(self):
@@ -92,6 +94,38 @@ class XenonConfig:
     def filesystem_args(self):
         return (self.files_scheme, self.location,
                 self.credential, self.files_properties)
+
+
+class RemoteJobConfig(object):
+    def __init__(self, **kwargs):
+        self.name = "remote-" + str(uuid.uuid4())
+        self.working_dir = os.getcwd()
+        self.prefix = sys.prefix
+        self.exec_command = None
+        self.registry = serial.base
+        self.init = None
+        self.finish = None
+        self.time_out = 5000  # 5 seconds
+
+        for key, value in kwargs.items():
+            if key in dir(self):
+                setattr(self, key, value)
+            else:
+                raise ValueError("Keyword `{}' not part of Remote Job config.".format(key))
+
+    def command_line(self):
+        cmd = ['/bin/bash',
+               self.working_dir + '/worker.sh',
+               self.prefix, 'online', '-name', self.name, '-verbose',
+               '-registry', object_name(self.registry)]
+
+        if self.init:
+            cmd.append("-init")
+
+        if self.finish:
+            cmd.append("-finish")
+
+        return cmd
 
 
 class XenonJob:
@@ -151,61 +185,45 @@ class XenonScheduler:
             desc.setInteractive(True)
         desc.setExecutable(command[0])
         desc.setArguments(*command[1:])
+        desc.setQueueName('multi')
+        print("submitting: ", command, end='', file=sys.stderr, flush=True)
         job = self._x.jobs.submitJob(self._s, desc)
+        print("done", file=sys.stderr, flush=True)
         return XenonJob(self._x, job, desc)
 
 
-def xenon_interactive_worker(config=None, init=None, finish=None):
+def xenon_interactive_worker(XeS: XenonScheduler, job_config):
     """Uses Xenon to run a single remote interactive worker.
 
     Jobs are read from stdin, and results written to stdout.
 
-    :param config:
-        The configuration for Xenon. This includes the kind
-        of Xenon adaptor to use along with authentication credentials and the
-        hostname of the machine.
-    :type config: :py:class:`XenonConfig`
+    :param XeS:
+        The :py:class:`XenonScheduler` object that allows us to schedule the
+        new worker.
+    :type Xe: XenonScheduler
 
-    :param init:
-        Run this function on the remote worker once before doing jobs
-
-    :param finish:
-        Run this function after everything has finished, probably not
-        very useful.
+    :param job_config:
+        Job configuration. Specifies the command to be run remotely.
     """
+    cmd = job_config.command_line()
+    J = XeS.submit(cmd, interactive=True)
 
-    if config is None:
-        config = XenonConfig()  # default config
+    # status = J.wait_until_running(job_config.time_out)
+    # if not status.isRunning():
+    #     raise RuntimeError("Could not get the job running")
+    # else:
+    #     print(job_config.name + " is now running.", file=sys.stderr, flush=True)
 
-    K = XenonKeeper(config.scheduler_args)
-
-    cmd = config.exec_command if config.exec_command \
-        else ['/bin/bash',
-              config.working_dir + '/worker.sh',
-              config.prefix,
-              'online', '-name', K.name,
-              '-registry', object_name(config.registry)]
-
-    if init:
-        cmd.append("-init")
-    if finish:
-        cmd.append("-finish")
-
-    J = K.submit(cmd, interactive=True)
-
-    status = J.wait_until_running(config.time_out)
-    if not status.isRunning():
-        raise RuntimeError("Could not get the job running")
-
+    print(job_config.name + " is now running.", file=sys.stderr, flush=True)
     def read_stderr():
         for line in java_lines(J.streams.getStderr()):
-            log.worker_stderr("Xe {0:X}".format(id(K)), line)
+            print(job_config.name + ": " + line, file=sys.stderr, flush=True)
 
-    K.stderr_thread = threading.Thread(target=read_stderr)
-    K.stderr_thread.daemon = True
-    K.stderr_thread.start()
+    J.stderr_thread = threading.Thread(target=read_stderr)
+    J.stderr_thread.daemon = True
+    J.stderr_thread.start()
 
-    registry = config.registry()
+    registry = job_config.registry()
 
     @coroutine_sink
     def send_job():
@@ -213,7 +231,7 @@ def xenon_interactive_worker(config=None, init=None, finish=None):
 
         while True:
             key, ujob = yield
-            out.println(put_job(registry, K.name, key, ujob))
+            out.println(put_job(registry, 'scheduler', key, ujob))
             out.flush()
 
     def get_result():
@@ -221,55 +239,65 @@ def xenon_interactive_worker(config=None, init=None, finish=None):
             key, status, result, err_msg = read_result(registry, line)
             yield (key, status, result, err_msg)
 
-    if init is not None:
-        send_job().send(("init", init()._workflow.root_node))
+    if job_config.init is not None:
+        send_job().send(("init", job_config.init()._workflow.root_node))
         key, status, result, err_msg = next(get_result())
         if key != "init" or not result:
             raise RuntimeError("The initializer function did not succeed on worker.")
 
-    if finish is not None:
-        send_job().send(("finish", finish()._workflow.root_node))
+    if job_config.finish is not None:
+        send_job().send(("finish", job_config.finish()._workflow.root_node))
 
     return Connection(get_result, send_job)
 
 
-# def xenon_batch_worker(poll_delay=1):
-#     xenon.init()
-#
-#     x = xenon.Xenon()
-#     jobs_api = x.jobs()
-#
-#     new_jobs = Queue()
-#
-#     @coroutine_sink
-#     def send_job():
-#         sched = jobs_api.newScheduler('ssh', 'localhost', None, None)
-#
-#         while True:
-#             key, job = yield
-#             pwd = 'noodles-{0}'.format(key.hex)
-#             desc = xenon.jobs.JobDescription()
-#             desc.setExecutable('python3.5')
-#             desc.setStdout(os.getcwd() + '/' + pwd + '/out.json')
-#
-#             # submit a job
-#             job = jobs_api.submitJob(sched, desc)
-#             new_jobs.put((key, job))
-#
-#     def get_result():
-#         jobs = {}
-#
-#         while True:
-#             time.sleep(poll_delay)
-#             for key, job in jobs.items():
-#                 ...
-#                 result = 42
-#                 yield (key, result)
-#
-#             # put recently submitted jobs into the jobs-dict.
-#             while not new_jobs.empty():
-#                 key, job = new_jobs.get()
-#                 jobs[key] = job
-#                 new_jobs.task_done()
-#
-#     return Connection(get_result, send_job)
+def run_xenon(wf, n_processes, xenon_config, job_config, deref=False):
+    """Run the workflow using a number of online Xenon workers.
+
+    :param wf:
+        The workflow.
+    :type wf: `Workflow` or `PromisedObject`
+
+    :param n_processes:
+        Number of processes to start.
+
+    :param registry:
+        The serial registry.
+
+    :param xenon_config:
+        The :py:class:`XenonConfig` object that gives tells us how to use Xenon.
+
+    :param job_config:
+        The :py:class:`RemoteJobConfig` object that specifies the command to run
+        remotely for each worker.
+
+    :param deref:
+        Set this to True to pass the result through one more encoding and
+        decoding step with object derefencing turned on.
+    :type deref: bool
+
+    :returns: the result of evaluating the workflow
+    :rtype: any
+    """
+    with XenonKeeper() as XeK:
+        XeS = XenonScheduler(XeK, xenon_config)
+
+        workers = {}
+        for i in range(n_processes):
+            cfg = copy(job_config)
+            cfg.name = 'remote-{0:02}'.format(i)
+            new_worker = xenon_interactive_worker(XeS, cfg)
+            workers[new_worker.name] = new_worker
+
+        worker_names = list(workers.keys())
+
+        def random_selector(job):
+            return random.choice(worker_names)
+
+        master_worker = hybrid_threaded_worker(random_selector, workers)
+        result = Scheduler().run(master_worker, get_workflow(wf))
+
+        if deref:
+            return job_config.registry().dereference(result, host='localhost')
+        else:
+            return result
