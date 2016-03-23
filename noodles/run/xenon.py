@@ -189,7 +189,7 @@ class XenonScheduler:
             desc.setInteractive(True)
         desc.setExecutable(command[0])
         desc.setArguments(*command[1:])
-        desc.setQueueName('multi')
+        # desc.setQueueName('multi')
         # print("submitting: ", command, end='', file=sys.stderr, flush=True)
         job = self._x.jobs.submitJob(self._s, desc)
         # print("done", file=sys.stderr, flush=True)
