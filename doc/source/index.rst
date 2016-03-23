@@ -17,6 +17,7 @@ Contents:
    boil_tutorial
    development
    scheduler
+   brokers
 
 Introduction
 ============

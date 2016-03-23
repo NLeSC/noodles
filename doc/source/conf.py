@@ -61,7 +61,7 @@ master_doc = 'index'
 
 # General information about the project.
 project = 'Noodles'
-copyright = '2015, Johan Hidding, Felipe Zapata'
+copyright = '2015-2016, Johan Hidding, Felipe Zapata, Berend Weel'
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
