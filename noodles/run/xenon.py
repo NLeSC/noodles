@@ -105,6 +105,7 @@ class RemoteJobConfig(object):
         self.registry = serial.base
         self.init = None
         self.finish = None
+        self.verbose = False
         self.time_out = 5000  # 5 seconds
 
         for key, value in kwargs.items():
@@ -116,7 +117,7 @@ class RemoteJobConfig(object):
     def command_line(self):
         cmd = ['/bin/bash',
                self.working_dir + '/worker.sh',
-               self.prefix, 'online', '-name', self.name, '-verbose',
+               self.prefix, 'online', '-name', self.name,
                '-registry', object_name(self.registry)]
 
         if self.init:
@@ -124,6 +125,9 @@ class RemoteJobConfig(object):
 
         if self.finish:
             cmd.append("-finish")
+
+        if self.verbose:
+            cmd.append("-verbose")
 
         return cmd
 
@@ -186,9 +190,9 @@ class XenonScheduler:
         desc.setExecutable(command[0])
         desc.setArguments(*command[1:])
         desc.setQueueName('multi')
-        print("submitting: ", command, end='', file=sys.stderr, flush=True)
+        # print("submitting: ", command, end='', file=sys.stderr, flush=True)
         job = self._x.jobs.submitJob(self._s, desc)
-        print("done", file=sys.stderr, flush=True)
+        # print("done", file=sys.stderr, flush=True)
         return XenonJob(self._x, job, desc)
 
 
