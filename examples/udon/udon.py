@@ -40,22 +40,45 @@ def idx_letters(i):
     return s
 
 
-class WorkSheet(Gtk.VBox):
+class WorkSheetTopHeader(Gtk.HBox):
+    def __init__(self):
+        super(WorkSheetTopHeader, self).__init__()
+
+
+class WorkSheetLeftHeader(Gtk.VBox):
+    def __init__(self):
+        super(WorkSheetLeftHeader, self).__init__()
+
+
+class WorkSheet(Gtk.Grid):
     def __init__(self, shape=(1, 1)):
         super(WorkSheet, self).__init__()
         self._scrolled_window = Gtk.ScrolledWindow()
         self._scrolled_window.set_hexpand(True)
         self._scrolled_window.set_vexpand(True)
 
-        self._grid = Gtk.Grid()
-        self._scrolled_window.add(self._grid)
+        self._cell_grid = Gtk.Grid()
+        self._scrolled_window.add(self._cell_grid)
+
+        self._left_header = WorkSheetLeftHeader()
+        self._top_header = WorkSheetTopHeader()
 
         self._entry = Gtk.Entry()
-        self.pack_start(self._scrolled_window, expand=True, fill=True, padding=0)
-        self.pack_end(self._entry, expand=False, fill=True, padding=2)
-        self.show_all()
+        self.attach(self._scrolled_window, 1, 1, 1, 1)
+        self.attach(self._top_header, 1, 0, 1, 1)
+        self.attach(self._left_header, 0, 1, 1, 1)
+        self.attach(self._entry, 0, 2, 2, 1)
 
+        self.show_all()
         self.shape = shape
+
+    @property
+    def shape(self):
+        return self._shape
+
+    @shape.setter
+    def set_shape(self, s):
+        self._shape = s
         self.create_cells()
 
     def create_cells(self):
@@ -79,7 +102,7 @@ class WorkSheet(Gtk.VBox):
 class Window(Gtk.Window):
     def __init__(self):
         super(Window, self).__init__(title='Udon')
-        self.set_default_size(1024, 720);
+        self.set_default_size(1024, 720)
 
         # header bar
         self._header_bar = Gtk.HeaderBar()
