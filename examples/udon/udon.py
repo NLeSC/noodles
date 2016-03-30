@@ -40,19 +40,29 @@ def idx_letters(i):
     return s
 
 
-class WorkSheetTopHeader(Gtk.HBox):
+class WorkSheetTopHeader(Gtk.Grid):
     def __init__(self):
         super(WorkSheetTopHeader, self).__init__()
 
 
-class WorkSheetLeftHeader(Gtk.VBox):
+class WorkSheetLeftHeader(Gtk.Grid):
     def __init__(self):
         super(WorkSheetLeftHeader, self).__init__()
 
 
 class WorkSheet(Gtk.Grid):
-    def __init__(self, shape=(1, 1)):
+    def __init__(self, columns=1):
         super(WorkSheet, self).__init__()
+
+        if isinstance(columns, int):
+            self._columns = tuple(idx_letters(i) for i in range(1, columns+1))
+        elif isinstance(columns, tuple):
+            self._columns = columns
+        else:
+            raise TypeError('columns should be specified as tuple or int')
+
+        self._n_rows = 1
+
         self._scrolled_window = Gtk.ScrolledWindow()
         self._scrolled_window.set_hexpand(True)
         self._scrolled_window.set_vexpand(True)
@@ -69,17 +79,17 @@ class WorkSheet(Gtk.Grid):
         self.attach(self._left_header, 0, 1, 1, 1)
         self.attach(self._entry, 0, 2, 2, 1)
 
+        self.create_cells()
+
         self.show_all()
-        self.shape = shape
 
     @property
-    def shape(self):
-        return self._shape
+    def columns(self):
+        return self._columns
 
-    @shape.setter
-    def set_shape(self, s):
-        self._shape = s
-        self.create_cells()
+    @columns.setter
+    def columns(self, c):
+        self._columns = c
 
     def create_cells(self):
         for i in range(1, self.shape[0]):
