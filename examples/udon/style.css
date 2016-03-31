@@ -1,0 +1,16 @@
+GtkLabel.sheet.header {
+    border-bottom: solid #111133 0.5px;
+    border-left: solid #111133 0.5px;
+    background: #222233;
+    font-weight: bold;
+}
+
+GtkLabel.sheet.cell {
+    border-bottom: solid #222244 0.5px;
+    border-left: solid #222244 0.5px;
+    background: #111119;
+}
+
+.sheet.cell.active {
+    border: solid #ccddcc 0.5px;
+}

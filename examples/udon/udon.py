@@ -40,18 +40,52 @@ def idx_letters(i):
     return s
 
 
-class WorkSheetTopHeader(Gtk.Grid):
-    def __init__(self):
+class WorkSheetTopHeader(Gtk.ScrolledWindow):
+    def __init__(self, hadjustment, columns):
         super(WorkSheetTopHeader, self).__init__()
+        self.set_hadjustment(hadjustment)
+        self.set_policy(Gtk.PolicyType.EXTERNAL, Gtk.PolicyType.NEVER)
+        self._grid = Gtk.Grid()
+        self.add(self._grid)
+        self._columns = columns
+        self._create_cells()
+        self.show_all()
+
+    def _create_cells(self):
+        for i, c in enumerate(self._columns):
+            label = Gtk.Label.new(c)
+            label.set_alignment(0.5, 0.5)
+            label.props.width_request = 100
+            label.props.xpad = 2
+            label.get_style_context().add_class('sheet')
+            label.get_style_context().add_class('header')
+            self._grid.attach(label, i, 0, 1, 1)
 
 
-class WorkSheetLeftHeader(Gtk.Grid):
-    def __init__(self):
+class WorkSheetLeftHeader(Gtk.ScrolledWindow):
+    def __init__(self, vadjustment, n_rows):
         super(WorkSheetLeftHeader, self).__init__()
+        self.set_policy(Gtk.PolicyType.NEVER, Gtk.PolicyType.EXTERNAL)
+        self.set_vadjustment(vadjustment)
+        self._grid = Gtk.Grid()
+        self.add(self._grid)
+        self._n_rows = n_rows
+        self._create_cells()
+        self.show_all()
 
+    def _create_cells(self):
+        for i in range(self._n_rows):
+            label = Gtk.Label.new(str(i + 1))
+            label.set_alignment(1, 0.5)
+            label.get_style_context().add_class('sheet')
+            label.get_style_context().add_class('header')
+            label.props.xpad = 5
+            label.props.ypad = 1
+            label.props.width_request = 100
+            self._grid.attach(label, 0, i, 1, 1)
 
 class WorkSheet(Gtk.Grid):
-    def __init__(self, columns=1):
+    def __init__(self, columns=1, n_rows=1):
         super(WorkSheet, self).__init__()
 
         if isinstance(columns, int):
@@ -61,7 +95,7 @@ class WorkSheet(Gtk.Grid):
         else:
             raise TypeError('columns should be specified as tuple or int')
 
-        self._n_rows = 1
+        self._n_rows = n_rows
 
         self._scrolled_window = Gtk.ScrolledWindow()
         self._scrolled_window.set_hexpand(True)
@@ -70,8 +104,8 @@ class WorkSheet(Gtk.Grid):
         self._cell_grid = Gtk.Grid()
         self._scrolled_window.add(self._cell_grid)
 
-        self._left_header = WorkSheetLeftHeader()
-        self._top_header = WorkSheetTopHeader()
+        self._left_header = WorkSheetLeftHeader(self._scrolled_window.get_vadjustment(), self._n_rows)
+        self._top_header = WorkSheetTopHeader(self._scrolled_window.get_hadjustment(), self._columns)
 
         self._entry = Gtk.Entry()
         self.attach(self._scrolled_window, 1, 1, 1, 1)
@@ -80,39 +114,63 @@ class WorkSheet(Gtk.Grid):
         self.attach(self._entry, 0, 2, 2, 1)
 
         self.create_cells()
+        self._active = (1, 1)
+        self._cell_grid.get_child_at(*self._active).get_style_context().add_class('active')
 
+        self.props.can_focus = True
+        self.connect('key-press-event', self.on_key_press)
+        self.connect('realize', self.on_realize)
         self.show_all()
 
     @property
-    def columns(self):
-        return self._columns
+    def active(self):
+        return self._active
 
-    @columns.setter
-    def columns(self, c):
-        self._columns = c
+    @active.setter
+    def active(self, value):
+        self._cell_grid.get_child_at(*self._active).get_style_context().remove_class('active')
+        self._active = value
+        self._cell_grid.get_child_at(*self._active).get_style_context().add_class('active')
+
+    def on_realize(self, widget):
+        self.grab_focus()
+
+    def on_key_press(self, widget, event):
+        delta = {Gdk.KEY_Up:    ( 0, -1),
+                 Gdk.KEY_Down:  ( 0,  1),
+                 Gdk.KEY_Left:  (-1,  0),
+                 Gdk.KEY_Right: ( 1,  0)}.get(event.keyval, None)
+
+        if delta:
+            next = (
+                max(0, min(len(self._columns) - 1, self._active[0] + delta[0])),
+                max(0, min(    self._n_rows   - 1, self._active[1] + delta[1])))
+            self.active = next
+            return True
+        else:
+            return False
 
     def create_cells(self):
-        for i in range(1, self.shape[0]):
-            label = Gtk.Label.new(idx_letters(i))
-            label.props.width_request = 100
-            label.props.height_request = 12
-            self._grid.attach(label, i, 0, 1, 1)
+        for j in range(self._n_rows):
+            for i in range(len(self._columns)):
+                label = Gtk.Label.new('---')
+                label.props.width_request = 100
+                label.props.ypad = 1
+                label.get_style_context().add_class('sheet')
+                label.get_style_context().add_class('cell')
+                self._cell_grid.attach(label, i, j, 1, 1)
 
-        for j in range(1, self.shape[1]):
-            label = Gtk.Label.new(str(j))
-            label.set_alignment(1, 0.5)
-            label.props.width_request = 100
-            label.props.halign = Gtk.Align.END
-            label.props.hexpand = True
-            label.props.height_request = 25
-            self._grid.attach(label, 0, j, 1, 1)
-
-        self.show_all()
 
 class Window(Gtk.Window):
     def __init__(self):
         super(Window, self).__init__(title='Udon')
         self.set_default_size(1024, 720)
+
+        # style
+        self._style_provider = Gtk.CssProvider()
+        self._style_provider.load_from_path('style.css')
+        Gtk.StyleContext.add_provider_for_screen(
+            self.get_screen(), self._style_provider, 0)
 
         # header bar
         self._header_bar = Gtk.HeaderBar()
@@ -122,7 +180,7 @@ class Window(Gtk.Window):
         self.set_titlebar(self._header_bar)
 
         # work sheet
-        self._work_sheet = WorkSheet(shape=(100, 100))
+        self._work_sheet = WorkSheet(30, 100)
 
         # editor
         self._editor = Editor()
