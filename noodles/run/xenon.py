@@ -1,4 +1,4 @@
-from .coroutines import coroutine_sink, Connection
+from .coroutines import coroutine_sink, Connection, IOQueue
 # from .data_json import saucer, desaucer, node_to_jobject
 from ..logger import log
 from ..utility import object_name
@@ -312,7 +312,7 @@ def run_xenon(Xe, n_processes, xenon_config, job_config, wf, deref=False):
 
     workers = {}
     for i in range(n_processes):
-        cfg = copy.copy(job_config)
+        cfg = copy(job_config)
         cfg.name = 'remote-{0:02}'.format(i)
         new_worker = xenon_interactive_worker(XeS, cfg)
         workers[new_worker.name] = new_worker
