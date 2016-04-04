@@ -268,7 +268,7 @@ def buffered_dispatcher(workers):
 
         for job in jobs.source():
             sink.send(job)
-            result_sink.send(source.next())
+            result_sink.send(next(source))
 
     for w in workers.values():
         t = threading.Thread(
