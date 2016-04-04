@@ -1,6 +1,9 @@
 from noodles import (
     serial, gather)
 
+from noodles.run.coroutines import (
+    IOQueue, coroutine_sink, patch, Connection)
+
 from noodles.run.scheduler import (
     Scheduler)
 
@@ -18,9 +21,33 @@ from noodles.workflow import (
 from noodles.tutorial import (
     add, mul, sub, accumulate)
 
+from noodles.utility import (unzip_dict)
+
 import copy
 import random
 import os
+import threading
+
+
+def buffered_dispatcher(workers):
+    jobs = IOQueue()
+    results = IOQueue()
+
+    def dispatcher(source, sink):
+        result_sink = results.sink()
+
+        for job in jobs.source():
+            sink.send(job)
+            result_sink.send(source.next())
+
+    for w in workers.values():
+        t = threading.Thread(
+            target=dispatcher,
+            args=w.setup())
+        t.daemon = True
+        t.start()
+
+    return Connection(results.source, jobs.sink)
 
 
 def run_xenon(Xe, n_processes, xenon_config, job_config, wf, deref=False):
@@ -33,12 +60,7 @@ def run_xenon(Xe, n_processes, xenon_config, job_config, wf, deref=False):
         new_worker = xenon_interactive_worker(XeS, cfg)
         workers[new_worker.name] = new_worker
 
-    worker_names = list(workers.keys())
-
-    def random_selector(_):
-        return random.choice(worker_names)
-
-    master_worker = hybrid_threaded_worker(random_selector, workers)
+    master_worker = buffered_dispatcher(workers)
     result = Scheduler().run(master_worker, get_workflow(wf))
 
     if deref:
@@ -56,12 +78,12 @@ if __name__ == '__main__':
 
     with XenonKeeper() as Xe:
         certificate = Xe.credentials.newCertificateCredential(
-            'ssh', os.environ["HOME"] + '/.ssh/id_rsa', 'jhidding', '', None)
+            'ssh', os.environ["HOME"] + '/.ssh/id_rsa', '<username>', '', None)
 
         xenon_config = XenonConfig(
             jobs_scheme='slurm',
-            location='fs0.das5.cs.vu.nl',
-            credential=certificate
+            location=None,
+            # credential=certificate
         )
 
         job_config = RemoteJobConfig(
