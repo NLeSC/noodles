@@ -106,6 +106,7 @@ class RemoteJobConfig(object):
         self.init = None
         self.finish = None
         self.verbose = False
+        self.queue = None
         self.time_out = 5000  # 5 seconds
 
         for key, value in kwargs.items():
@@ -180,19 +181,22 @@ class XenonKeeper:
 
 class XenonScheduler:
     def __init__(self, keeper, config):
+        self.config = config
         self._x = keeper
         self._s = keeper.jobs.newScheduler(*config.scheduler_args)
 
-    def submit(self, command, interactive=True):
+    def submit(self, command, *, queue=None, interactive=True):
         desc = xenon.jobs.JobDescription()
         if interactive:
             desc.setInteractive(True)
         desc.setExecutable(command[0])
         desc.setArguments(*command[1:])
-        # desc.setQueueName('multi')
-        # print("submitting: ", command, end='', file=sys.stderr, flush=True)
+        if queue:
+            desc.setQueueName(queue)
+        elif self.config.jobs_scheme == 'local':
+            desc.setQueueName('multi')
+
         job = self._x.jobs.submitJob(self._s, desc)
-        # print("done", file=sys.stderr, flush=True)
         return XenonJob(self._x, job, desc)
 
 

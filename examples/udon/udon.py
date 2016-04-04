@@ -1,34 +1,10 @@
 import gi
 gi.require_version('Gtk', '3.0')
-gi.require_version('GtkSource', '3.0')
 
-from gi.repository import (Gtk, Gdk, GtkSource)
+from gi.repository import (Gtk, Gdk)
 # import pandas
 
-class Editor(Gtk.ScrolledWindow):
-    def __init__(self):
-        super(Editor, self).__init__()
-
-        self._buffer = GtkSource.Buffer.new()
-        text = open("./udon.py", "r").read()
-        self._buffer.set_text(text)
-
-        slm = GtkSource.LanguageManager.new()
-        language = slm.get_language("python")
-        self._buffer.set_language(language)
-
-        ssm = GtkSource.StyleSchemeManager.get_default()
-        scheme = ssm.get_scheme('cobalt')
-        self._buffer.set_style_scheme(scheme)
-
-        self._source_editor = GtkSource.View.new_with_buffer(self._buffer)
-        self._source_editor.set_show_line_numbers(True)
-        self._source_editor.set_monospace(True)
-        self._source_editor.set_right_margin_position(80)
-        self._source_editor.set_show_right_margin(True)
-
-        self.add(self._source_editor)
-        self._source_editor.get_style_context().add_class("Editor")
+from editor import (Editor)
 
 
 def idx_letters(i):
@@ -38,6 +14,27 @@ def idx_letters(i):
         s = chr((i % 26) + ord('A')) + s
         i //= 26
     return s
+
+
+class Status(Gtk.Statusbar):
+    def __init__(self):
+        super(Status, self).__init__()
+        self._data = {}
+        self.connect('realize', self.on_realize)
+
+    def on_realize(self, widget):
+        self.push(0, self.msg())
+
+    def msg(self):
+        return ' - '.join('{}: {}'.format(k, v) for k, v in self._data.items())
+
+    def __getitem__(self, item):
+        return self._data[item]
+
+    def __setitem__(self, key, value):
+        self._data[key] = value
+        self.pop(0)
+        self.push(0, self.msg())
 
 
 class WorkSheetTopHeader(Gtk.ScrolledWindow):
@@ -84,9 +81,11 @@ class WorkSheetLeftHeader(Gtk.ScrolledWindow):
             label.props.width_request = 100
             self._grid.attach(label, 0, i, 1, 1)
 
+
 class WorkSheet(Gtk.Grid):
-    def __init__(self, columns=1, n_rows=1):
+    def __init__(self, status, columns=1, n_rows=1):
         super(WorkSheet, self).__init__()
+        self._status = status
 
         if isinstance(columns, int):
             self._columns = tuple(idx_letters(i) for i in range(1, columns+1))
@@ -117,6 +116,9 @@ class WorkSheet(Gtk.Grid):
         self._active = (1, 1)
         self._cell_grid.get_child_at(*self._active).get_style_context().add_class('active')
 
+        self._mode = None
+        self.mode = 'cell'
+
         self.props.can_focus = True
         self.connect('key-press-event', self.on_key_press)
         self.connect('realize', self.on_realize)
@@ -132,14 +134,41 @@ class WorkSheet(Gtk.Grid):
         self._active = value
         self._cell_grid.get_child_at(*self._active).get_style_context().add_class('active')
 
+    @property
+    def mode(self):
+        return self._mode
+
+    @mode.setter
+    def mode(self, m):
+        if m not in ['cell', 'all', 'column', 'row']:
+            raise RuntimeError('Worksheet mode should be one of'
+                               '[\'cell\', \'column\', \'row\', \'all\']')
+
+        self._mode = m
+        self._status['mode'] = m
+
+
     def on_realize(self, widget):
         self.grab_focus()
 
     def on_key_press(self, widget, event):
-        delta = {Gdk.KEY_Up:    ( 0, -1),
-                 Gdk.KEY_Down:  ( 0,  1),
-                 Gdk.KEY_Left:  (-1,  0),
-                 Gdk.KEY_Right: ( 1,  0)}.get(event.keyval, None)
+        mode_change = {
+            Gdk.KEY_c: 'column',
+            Gdk.KEY_r: 'row',
+            Gdk.KEY_a: 'all',
+            Gdk.KEY_Escape: 'cell'
+        }.get(event.keyval, None)
+
+        if mode_change:
+            self.mode = mode_change
+            return True
+
+        delta = {
+            Gdk.KEY_Up:    ( 0, -1),
+            Gdk.KEY_Down:  ( 0,  1),
+            Gdk.KEY_Left:  (-1,  0),
+            Gdk.KEY_Right: ( 1,  0)
+        }.get(event.keyval, None)
 
         if delta:
             next = (
@@ -179,8 +208,9 @@ class Window(Gtk.Window):
         self._header_bar.props.subtitle = 'your reactive functional thought assistant'
         self.set_titlebar(self._header_bar)
 
+        self._status_bar = Status()
         # work sheet
-        self._work_sheet = WorkSheet(30, 100)
+        self._work_sheet = WorkSheet(self._status_bar, 30, 100)
 
         # editor
         self._editor = Editor()
@@ -191,7 +221,6 @@ class Window(Gtk.Window):
         self._notebook.append_page(self._editor, Gtk.Label.new('Editor'))
 
         self._vbox = Gtk.VBox()
-        self._status_bar = Gtk.Statusbar()
         self._vbox.pack_start(self._notebook, expand=True, fill=True, padding=0)
         self._vbox.pack_end(self._status_bar, expand=False, fill=True, padding=0)
 

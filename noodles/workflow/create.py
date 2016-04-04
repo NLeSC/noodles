@@ -30,8 +30,8 @@ def from_call(foo, args, kwargs, hints, call_by_value=True):
     if not already present in the new workflow from an earlier argument,
     are copied to the new workflow, and a new entry is made into the link
     dictionary. Then the links in the old workflow are also added to the
-    link dictionary. Since the link dictionary points from nodes to a 
-    :py:class:`set` of :py:class:`ArgumentAddress` es, no links are 
+    link dictionary. Since the link dictionary points from nodes to a
+    :py:class:`set` of :py:class:`ArgumentAddress` es, no links are
     duplicated.
 
     In the ``bound_args`` object the promised value is replaced by the ``Empty``
@@ -71,7 +71,10 @@ def from_call(foo, args, kwargs, hints, call_by_value=True):
     # variadic arguments. Since we need to modify them,
     # we have to replace the tuple with a list. This works, for now...
     if variadic:
-        bound_args.arguments[variadic] = list(bound_args.arguments[variadic])
+        if variadic not in bound_args.arguments:
+            bound_args.arguments[variadic] = []
+        else:
+            bound_args.arguments[variadic] = list(bound_args.arguments[variadic])
 
     node = FunctionNode(foo, bound_args, hints)
 

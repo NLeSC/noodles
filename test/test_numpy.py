@@ -1,4 +1,5 @@
 from noodles import schedule, run_process, serial
+from noodles.serial.numpy import registry as numpy_registry
 
 import os
 import numpy as np
@@ -7,7 +8,7 @@ from shutil import (copyfile, rmtree)
 
 
 def registry():
-    return serial.base() + serial.numpy(file_prefix='test-numpy/')
+    return serial.base() + numpy_registry(file_prefix='test-numpy/')
 
 
 @schedule
