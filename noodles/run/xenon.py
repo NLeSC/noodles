@@ -259,8 +259,32 @@ def xenon_interactive_worker(XeS: XenonScheduler, job_config):
     return Connection(get_result, send_job)
 
 
-def run_xenon(wf, n_processes, xenon_config, job_config, deref=False):
+def buffered_dispatcher(workers):
+    jobs = IOQueue()
+    results = IOQueue()
+
+    def dispatcher(source, sink):
+        result_sink = results.sink()
+
+        for job in jobs.source():
+            sink.send(job)
+            result_sink.send(source.next())
+
+    for w in workers.values():
+        t = threading.Thread(
+            target=dispatcher,
+            args=w.setup())
+        t.daemon = True
+        t.start()
+
+    return Connection(results.source, jobs.sink)
+
+
+def run_xenon(Xe, n_processes, xenon_config, job_config, wf, deref=False):
     """Run the workflow using a number of online Xenon workers.
+
+    :param Xe:
+        The XenonKeeper instance.
 
     :param wf:
         The workflow.
@@ -268,9 +292,6 @@ def run_xenon(wf, n_processes, xenon_config, job_config, deref=False):
 
     :param n_processes:
         Number of processes to start.
-
-    :param registry:
-        The serial registry.
 
     :param xenon_config:
         The :py:class:`XenonConfig` object that gives tells us how to use Xenon.
@@ -287,25 +308,21 @@ def run_xenon(wf, n_processes, xenon_config, job_config, deref=False):
     :returns: the result of evaluating the workflow
     :rtype: any
     """
-    with XenonKeeper() as XeK:
-        XeS = XenonScheduler(XeK, xenon_config)
+    XeS = XenonScheduler(Xe, xenon_config)
 
-        workers = {}
-        for i in range(n_processes):
-            cfg = copy(job_config)
-            cfg.name = 'remote-{0:02}'.format(i)
-            new_worker = xenon_interactive_worker(XeS, cfg)
-            workers[new_worker.name] = new_worker
+    workers = {}
+    for i in range(n_processes):
+        cfg = copy.copy(job_config)
+        cfg.name = 'remote-{0:02}'.format(i)
+        new_worker = xenon_interactive_worker(XeS, cfg)
+        workers[new_worker.name] = new_worker
 
-        worker_names = list(workers.keys())
+    master_worker = buffered_dispatcher(workers)
+    result = Scheduler().run(master_worker, get_workflow(wf))
 
-        def random_selector(job):
-            return random.choice(worker_names)
+    if deref:
+        return job_config.registry().dereference(result, host='localhost')
+    else:
+        return result
 
-        master_worker = hybrid_threaded_worker(random_selector, workers)
-        result = Scheduler().run(master_worker, get_workflow(wf))
 
-        if deref:
-            return job_config.registry().dereference(result, host='localhost')
-        else:
-            return result
