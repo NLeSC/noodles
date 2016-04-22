@@ -8,5 +8,6 @@ cover
 */.ipynb_checkpoints/*
 *.idea
 *~
+.*.swp
 doc/build
 venv
