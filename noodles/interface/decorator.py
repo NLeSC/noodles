@@ -73,6 +73,11 @@ def update_hints(obj, data):
     obj._workflow.nodes[root].hints.update(data)
 
 
+def get_result(obj):
+    root = obj._workflow.root
+    return obj._workflow.nodes[root].result
+
+
 class PromisedObject:
     """
     Wraps a :py:class:`Workflow`. The workflow represents the future promise

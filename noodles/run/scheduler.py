@@ -12,12 +12,27 @@ def run_job(node):
 
 
 class Job:
-    def __init__(self, workflow, node):
+    def __init__(self, workflow, node_id):
         self.workflow = workflow
-        self.node = node
+        self.node_id = node_id
 
     def __iter__(self):
-        return iter((self.workflow, self.node))
+        return iter((self.workflow, self.node_id))
+
+    @property
+    def node(self):
+        return self.workflow.nodes[self.node_id]
+
+
+class Result:
+    def __init__(self, key, status, value, msg):
+        self.key = key
+        self.status = status
+        self.value = value
+        self.msg = msg
+
+    def __iter__(self):
+        return iter((self.key, self.status, self.value, self.msg))
 
 
 class DynamicLink:
@@ -36,10 +51,11 @@ class Scheduler:
     become ready to compute. This class communicates with a pool of workers
     by means of coroutines.
     """
-    def __init__(self, verbose=False, error_handler=None):
+    def __init__(self, verbose=False, error_handler=None, job_keeper=None):
         self.dynamic_links = {}
-        self.results = {}
-        self.jobs = {}
+        self.jobs = job_keeper if job_keeper is not None else {}
+        # I'd rather say: self.jobs = job_keeper or {}
+        # but Python thruthiness of {} is False
         self.count = 0
         self.key_map = {}
         self.verbose = verbose
@@ -96,14 +112,11 @@ class Scheduler:
                 if wf == master and n == master.root:
                     return result
 
-            # save the result
-            self.results[id(wf)][n] = result
-
             # and insert it in the nodes that need it
             for (tgt, address) in wf.links[n]:
                 insert_result(wf.nodes[tgt], address, result)
                 if is_node_ready(wf.nodes[tgt]) and not graceful_exit:
-                    self.schedule(Job(workflow=wf, node=tgt), sink)
+                    self.schedule(Job(workflow=wf, node_id=tgt), sink)
 
             # see if we're done
             if wf == master and n == master.root:
@@ -116,23 +129,18 @@ class Scheduler:
         self.jobs[uid] = job
         self.count += 1
         self.key_map[uid] = self.count
-        node = job.workflow.nodes[job.node]
         if self.verbose:
             print("sched job [{0}]: ".format(self.count),
                   node.foo.__name__, node.bound_args.args,
                   file=sys.stderr, flush=True)
-        sink.send((uid, node))
+        sink.send((uid, job.node))
         return uid
 
     def add_workflow(self, wf, target, node, sink):
         self.dynamic_links[id(wf)] = DynamicLink(
             source=wf, target=target, node=node)
 
-        self.results[id(wf)] = dict((n, Empty) for n in wf.nodes)
-
-        #depends = invert_links(wf.links)
-
         for n in wf.nodes:
-            #if depends[n] == {}:
             if is_node_ready(wf.nodes[n]):
-                self.schedule(Job(workflow=wf, node=n), sink)
+                self.schedule(Job(workflow=wf, node_id=n), sink)
+

@@ -8,7 +8,7 @@ from queue import Queue
 from functools import wraps
 
 
-def coroutine_sink(f):
+def coroutine(f):
     """
     A sink should be send `None` first, so that the coroutine arrives
     at the `yield` position. This wrapper takes care that this is done
@@ -21,6 +21,9 @@ def coroutine_sink(f):
         return sink
 
     return g
+
+
+coroutine_sink = coroutine
 
 
 class IOQueue:
