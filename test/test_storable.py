@@ -43,7 +43,7 @@ def test_storable():
     b.x = c
     d = h(b, a)
 
-    result = run_process(d, n_processes=1, registry=serial.base, verbose=True)
+    result = run_process(d, n_processes=1, registry=serial.base)
     assert result.x == 7
 
 

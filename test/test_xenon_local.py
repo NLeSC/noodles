@@ -1,5 +1,5 @@
 import noodles
-from noodles.run.xenon import (run_xenon, XenonConfig, RemoteJobConfig)
+from noodles.run.xenon import (run_xenon, XenonConfig, RemoteJobConfig, XenonKeeper)
 from noodles import serial
 from noodles.tutorial import (add, mul, sub, accumulate)
 
@@ -20,5 +20,7 @@ def test_xenon_42():
         time_out=1
     )
 
-    result = run_xenon(C, 2, xenon_config, job_config)
+    with XenonKeeper() as Xe:
+        result = run_xenon(Xe, 2, xenon_config, job_config, C)
+    
     assert(result == 42)
