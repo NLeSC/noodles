@@ -6,7 +6,7 @@
 
 import sys
 
-from .pretty_term import OutStream
+from .termapp import TermApp
 
 
 class Turtle:
@@ -104,37 +104,40 @@ def make_frame(w, h):
     return cx.render()
 
 
-perr = OutStream(sys.stderr)
-
 if __name__ == "__main__":
-    cx = Canvas(28, 24)
-    cx.turtle.jump(13, 17, 0)
-    cx.put(LSystem('F', {'F': 'FF-F-'}).compute(6))
-    ls = cx.render()
+    with TermApp() as tout:
+        width = tout.get_cols()
+        height = tout.get_lines()
 
-    fr1 = make_frame(64, 7)
-    fr2 = make_frame(64, 12)
+        cx = Canvas(28, 24)
+        cx.turtle.jump(13, 17, 0)
+        cx.put(LSystem('F', {'F': 'FF-F-'}).compute(6))
+        ls = cx.render()
 
-    perr << ['reset'] << ['fg', 140, 0, 40]
-    perr << ['clear'] << ['move', 1, 1]
-    for l in ls:
-        perr << ['save'] << l << ['restore'] << ['down', 1]
-    perr << ['fg', 170, 110, 10] << ['move', 10, 10] << 'λみ'
+        fr1 = make_frame(width - 18, 7)
+        fr2 = make_frame(width - 18, 12)
 
-    perr << ['fg', 50, 120, 90] << ['move', 5, 16]
-    for l in fr1:
-        perr << ['save'] << l << ['restore'] << ['down', 1]
+        tout << tout.reset_color() << ['setfg', 140, 0, 40]
+        tout << ['clear'] << ['cup', 1, 1]
+        for l in ls:
+            tout << ['sc'] << l << ['rc'] << ['cud', 1]
+        tout << ['setfg', 170, 110, 10] << ['cup', 10, 10] << 'λみ'
 
-    perr << ['fg', 50, 80, 120] << ['down', 1]
-    for l in fr2:
-        perr << ['save'] << l << ['restore'] << ['down', 1]
+        tout << ['setfg', 50, 120, 90] << ['cup', 5, 16]
+        for l in fr1:
+            tout << ['sc'] << l << ['rc'] << ['cud', 1]
 
-    perr << ['fg', 160, 220, 100] << ['move', 3, 20]
-    perr << ['italic']
-    perr << " Noodles 0.1.0 - worker console "
-    perr << ['move', 4, 20] << ['reverse'] << ['fg', 40, 40, 40] << "▆"*58
+        tout << ['setfg', 50, 80, 120] << ['cud', 1]
+        for l in fr2:
+            tout << ['sc'] << l << ['rc'] << ['cud', 1]
 
-    perr << ['reset'] << ['fg', 100, 160, 60] << ['italic']
-    perr << ['move', 5, 19] << "(status)"
-    perr << ['move', 13, 19] << "(job list)"
-    perr << ['move', 25, 1] << ['reset']
+        tout << ['setfg', 160, 220, 100] << ['cup', 3, 20]
+        tout << ['sitm']
+        tout << " Noodles 0.1.0 - worker console "
+        tout << ['cup', 4, 20] << ['rev'] << ['setfg', 40, 40, 40] << "▆"*(width - 24)
+
+        tout << ['sgr0'] << ['op'] << ['setfg', 100, 160, 60] << ['sitm']
+        tout << ['cup', 5, 19] << "(status)"
+        tout << ['cup', 13, 19] << "(job list)"
+        tout << ['cup', 25, 1] << ['op'] << ['sgr0']
+

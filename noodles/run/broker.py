@@ -1,132 +1,14 @@
 from .coroutines import (Connection, IOQueue, QueueConnection, patch, coroutine)
 import threading
+from .haploid import (haploid, Haploid)
+from .queue import (Queue)
 
 
-class Terminoid(object):
-    pass
-
-
-def haploid(mode):
-    def wrap(f):
-        return Haploid(f, mode)
-
-    return wrap
-
-
-class Haploid(object):
-    """A Haploid is a single co-routine sending or pulling data.
-
-    A pulling haploid could have the form::
-
-        @haploid('pull')
-        def foo(source):
-            for item in source:
-                yield do_something(item)
-
-    while a sending haploid  (recognizable from the `send` call) would look
-    like::
-
-        @haploid('send')
-        def foo(sink):
-            while True:
-                item = yield
-                sink.send(do_something(item))
-
-    The difference between these two modes is all about ownership of execution.
-    If we want to link a haploid with active output (a sender) to a puller
-    having active input, it is assumed the data transfer is approached from two
-    different thread points (either two different threads simultaneously, or the
-    same thread at a different point of execution). The universal way of fixing
-    this is by putting a Queue object in between.
-
-    The other way around, having two passive ends, requires the insertion of a
-    thread running the simple function:
-
-        def patch(source, sink):
-            for item in source:
-                sink.send(item)
-    """
-    def __init__(self, fn, mode):
-        self.fn = fn if mode == 'pull' else coroutine(fn)
-        self.mode = mode   # 'send' or 'pull'
-
-    def __gt__(self, other):
-        if not (self.mode == other.mode):
-            raise RuntimeError('When linking haploids, their modes should match.')
-        
-        if self.mode == 'send':
-            return Haploid(lambda outs: self.fn(other.fn(outs)), 'send')
-
-        if self.mode == 'pull':
-            return Haploid(lambda ins: other.fn(self.fn(ins)), 'pull')
-
-    def __lt__(self, other):
-        if not (self.mode == other.mode):
-            raise RuntimeError('When linking haploids, their modes should match.')
-        
-        if self.mode == 'pull':
-            return Haploid(lambda ins: self.fn(other.fn(ins)), 'pull')
-
-        if self.mode == 'send':
-            return Haploid(lambda outs: other.fn(self.fn(outs)), 'send')
-
-    def __pos__(self):
-        """Prepend a Queue to create a Connection with two passive ends."""
-        Q = IOQueue()
-        if self.mode == 'send':
-            return Connection(Q.source, lambda: self.fn(Q.sink()))
-        else:
-            return Connection(lambda: self.fn(Q.source()), Q.sink)
-
-
-class Diploid(object):
-    """A Diploid is an object containing two haploids. In the case of our
-    job queue system, a job is sent out and a result comes back. A broker
-    should know about a worker having finished, so that we can send it another
-    job; a logger needs to affirm that a job was run successfully; the
-    provenance system needs to cache a result when it comes in but also act as a
-    filter for outgoing jobs.
-
-    This class is endowed with a the '//' operator. It joins the job haploid
-    streams with the '>' operator and the result haploid streams with the '<'
-    operator, creating a two-way traffic line.
-
-    A diploid can be 'capped' with a worker, provided it has a matching io docks.
-    This is done with the '|' operator, turning the resulting in a haploid.
-    """
-    def __init__(self, jobs, results):
-        self.jobs = jobs
-        self.results = results
-
-    def __floordiv__(self, other):
-        if isinstance(other, Diploid):
-            if self.jobs.mode != other.jobs.mode and self.results.mode != other.results.mode:
-                return Diploid(
-                    self.jobs > other.jobs,
-                    self.results < other.results)
-
-    def __or__(self, other):
-        if isinstance(other, Haploid):
-            return self.jobs > other > self.results
-        elif isinstance(other, tuple):
-            return self | thread_pool(*other)
-
-
-class Plug:
-    def __init__(self, source, sink):
-        self.source = source
-        self.sink = sink
-
-
-def tee(*recievers):
-    @haploid('send')
-    def fn(sink):
-        while True:
-            msg = yield
-            for r in recievers:
-                r.send(msg)
-
-    return fn
+def patchl(source, sink):
+    """Create a direct link between a source and a sink."""
+    sink = sink()
+    for v in source():
+        sink.send(v)
 
 
 def thread_pool(*stealers):
@@ -151,10 +33,10 @@ def thread_pool(*stealers):
 
     @haploid('pull')
     def fn(source):
-        nonlocal results, stealers
-
         for s in stealers:
-            t = threading.Thread(target=patch, args=(s(source), results.sink()))
+            t = threading.Thread(
+                target=patchl, 
+                args=(lambda: s(source), results.sink))
             t.daemon = True
             t.start()
 
@@ -166,43 +48,63 @@ def thread_pool(*stealers):
 # The runners
 from .scheduler import (Scheduler, Result)
 from ..workflow import get_workflow
+from .job_keeper import JobKeeper
 
-from itertools import repeat
+from itertools import repeat, starmap
+from functools import partial
 
-@haploid('pull')
-def worker(source):
-    for key, job in source:
-        try:
-            if job.hints and 'annotated' in job.hints:
-                result, meta_data = job.foo(*job.bound_args.args, **job.bound_args.kwargs)
-                yield Result(key, 'done', result, meta_data)
+#@haploid('pull')
+#def worker(source):
 
-            else:
-                result = job.foo(*job.bound_args.args, **job.bound_args.kwargs)
-                yield Result(key, 'done', result, None)
-
-        except Exception as error:
-            yield Result(key, 'error', None, error)
+def pull_map(f):
+    @haploid('pull')
+    def gen(source):
+        return starmap(f, source())
+    return gen
 
 
-class JobKeeper(dict):
-    def __init__(self):
-        super(JobKeeper, self).__init__()
-        # self['test'] = 'hi'
-
-    def __setitem__(self, key, value):
-        print('job-k:', key, value)
-        super(JobKeeper, self).__setitem__(key, value)
-
-    @coroutine
-    def store_result(self):
+def send_map(f):
+    @haploid('send')
+    def crt(sink):
+        sink = sink()
         while True:
-            result = yield
-            if result.status != 'done':
-                continue
+            args = yield
+            sink.send(f(*args))
 
-            job = self[result.key]
-            job.node.result = result.value
+    return crt
+
+
+def sink_map(f):
+    @haploid('send')
+    def sink():
+        while True:
+            args = yield
+            f(*args)
+
+    return sink
+
+
+@pull_map
+def worker(key, job):
+    """A worker coroutine. Pulls jobs, yielding results. If an
+    exception is raised running the job, it returns a result
+    object with 'error' status. If the job requests return-value
+    annotation, a two-tuple is expected; this tuple is then
+    unpacked, the first being the result, the second part is
+    sent on in the error message slot."""
+    try:
+        if job.hints and 'annotated' in job.hints:
+            result, meta_data = job.foo(
+                    *job.bound_args.args, 
+                    **job.bound_args.kwargs)
+            return Result(key, 'done', result, meta_data)
+
+        else:
+            result = job.foo(*job.bound_args.args, **job.bound_args.kwargs)
+            return Result(key, 'done', result, None)
+
+    except Exception as error:
+        return Result(key, 'error', None, error)
 
 
 def branch(*sinks_):
@@ -210,7 +112,7 @@ def branch(*sinks_):
 
     @haploid('pull')
     def junction(source):
-        for msg in source:
+        for msg in source():
             for s in sinks:
                 s.send(msg)
             yield msg
@@ -221,11 +123,61 @@ def branch(*sinks_):
 def run_single(wf):
     J = JobKeeper()
     S = Scheduler(job_keeper=J)
-    W = +(worker > branch(J.store_result))
+    W = Queue() \
+        .to(worker) \
+        .to(branch(sink_map(J.store_result)))
+
     return S.run(W, get_workflow(wf))
 
 
 def run_parallel(wf, n):
-    return Scheduler().run(+thread_pool(*repeat(worker, n)), get_workflow(wf))
+    J = JobKeeper()
+    S = Scheduler(job_keeper=J)
+    W = Queue() \
+        .to(thread_pool(*repeat(worker, n))) \
+        .to(branch(sink_map(J.store_result)))
 
+    return S.run(W, get_workflow(wf))
+
+
+@send_map
+def log_job_start(key, job):
+    return (key, 'start', job, None)
+
+
+@send_map
+def log_job_schedule(key, job):
+    return (key, 'schedule', job, None)
+
+
+def run_single_with_display(wf, display):
+    S = Scheduler()
+    W = Queue() \
+        .to(branch(log_job_start.to(sink_map(display)))) \
+        .to(worker) \
+        .to(branch(sink_map(display)))
+
+    return S.run(W, get_workflow(wf))
+
+
+def run_parallel_with_display(wf, n, display):
+    LogQ = Queue()
+
+    S = Scheduler()
+    
+    t = threading.Thread(
+        target=patchl, 
+        args=(LogQ.source, sink_map(display)), 
+        daemon=True).start()
+
+    W = Queue() \
+        .to(branch(log_job_start.to(LogQ.sink))) \
+        .to(thread_pool(*repeat(worker, n))) \
+        .to(branch(LogQ.sink))
+
+    result = S.run(W, get_workflow(wf))
+    LogQ.wait()
+    del t
+
+    return result
 

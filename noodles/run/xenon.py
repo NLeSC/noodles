@@ -315,7 +315,7 @@ def run_xenon(Xe, n_processes, xenon_config, job_config, wf, deref=False):
         cfg = copy(job_config)
         cfg.name = 'remote-{0:02}'.format(i)
         new_worker = xenon_interactive_worker(XeS, cfg)
-        workers[new_worker.name] = new_worker
+        workers[cfg.name] = new_worker
 
     master_worker = buffered_dispatcher(workers)
     result = Scheduler().run(master_worker, get_workflow(wf))

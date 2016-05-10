@@ -88,7 +88,7 @@ def process_worker(registry,
     if finish is not None:
         send_job().send(("finish", finish()._workflow.root_node))
 
-    return Connection(get_result, send_job, name=name)
+    return Connection(get_result, send_job)
 
 
 def run_process(wf, n_processes, registry,
@@ -132,7 +132,7 @@ def run_process(wf, n_processes, registry,
     workers = {}
     for i in range(n_processes):
         new_worker = process_worker(registry, verbose, jobdirs, init, finish)
-        workers[new_worker.name] = new_worker
+        workers['worker {0:2}'.format(i)] = new_worker
 
     worker_names = list(workers.keys())
 

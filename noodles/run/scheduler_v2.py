@@ -1,5 +1,6 @@
 from .coroutines import (Connection)
 from .job_keeper import (JobKeeper)
+
 from ..workflow import (
     is_workflow, get_workflow, Empty, invert_links, insert_result,
     is_node_ready, Workflow)
@@ -101,21 +102,19 @@ class Scheduler:
             if len(self.jobs) == 0 and graceful_exit:
                 return
 
-            # if this result is the root of a workflow, pop to parent
-            # we do this before scheduling a child workflow, as to
-            # achieve tail-call elimination.
-            while n == wf.root and wf != master:
-                child = id(wf)
-                _, wf, n = self.dynamic_links[child]
-                del self.dynamic_links[child]
-
             # if we retrieve a workflow, push a child
             if is_workflow(result):
                 child_wf = get_workflow(result)
                 self.add_workflow(child_wf, wf, n, sink)
                 continue
 
-            # insert the result in the nodes that need it
+            # if this result is the root of a workflow, pop to parent
+            while n == wf.root:
+                _, wf, n = self.dynamic_links[id(wf)]
+                if wf == master and n == master.root:
+                    return result
+
+            # and insert it in the nodes that need it
             for (tgt, address) in wf.links[n]:
                 insert_result(wf.nodes[tgt], address, result)
                 if is_node_ready(wf.nodes[tgt]) and not graceful_exit:

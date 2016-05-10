@@ -15,11 +15,11 @@ def insert_result(node, address, value):
     is redundant, but if we don't give an error here the program would continue
     with unexpected results.
     """
-    a = ref_argument(node.bound_args, address)
-    if a != Empty:
-        raise RuntimeError(
-            "Noodle panic. Argument {arg} in {name} already given." \
-            .format(arg=format_address(address),
-                    name=node.foo.__name__))
+    #a = ref_argument(node.bound_args, address)
+    #if a != Empty:
+    #    raise RuntimeError(
+    #        "Noodle panic. Argument {arg} in {name} already given." \
+    #        .format(arg=format_address(address),
+    #                name=node.foo.__name__))
 
     set_argument(node.bound_args, address, value)

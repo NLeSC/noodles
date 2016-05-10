@@ -29,7 +29,7 @@ class FunctionNode:
         bound_args = bind_arguments(foo, data.arguments)
         return FunctionNode(foo, bound_args, data.hints)
 
-    def __init__(self, foo, bound_args, hints, result=None):
+    def __init__(self, foo, bound_args, hints, result=Empty):
         self.foo = foo
         self.bound_args = bound_args
         self.hints = hints
