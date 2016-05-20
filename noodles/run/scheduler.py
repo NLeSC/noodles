@@ -97,7 +97,7 @@ class Scheduler:
                       file=sys.stderr, flush=True)
             wf, n = self.jobs[job_key]
 
-            del self.jobs[job_key]
+            # del self.jobs[job_key]
             if len(self.jobs) == 0 and graceful_exit:
                 return
 

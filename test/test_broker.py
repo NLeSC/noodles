@@ -1,7 +1,7 @@
 import noodles
 from noodles.tutorial import (add, sub, mul, accumulate)
 from noodles.display import (NCDisplay)
-from noodles.run import broker
+from noodles.run.runners import (run_single, run_parallel, run_parallel_with_display)
 import time
 
 
@@ -12,7 +12,7 @@ def test_broker_01():
     multiples = [mul(add(i, B), A) for i in range(6)]
     C = accumulate(noodles.gather(*multiples))
 
-    assert broker.run_parallel(C, 4) == 42
+    assert run_parallel(C, 4) == 42
 
 
 def test_broker_02():
@@ -22,7 +22,7 @@ def test_broker_02():
     multiples = [mul(add(i, B), A) for i in range(6)]
     C = accumulate(noodles.gather(*multiples))
 
-    assert broker.run_single(C) == 42
+    assert run_single(C) == 42
 
 
 @noodles.schedule_hint(display="│   {a} + {b}", confirm=True)
@@ -44,5 +44,5 @@ def test_broker_logging():
     wf = message("\n╭─(Running the test)", lambda: C)
 
     with NCDisplay() as display:
-        assert broker.run_parallel_with_display(wf, 4, display) == 42
+        assert run_parallel_with_display(wf, 4, display) == 42
 

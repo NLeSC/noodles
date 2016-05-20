@@ -207,7 +207,7 @@ class Registry(object):
         cls = look_up(typename)
         return self[cls].decode(cls, rec['data'])
 
-    def to_json(self, obj, host=None):
+    def to_json(self, obj, host=None, indent=None):
         """Recursively encode `obj` and convert it to a JSON string.
 
         :param obj:
@@ -216,7 +216,7 @@ class Registry(object):
         :param host:
             hostname where this object is being encoded.
         :type host: str"""
-        return json.dumps(deep_map(lambda o: self.encode(o, host), obj))
+        return json.dumps(deep_map(lambda o: self.encode(o, host), obj), indent=indent)
 
     def from_json(self, data, deref=False):
         """Decode the string from JSON to return the original object (if

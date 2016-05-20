@@ -1,5 +1,6 @@
 from .coroutine import coroutine
 
+from itertools import starmap
 
 def haploid(mode):
     def wrap(f):
@@ -71,4 +72,52 @@ class Haploid(object):
 
     def __call__(self, *args):
         return self.fn(*args)
+
+
+def pull_map(f):
+    @haploid('pull')
+    def gen(source):
+        return starmap(f, source())
+    return gen
+
+
+def send_map(f):
+    @haploid('send')
+    def crt(sink):
+        sink = sink()
+        while True:
+            args = yield
+            sink.send(f(*args))
+
+    return crt
+
+
+def sink_map(f):
+    @haploid('send')
+    def sink():
+        while True:
+            args = yield
+            f(*args)
+
+    return sink
+
+
+def branch(*sinks_):
+    @haploid('pull')
+    def junction(source):
+        sinks = [s() for s in sinks_]
+
+        for msg in source():
+            for s in sinks:
+                s.send(msg)
+            yield msg
+
+    return junction
+
+
+def patch(source, sink):
+    """Create a direct link between a source and a sink."""
+    sink = sink()
+    for v in source():
+        sink.send(v)
 
