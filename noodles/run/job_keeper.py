@@ -53,9 +53,9 @@ class JobTimer(dict):
         if job.node.hints and 'display' in job.node.hints:
             msg_obj = {
                 'description': job.node.hints['display'].format(**job.node.bound_args.arguments),
-                'schedule_time': time.strftime('%Y-%m-%dT%H:%M:%S', time.gmtime(job.sched_time)),
-                'start_time': time.strftime('%Y-%m-%dT%H:%M:%S', time.gmtime(job.start_time)),
-                'done_time': time.strftime('%Y-%m-%dT%H:%M:%S', time.gmtime(now)),
+                'schedule_time': time.strftime('%Y-%m-%dT%H:%M:%SZ', time.gmtime(job.sched_time)),
+                'start_time': time.strftime('%Y-%m-%dT%H:%M:%SZ', time.gmtime(job.start_time)),
+                'done_time': time.strftime('%Y-%m-%dT%H:%M:%SZ', time.gmtime(now)),
                 'run_duration': now - job.start_time }
             self.fo.write('{record},\n'.format(record=json.dumps(msg_obj, indent=2)))
 

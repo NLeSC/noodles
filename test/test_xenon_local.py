@@ -1,7 +1,13 @@
-import noodles
-from noodles.run.xenon import (run_xenon, XenonConfig, RemoteJobConfig, XenonKeeper)
-from noodles import serial
-from noodles.tutorial import (add, mul, sub, accumulate)
+from nose.plugins.skip import SkipTest
+
+try:
+    import noodles
+    from noodles.run.xenon import (run_xenon, XenonConfig, RemoteJobConfig, XenonKeeper)
+    from noodles import serial
+    from noodles.tutorial import (add, mul, sub, accumulate)
+
+except ImportError:
+    raise SkipTest()
 
 
 def test_xenon_42():
@@ -24,3 +30,4 @@ def test_xenon_42():
         result = run_xenon(Xe, 2, xenon_config, job_config, C)
     
     assert(result == 42)
+

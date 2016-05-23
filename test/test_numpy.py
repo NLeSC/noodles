@@ -1,9 +1,18 @@
-from noodles import schedule, run_process, serial
-from noodles.serial.numpy import registry as numpy_registry
+from nose.plugins.skip import SkipTest
 
+try:
+    import numpy
+    import numpy as np
+    from numpy import (random, fft, exp)
+
+    from noodles.serial.numpy import registry as numpy_registry
+
+except ImportError:
+    raise SkipTest()
+
+
+from noodles import schedule, run_process, serial
 import os
-import numpy as np
-from numpy import (random, fft, exp)
 from shutil import (copyfile, rmtree)
 
 
@@ -34,7 +43,6 @@ def apply_filter(a, b):
 @schedule
 def make_noise(n):
     return random.normal(0, 1, n)
-
 
 def test_pickle():
     x = make_noise(256)
