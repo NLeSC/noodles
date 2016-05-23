@@ -22,12 +22,12 @@ def run_single(wf):
     return S.run(W, get_workflow(wf))
 
 
-def run_parallel(wf, n):
-    """Run a workflow in `n` parallel threads. Now we replaced the single
+def run_parallel(wf, n_threads):
+    """Run a workflow in `n_threads` parallel threads. Now we replaced the single
     worker with a thread-pool of workers."""
     S = Scheduler()
     W = Queue() \
-        .to(thread_pool(*repeat(worker, n)))
+        .to(thread_pool(*repeat(worker, n_threads)))
 
     return S.run(W, get_workflow(wf))
 

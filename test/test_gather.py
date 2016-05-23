@@ -1,5 +1,5 @@
 import noodles
-from noodles.run.local import run_single
+from noodles.run.runners import run_single
 
 
 def test_empty_gather():

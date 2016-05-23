@@ -6,7 +6,19 @@ from noodles.run.coroutines import IOQueue, Connection
 from noodles.run.scheduler import Scheduler, run_job
 from noodles.run.hybrid import hybrid_coroutine_worker
 from noodles.run.hybrid import run_hybrid
-from noodles.run.local import single_worker, threaded_worker
+
+from noodles.run.queue import (Queue)
+from noodles.run.thread_pool import (thread_pool)
+from noodles.run.worker import (worker)
+from itertools import repeat
+
+
+def single_worker():
+    return Queue().to(worker)
+
+
+def threaded_worker(n_threads):
+    return Queue().to(thread_pool(*repeat(worker, n_threads)))
 
 
 @schedule_hint(n=1)
