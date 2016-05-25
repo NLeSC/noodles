@@ -61,7 +61,7 @@ def lift(obj, memo=None):
     if memo is None:
         memo = {}
 
-    if isinstance(obj, (PromisedObject, str, int, float)):
+    if isinstance(obj, (PromisedObject, str, int, float, complex)):
         return obj
 
     if id(obj) in memo:
