@@ -7,7 +7,7 @@ try:
     from noodles.tutorial import (add, mul, sub, accumulate)
 
 except ImportError:
-    raise SkipTest()
+    raise SkipTest("No pyXenon installed.")
 
 
 def test_xenon_42():

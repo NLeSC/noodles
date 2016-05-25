@@ -11,8 +11,9 @@ from .coroutines import coroutine_sink, Connection
 from ..serial.registry import RefObject
 from ..utility import object_name
 from .scheduler import Scheduler
+from .protect import CatchExceptions
 from .hybrid import hybrid_threaded_worker
-
+from .haploid import haploid
 
 def read_result(registry, s):
     obj = registry.from_json(s)
@@ -65,13 +66,14 @@ def process_worker(registry,
 
 #    processes[id(p)] = t
 
-    @coroutine_sink
+    @haploid('send')
     def send_job():
         reg = registry()
         while True:
             key, job = yield
             print(put_job(reg, name, key, job), file=p.stdin, flush=True)
 
+    @haploid('pull')
     def get_result():
         reg = registry()
         for line in p.stdout:

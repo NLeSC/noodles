@@ -1,22 +1,24 @@
-from .coroutines import (
-    IOQueue, QueueConnection, coroutine_sink, splice_sink, siphon_source)
+from .queue import Queue
+from .connection import Connection
+from .coroutine import coroutine
+from .coroutines import (splice_sink, siphon_source, QueueConnection)
 from .scheduler import (run_job, Scheduler)
 from ..workflow import (get_workflow)
 import threading
 
 
-class Logger(IOQueue):
+class Logger(Queue):
     def __init__(self):
         super(Logger, self).__init__()
 
-    @coroutine_sink
+    @coroutine
     def job_sink(self):
         msg_sink = self.sink()
         while True:
             key, job = yield
             msg_sink.send(('start', key, job, None))
 
-    @coroutine_sink
+    @coroutine
     def result_sink(self):
         msg_sink = self.sink()
         while True:
@@ -40,8 +42,8 @@ def logging_worker(n_threads, display):
         Connection to the job and result queues
     :rtype: :py:class:`Connection`
     """
-    job_q = IOQueue()
-    result_q = IOQueue()
+    job_q = Queue()
+    result_q = Queue()
 
     worker_connection = QueueConnection(job_q, result_q)
     scheduler_connection = QueueConnection(result_q, job_q)

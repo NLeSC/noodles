@@ -1,3 +1,5 @@
+from .haploid import Haploid
+
 class Connection:
     """
     Combine a source and a sink. These should represent the IO of
@@ -32,7 +34,7 @@ class Connection:
     def to(self, other):
         """A connection has one output channel, so the '>' operator
         connects the source to a coroutine, creating a new connection."""
-        return Connection(lambda: other.fn(self.source), self.sink)
+        return Connection(Haploid(lambda: other.fn(self.source), 'pull'), self.sink)
 
     def ot(self, other):
         return Connection(self.source, lambda: other.fn(self.sink))

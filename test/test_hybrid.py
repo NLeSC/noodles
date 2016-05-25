@@ -2,11 +2,12 @@ import time
 
 from noodles import schedule, schedule_hint, gather
 from noodles.workflow import get_workflow
-from noodles.run.coroutines import IOQueue, Connection
+from noodles.run.connection import Connection
 from noodles.run.scheduler import Scheduler, run_job
 from noodles.run.hybrid import hybrid_coroutine_worker
 from noodles.run.hybrid import run_hybrid
 
+from noodles.run.haploid import haploid
 from noodles.run.queue import (Queue)
 from noodles.run.thread_pool import (thread_pool)
 from noodles.run.worker import (worker)
@@ -75,8 +76,9 @@ def test_hybrid_threaded_runner_03():
 
 
 def tic_worker(tic):
-    jobs = IOQueue()
+    jobs = Queue()
 
+    @haploid('pull')
     def get_result():
         source = jobs.source()
 

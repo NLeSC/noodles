@@ -1,9 +1,14 @@
 import threading
 
 from ..workflow import get_workflow
-from .coroutines import IOQueue, Connection, patch, coroutine_sink
+from .queue import Queue
+from .connection import Connection
+from .coroutine import coroutine
+from .protect import CatchExceptions
+from .haploid import patch
 from ..utility import unzip_dict
-from .scheduler import run_job, Scheduler
+from .scheduler import Scheduler
+from .worker import run_job
 
 
 def hybrid_coroutine_worker(selector, workers):
@@ -18,7 +23,7 @@ def hybrid_coroutine_worker(selector, workers):
         A dict of workers.
     :type workers: dict
     """
-    jobs = IOQueue()
+    jobs = Queue()
 
     worker_source, worker_sink = unzip_dict(
         {k: w.setup() for k, w in workers.items()})
@@ -29,7 +34,7 @@ def hybrid_coroutine_worker(selector, workers):
         for key, job in source:
             worker = selector(job)
             if worker is None:
-                yield (key, 'done', run_job(job), None)
+                yield run_job(key, job)
             else:
                 # send the worker a job and wait for it to return
                 worker_sink[worker].send((key, job))
@@ -61,12 +66,26 @@ def hybrid_threaded_worker(selector, workers):
     assumed that dispatching a job takes little time, while waiting for
     one to return a result may take a long time.
     """
-    results = IOQueue()
+    results = Queue()
 
-    worker_source, worker_sink = unzip_dict(
-        {k: w.setup() for k, w in workers.items()})
+    print([w.source for k, w in workers.items()])
 
-    @coroutine_sink
+    catch = { 
+        k: CatchExceptions(results.sink) \
+            for k, w in workers.items() 
+    }
+
+    result_source = {
+        k: w.source.to(catch[k].result_source) \
+            for k, w in workers.items()
+    }
+
+    job_sink = {
+        k: catch[k].job_sink.to(w.sink)() \
+            for k, w in workers.items()
+    }
+
+    @coroutine
     def dispatch_job():
         default_sink = results.sink()
 
@@ -74,15 +93,14 @@ def hybrid_threaded_worker(selector, workers):
             key, job = yield
             worker = selector(job)
             if worker:
-                worker_sink[worker].send((key, job))
+                job_sink[worker].send((key, job))
             else:
-                result = run_job(job)
-                default_sink.send((key, 'done', result, None))
+                default_sink.send(run_job(key, job))
 
-    for k, source in worker_source.items():
+    for worker, source in result_source.items():
         t = threading.Thread(
             target=patch,
-            args=(source, results.sink()))
+            args=(source, results.sink))
         t.daemon = True
         t.start()
 

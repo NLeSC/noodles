@@ -7,7 +7,7 @@ import sys
 @noodles.schedule_hint(
     display="adding {a} + {b}")
 def add(a, b):
-    time.sleep(0.1)
+    time.sleep(0.01)
     return a + b
 
 def test_xenon_42():
