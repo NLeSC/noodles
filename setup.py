@@ -30,7 +30,7 @@ setup(
         'Programming Language :: Python :: 3.5',
         'Topic :: System :: Distributed Computing'],
 
-#    install_requires=['pyxenon'],
+    install_requires=['pyxenon', 'numpy'],
 
     extras_require={
         'test': ['nose', 'coverage', 'pyflakes', 'pep8']

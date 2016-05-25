@@ -1,15 +1,15 @@
 from .coroutines import coroutine_sink, Connection, IOQueue
 # from .data_json import saucer, desaucer, node_to_jobject
-from ..logger import log
+# from ..logger import log
 from ..utility import object_name
 from noodles import serial
-from .hybrid import hybrid_threaded_worker
+# from .hybrid import hybrid_threaded_worker
 from .scheduler import Scheduler
 from ..workflow import get_workflow
 
 from copy import copy
 
-import random
+# import random
 import uuid
 import xenon
 import os
@@ -21,8 +21,7 @@ import threading
 # with redirect_stderr(xenon_log):
 xenon.init()  # noqa
 
-from jnius import autoclass
-
+from xenon import java
 
 def read_result(registry, s):
     obj = registry.from_json(s)
@@ -42,30 +41,10 @@ def put_job(registry, host, key, job):
     return registry.to_json(obj, host=host)
 
 
-jPrintStream = autoclass('java.io.PrintStream')
-jBufferedReader = autoclass('java.io.BufferedReader')
-jInputStreamReader = autoclass('java.io.InputStreamReader')
-jScanner = autoclass('java.util.Scanner')
-
-
-def java_lines(inp):
-    reader = jScanner(inp)
-
-    while True:
-        line = reader.nextLine()
-        yield line
-
-HashMap = autoclass('java.util.HashMap')
-
-
-def dict2HashMap(d):
-    if d is None:
-        return None
-
-    m = HashMap()
-    for k, v in d.items():
-        m.put(k, v)
-    return m
+jPrintStream = java.io.PrintStream
+jBufferedReader = java.io.BufferedReader
+jInputStreamReader = java.io.InputStreamReader
+jScanner = java.util.Scanner
 
 
 class XenonConfig:
@@ -86,7 +65,7 @@ class XenonConfig:
 
     @property
     def scheduler_args(self):
-        properties = dict2HashMap(self.jobs_properties)
+        properties = xenon.conversions.dict_to_HashMap(self.jobs_properties)
         return (self.jobs_scheme, self.location,
                 self.credential, properties)
 
@@ -223,8 +202,9 @@ def xenon_interactive_worker(XeS: XenonScheduler, job_config):
     #     print(job_config.name + " is now running.", file=sys.stderr, flush=True)
 
     print(job_config.name + " is now running.", file=sys.stderr, flush=True)
+
     def read_stderr():
-        for line in java_lines(J.streams.getStderr()):
+        for line in xenon.conversions.read_lines(J.streams.getStderr()):
             print(job_config.name + ": " + line, file=sys.stderr, flush=True)
 
     J.stderr_thread = threading.Thread(target=read_stderr)
@@ -243,15 +223,16 @@ def xenon_interactive_worker(XeS: XenonScheduler, job_config):
             out.flush()
 
     def get_result():
-        for line in java_lines(J.streams.getStdout()):
-            key, status, result, err_msg = read_result(registry, line)
-            yield (key, status, result, err_msg)
+        """ Returns a result tuple: key, status, result, err_msg """
+        for line in xenon.conversions.read_lines(J.streams.getStdout()):
+            return read_result(registry, line)
 
     if job_config.init is not None:
         send_job().send(("init", job_config.init()._workflow.root_node))
         key, status, result, err_msg = next(get_result())
         if key != "init" or not result:
-            raise RuntimeError("The initializer function did not succeed on worker.")
+            raise RuntimeError("The initializer function did not succeed on "
+                               "worker.")
 
     if job_config.finish is not None:
         send_job().send(("finish", job_config.finish()._workflow.root_node))

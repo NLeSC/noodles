@@ -69,4 +69,4 @@ def test_parallel_runner_02():
     assert run_parallel(B, 4) == 100
     end = time.time()
     # print(end-start)
-    assert (end - start) < 0.3   # liberal upper limit for running time
+    assert (end - start) < 0.4   # liberal upper limit for running time
