@@ -24,6 +24,10 @@ def gather(*a):
     return list(a)
 
 
+def unpack(t, n):
+    return (t[i] for i in range(n))
+
+
 @schedule
 def set_dict(obj, d):
     obj.__dict__ = d

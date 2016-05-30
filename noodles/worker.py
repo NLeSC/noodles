@@ -33,13 +33,32 @@ import os
 from noodles.run.scheduler import run_job
 from .utility import (look_up)
 
+try:
+    import msgpack
+    has_msgpack = True
+except ImportError:
+    has_msgpack = False
 
-def get_job(registry, s):
+
+def get_job(msg):
+    return msg['key'], msg['node']
+
+
+def get_job_json(registry, s):
     obj = registry.from_json(s, deref=True)
     return obj['key'], obj['node']
 
 
-def put_result(registry, host, key, status, result, err_msg):
+def put_result_msgpack(registry, host, key, status, result, err_msg):
+    return registry.to_msgpack({
+        'key': key,
+        'status': status,
+        'result': result,
+        'err_msg': err_msg
+    }, host=host)
+
+
+def put_result_json(registry, host, key, status, result, err_msg):
     return registry.to_json({
         'key': key,
         'status': status,
@@ -57,30 +76,41 @@ def run_online_mode(args):
         registry = look_up(args.registry)()
         finish = None
 
+        if args.msgpack:
+            messages = msgpack.Unpacker(sys.stdin.buffer)# , 
+                #object_hook=lambda o: registry.decode(o, deref=True))
+        else:
+            def msg_stream():
+                for line in sys.stdin:
+                    yield registry.from_json(line, deref=True)
+            
+            messages = msg_stream()
+
         # run the init function if it is given
         if args.init:
-            line = sys.stdin.readline()
-            key, job = get_job(registry, line)
+            # line = sys.stdin.readline()
+            key, job = get_job(next(messages))
             if key != 'init':
                 raise RuntimeError("Expected init function.")
 
             with redirect_stdout(sys.stderr):
                 result = run_job(job)
-            print(put_result(registry, args.name, key, 'success', result, None), flush=True)
+
+            if args.msgpack:
+                sys.stdout.buffer.write(put_result_msgpack(registry, args.name, key, 'success', result, None))
+                sys.stdout.flush()
+            else:
+                print(put_result_json(registry, args.name, key, 'success', result, None), flush=True)
 
         if args.finish:
-            line = sys.stdin.readline()
-            key, job = get_job(registry, line)
+            # line = sys.stdin.readline()
+            key, job = get_job(next(messages))
             if key != 'finish':
                 raise RuntimeError("Expected finish function.")
             finish = job
 
-        for line in sys.stdin:
-            if args.verbose:
-                print("============\nraw json: ", line,
-                      file=sys.stderr, flush=True)
-
-            key, job = get_job(registry, line)
+        for msg in messages:
+            key, job = get_job(msg)
 
             if args.jobdirs:
                 # make a directory
@@ -100,7 +130,7 @@ def run_online_mode(args):
 
             if args.verbose:
                 print("result: ", result, file=sys.stderr, flush=True)
-                print("json: ", put_result(
+                print("json: ", put_result_json(
                     registry, args.name, key,
                     'success', result, None), file=sys.stderr, flush=True)
 
@@ -108,7 +138,11 @@ def run_online_mode(args):
                 # parent directory
                 os.chdir("..")
 
-            print(put_result(registry, args.name, key, 'success', result, None), flush=True)
+            if args.msgpack:
+                sys.stdout.buffer.write(put_result_msgpack(registry, args.name, key, 'success', result, None))
+                sys.stdout.flush()
+            else:
+                print(put_result_json(registry, args.name, key, 'success', result, None), flush=True)
 
         if finish:
             run_job(finish)
@@ -153,6 +187,10 @@ if __name__ == "__main__":
     online_parser.add_argument(
         "-jobdirs",
         help="create a directory for each job to run in",
+        default=False, action='store_true')
+    online_parser.add_argument(
+        "-msgpack",
+        help="use MessagePack for serialisation.",
         default=False, action='store_true')
     online_parser.add_argument(
         "-name", type=str,
