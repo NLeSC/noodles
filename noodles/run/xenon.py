@@ -15,6 +15,7 @@ import xenon
 import os
 import sys
 import threading
+import jpype
 
 # from contextlib import redirect_stderr
 # xenon_log = open('xenon_log.txt', 'w')
@@ -169,7 +170,7 @@ class XenonScheduler:
         if interactive:
             desc.setInteractive(True)
         desc.setExecutable(command[0])
-        desc.setArguments(*command[1:])
+        desc.setArguments(command[1:])
         if queue:
             desc.setQueueName(queue)
         elif self.config.jobs_scheme == 'local':
@@ -204,6 +205,7 @@ def xenon_interactive_worker(XeS: XenonScheduler, job_config):
     print(job_config.name + " is now running.", file=sys.stderr, flush=True)
 
     def read_stderr():
+        jpype.attachThreadToJVM()
         for line in xenon.conversions.read_lines(J.streams.getStderr()):
             print(job_config.name + ": " + line, file=sys.stderr, flush=True)
 
@@ -225,7 +227,7 @@ def xenon_interactive_worker(XeS: XenonScheduler, job_config):
     def get_result():
         """ Returns a result tuple: key, status, result, err_msg """
         for line in xenon.conversions.read_lines(J.streams.getStdout()):
-            return read_result(registry, line)
+            yield read_result(registry, line)
 
     if job_config.init is not None:
         send_job().send(("init", job_config.init()._workflow.root_node))
@@ -245,6 +247,7 @@ def buffered_dispatcher(workers):
     results = IOQueue()
 
     def dispatcher(source, sink):
+        jpype.attachThreadToJVM()
         result_sink = results.sink()
 
         for job in jobs.source():
