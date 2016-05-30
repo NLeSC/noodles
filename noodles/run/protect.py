@@ -1,18 +1,54 @@
 from functools import wraps
+from .haploid import (send_map, pull_map)
+import threading
+
+
+def source_branch(*flst):
+    @pull_map
+    def g(*args):
+        for f in flst:
+            f(*args)
+        return args
+
+    return g
+
+
+def sink_branch(*flst):
+    @send_map
+    def g(*args):
+        for f in flst:
+            f(*args)
+        return args
+
+    return g
+
 
 class CatchExceptions(object):
     """Catches exceptions running a function and passes them
     on to a Queue. This should be used when running a critical
-    thread."""
+    thread.
+    
+    The CatchExceptions object has two important members:
+    `job_pass` and `result_pass`, the first is a `pull_map`,
+    the second a `send_map`, assuming we pull and send to an
+    intermediate queue."""
     def __init__(self, sink):
         self.sink = sink
         self.jobs = set()
+        self.lock = threading.Lock()
 
-    def job_pass(self, key, job):
-        self.jobs.add(key)
+        self.job_sink = sink_branch(self._job_pass)
+        self.job_source = source_branch(self._job_pass)
+        self.result_sink = sink_branch(self._result_pass)
+        self.result_source = source_branch(self._result_pass)
 
-    def result_pass(self, key, status, result, err):
-        self.jobs.remove(key)
+    def _job_pass(self, key, job):
+        with self.lock:
+            self.jobs.add(key)
+
+    def _result_pass(self, key, status, result, err):
+        with self.lock:
+            self.jobs.remove(key)
 
     def __call__(self, fn):
         @wraps(fn)
@@ -21,7 +57,8 @@ class CatchExceptions(object):
             try:
                 return fn(*args, **kwargs)
             except Exception as exc:
-                for key in self.jobs:
-                    sink.send((key, 'aborted', None, exc))
+                with self.lock:
+                    for key in self.jobs:
+                        sink.send((key, 'aborted', None, exc))
 
         return fn

@@ -4,6 +4,12 @@ import noodles
 import json
 # import sys
 
+try:
+    import msgpack
+    has_msgpack = True
+except ImportError:
+    has_msgpack = False
+
 
 def _chain_fn(a, b):
     def f(obj):
@@ -218,6 +224,9 @@ class Registry(object):
         :type host: str"""
         return json.dumps(deep_map(lambda o: self.encode(o, host), obj), indent=indent)
 
+    def to_msgpack(self, obj, host=None):
+        return msgpack.packb(deep_map(lambda o: self.encode(o, host), obj))
+
     def from_json(self, data, deref=False):
         """Decode the string from JSON to return the original object (if
         `deref` is true. Uses the `json.loads` function with `self.decode`
@@ -231,6 +240,9 @@ class Registry(object):
             Whether to decode records that gave `ref=True` at encoding.
         :type deref: bool"""
         return json.loads(data, object_hook=lambda o: self.decode(o, deref))
+
+    def from_msgpack(self, data, deref=False):
+        return msgpack.unpackb(data, object_hook=lambda o: self.decode(o, deref))
 
     def dereference(self, data, host):
         """Dereferences RefObjects stuck in the hierarchy. This is a bit

@@ -1,6 +1,5 @@
-from noodles import schedule, run_single, run_process, serial
-from noodles.storable import Storable, storable
-
+from noodles import schedule, run_single, run_process, serial, lift
+from noodles.storable import Storable
 from nose.tools import raises
 
 
@@ -34,14 +33,12 @@ def test_storable():
     a = A()
     b = A()
 
-    assert storable(a)
-
     a.x = 1
     b.x = f(3, 4)
 
-    c = g(a, b)
+    c = g(a, lift(b))
     b.x = c
-    d = h(b, a)
+    d = h(lift(b), a)
 
     result = run_process(d, n_processes=1, registry=serial.base)
     assert result.x == 7
@@ -52,11 +49,9 @@ def test_nonstorable():
     a = A()
     b = M()
 
-    assert not storable(b)
-
     a.x = 1
     b.x = f(3, 4)
 
-    c = g(a, b)
+    zzc = g(a, b)
     result = run_single(c)
     assert result == 8
