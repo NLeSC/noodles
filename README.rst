@@ -1,27 +1,37 @@
 Noodles - workflow engine
 =========================
 
-Requirements for running the first release (0.1.0) are:
+Requires Python 3.5. See http://nlesc.github.io/noodles/ for
+more information.
 
--   Python 3.5
--   xenon (packaged with pyxenon)
--   pyxenon
-
-Installing
-----------
-
-To run the unittests, install the following in a virtualenv:
+Installation
+------------
+Install the following in a virtualenv:
 
 .. code:: bash
 
-    # pyxenon needs jnius, which needs this env
-    export JAVA_HOME="/usr/lib/jvm/default-java"  # or similar...
-    pyvenv-3.5 <venv-dir>
-    . <venv-dir>/bin/activate
-    cd ../pyxenon          # git pull git@github.com:NLeSC/pyxenon.git
-    make install
-    cd ../noodles
     pip install .
+
+To enable Xenon for remote execution, Java must be installed, and Xenon
+can be installed with
+
+.. code:: bash
+
+    pip install '.[xenon]'
+
+If Java cannot be found (needed by Xenon), run
+.. code:: bash
+
+    export JAVA_HOME="/usr/lib/jvm/default-java"  # or similar...
+
+in your shell initialization script (like `~/.bashrc`).
+
+To run unit tests, run
+
+.. code:: bash
+
+    pip install '.[test]'
+    nosetests test
 
 The prototype
 -------------

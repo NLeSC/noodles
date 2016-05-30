@@ -43,20 +43,16 @@ The core of Noodles runs on **Python 3.5**. To run Noodles on your own machine, 
 
 .. code-block:: bash
 
-    # pyxenon needs jnius, which needs JAVA_HOME set, put it in .bashrc
+    # pyxenon needs Java, which may needs JAVA_HOME set, put it in .bashrc
     export JAVA_HOME="/usr/lib/jvm/default-java"  # or similar...
 
     # create the virtualenv
     pyvenv-3.5 <venv-dir>
     . <venv-dir>/bin/activate
 
-    # install pyxenon
-    cd pyxenon          # git pull git@github.com:NLeSC/pyxenon.git
-    make install
-    cd ..
-
     # install noodles
     cd noodles          # git pull git@github.com:NLeSC/noodles.git
+    pip install -r requirements.txt
     pip install .
 
 .. NOTE:: In the future this will reduce to `pip install noodles`.

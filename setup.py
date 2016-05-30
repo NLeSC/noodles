@@ -29,10 +29,9 @@ setup(
         'Development Status :: 4 - Beta',
         'Programming Language :: Python :: 3.5',
         'Topic :: System :: Distributed Computing'],
-
-#    install_requires=['pyxenon'],
-
+    install_requires=[],
     extras_require={
+        'xenon': ['pyxenon'],
         'test': ['nose', 'coverage', 'pyflakes', 'pep8']
     },
 )
