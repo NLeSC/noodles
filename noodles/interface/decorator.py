@@ -1,5 +1,6 @@
 from functools import wraps
 from copy import deepcopy
+import operator
 
 from ..workflow import (from_call, get_workflow)
 
@@ -48,13 +49,13 @@ def unwrap(f):
 
 
 @schedule
-def _getattr(obj, attr):
-    return getattr(obj, attr)
+def _getitem(obj, ix):
+    return obj[ix]
 
 
 @schedule
-def _getitem(obj, name):
-    return obj[name]
+def _getattr(obj, attr):
+    return getattr(obj, attr)
 
 
 @schedule
@@ -91,31 +92,118 @@ class PromisedObject:
     def __call__(self, *args, **kwargs):
         return _do_call(self._workflow, *args, **kwargs)
 
-    def __getitem__(self, name):
-        return _getitem(self._workflow, name)
-
     def __getattr__(self, attr):
-        return _getattr(self._workflow, attr)
+        return _getattr(self, attr)
 
     def __setattr__(self, attr, value):
         if attr[0] == '_':
             self.__dict__[attr] = value
             return
 
-        self._workflow = get_workflow(_setattr(self._workflow, attr, value))
+        self._workflow = get_workflow(
+            _setattr(self, attr, value))
 
+    # predicates
+    # def __lt__(self, other):
+    #     return schedule(operator.lt)(self, other)
+
+    # def __gt__(self, other):
+    #     return schedule(operator.gt)(self, other)
+
+    # def __eq__(self, other):
+    #     return schedule(operator.eq)(self, other)
+
+    # def __ne__(self, other):
+    #     return schedule(operator.ne)(self, other)
+
+    # def __ge__(self, other):
+    #     return schedule(operator.ge)(self, other)
+
+    # def __le__(self, other):
+    #     return schedule(operator.le)(self, other)
+
+    #  boolean operations
+    # def __bool__(self):
+    #     return schedule(operator.truth)(self)
+
+    # numerical operations
+    # def __abs__(self):
+    #     return schedule(operator.abs)(self)
+
+    # def __sub__(self, other):
+    #     return schedule(operator.sub)(self, other)
+
+    # def __add__(self, other):
+    #     return schedule(operator.add)(self, other)
+
+    # def __mul__(self, other):
+    #     return schedule(operator.mul)(self, other)
+
+    # def __truediv__(self, other):
+    #     return schedule(operator.truediv)(self, other)
+
+    # def __floordiv__(self, other):
+    #     return schedule(operator.floordiv)(self, other)
+
+    # def __mod__(self, other):
+    #     return schedule(operator.mod)(self, other)
+
+    # def __pow__(self, other):
+    #     return schedule(operator.pow)(self, other)
+
+    # def __pos__(self):
+    #     return schedule(operator.pos)(self)
+
+    # def __neg__(self):
+    #     return schedule(operator.neg)(self)
+
+    # def __matmul__(self, other):
+    #     return schedule(operator.matmul)(self, other)
+
+    # def __index__(self):
+    #     return schedule(operator.index)(self)
+
+    # bit operations
+    # def __inv__(self):
+    #     return schedule(operator.inv)(self)
+
+    # def __lshift__(self, n):
+    #     return schedule(operator.lshift)(self, n)
+
+    # def __rshift__(self, n):
+    #     return schedule(operator.rshift)(self, n)
+
+    # def __and__(self, other):
+    #     return schedule(operator.and_)(self, other)
+
+    # def __or__(self, other):
+    #     return schedule(operator.or_)(self, other)
+
+    # def __xor__(self, other):
+    #     return schedule(operator.xor)(self, other)
+
+    # container operations
+    # def __contains__(self, item):
+    #    return schedule(operator.contains)(self, item)
+
+    def __getitem__(self, name):
+        return _getitem(self, name)
+
+    # undefined behaviour
     def __iter__(self):
         raise TypeError(
-            "You tried to iterate (or unpack) a PromisedObject. "
-            "There is currently no possible way to learn the arity "
-            "or length of a PromisedObject so, sadly, this is not "
-            "implemented.")
+            "You have tried to iterate (or unpack) a PromisedObject. "
+            "There is currently no possible way to learn the "
+            "length of a PromisedObject so, sadly, this is not "
+            "implemented. You may use the `noodles.unpack` function "
+            "to unpack a promised tuple.")
 
     def __deepcopy__(self, _):
         rnode = self._workflow.nodes[self._workflow.root]
         raise TypeError(
-            "A PromisedObject cannot be deepcopied.\n"
-            "hint: Derive your data class from Storable.\n"
-            "info: {0} {1}".format(rnode.foo, rnode.data))
+            "A PromisedObject cannot be deepcopied. Most probably, you "
+            "have a promise stored in another object, which you passed to "
+            "a scheduled function. To transform an object with nested promises "
+            "to a top-level promise, apply the `lift` function.")
 
 

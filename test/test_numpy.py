@@ -8,7 +8,7 @@ try:
     from noodles.serial.numpy import registry as numpy_registry
 
 except ImportError:
-    raise SkipTest()
+    raise SkipTest("No NumPy installed.")
 
 
 from noodles import schedule, run_process, serial

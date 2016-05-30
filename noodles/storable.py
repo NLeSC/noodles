@@ -2,26 +2,6 @@
 A base class for making objects serializable to JSON.
 """
 
-from copy import deepcopy
-from noodles.interface.decorator import PromisedObject, schedule
-
-
-def storable(obj):
-    return isinstance(obj, Storable)
-
-
-def copy_if_normal(obj, memo):
-    if isinstance(obj, PromisedObject):
-        return obj
-    else:
-        return deepcopy(obj, memo)
-
-
-def from_dict(cls, **kwargs):
-    obj = cls.from_dict(**kwargs)
-    return obj
-
-
 class Storable:
     def as_dict(self):
         """Converts the object to a `dict` containing the members
@@ -54,13 +34,4 @@ class Storable:
         obj = cls.__new__(cls)
         obj.__dict__ = kwargs
         return obj
-
-    def __deepcopy__(self, memo):
-        cls = self.__class__
-        tmp = {k: copy_if_normal(v, memo) for k, v in self.as_dict().items()}
-
-        if any(isinstance(x, PromisedObject) for x in tmp.values()):
-            return schedule(from_dict)(cls, **tmp)
-        else:
-            return cls.from_dict(**tmp)
 

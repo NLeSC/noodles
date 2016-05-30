@@ -1,6 +1,7 @@
-from .coroutines import coroutine_sink, Connection, IOQueue
-# from .data_json import saucer, desaucer, node_to_jobject
-# from ..logger import log
+from .connection import Connection
+from .coroutine import coroutine
+from .queue import Queue
+from ..logger import log
 from ..utility import object_name
 from noodles import serial
 # from .hybrid import hybrid_threaded_worker
@@ -215,7 +216,7 @@ def xenon_interactive_worker(XeS: XenonScheduler, job_config):
 
     registry = job_config.registry()
 
-    @coroutine_sink
+    @coroutine
     def send_job():
         out = jPrintStream(J.streams.getStdin())
 
@@ -243,8 +244,8 @@ def xenon_interactive_worker(XeS: XenonScheduler, job_config):
 
 
 def buffered_dispatcher(workers):
-    jobs = IOQueue()
-    results = IOQueue()
+    jobs = Queue()
+    results = Queue()
 
     def dispatcher(source, sink):
         jpype.attachThreadToJVM()

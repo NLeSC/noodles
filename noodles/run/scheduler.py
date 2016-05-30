@@ -1,4 +1,4 @@
-from .coroutines import (Connection)
+from .connection import (Connection)
 from .job_keeper import (JobKeeper)
 from ..workflow import (
     is_workflow, get_workflow, Empty, invert_links, insert_result,

@@ -11,10 +11,42 @@ from .coroutines import coroutine_sink, Connection
 from ..serial.registry import RefObject
 from ..utility import object_name
 from .scheduler import Scheduler
+from .protect import CatchExceptions
 from .hybrid import hybrid_threaded_worker
+from .haploid import haploid
+
+try:
+    import msgpack
+    has_msgpack = True
+except ImportError:
+    has_msgpack = False
 
 
-def read_result(registry, s):
+
+# buf = BytesIO()
+# for i in range(100):
+#    buf.write(msgpack.packb(range(i)))
+# 
+# buf.seek(0)
+# 
+# unpacker = msgpack.Unpacker(buf)
+# for unpacked in unpacker:
+#     print unpacked
+
+
+def get_result_tuple(msg):
+    key = msg['key']
+    status = msg['status']
+
+    try:
+        key = uuid.UUID(key)
+    except ValueError:
+        pass
+
+    return key, status, msg['result'], msg['err_msg']
+
+
+def read_result_json(registry, s):
     obj = registry.from_json(s)
     key = obj['key']
     status = obj['status']
@@ -26,6 +58,11 @@ def read_result(registry, s):
 
     return key, status, obj['result'], obj['err_msg']
 
+def job_msg(registry, host, key, job):
+    obj = {'key': key if isinstance(key, str) else key.hex,
+           'node': job}
+    return registry.to_msgpack(obj, host=host)
+
 
 def put_job(registry, host, key, job):
     obj = {'key': key if isinstance(key, str) else key.hex,
@@ -35,11 +72,13 @@ def put_job(registry, host, key, job):
 
 def process_worker(registry,
                    verbose=False, jobdirs=False,
-                   init=None, finish=None, status=True):
+                   init=None, finish=None, status=True, use_msgpack=False):
     name = "process-" + str(uuid.uuid4())
 
     cmd = ["/bin/bash", os.getcwd() + "/worker.sh", sys.prefix, "online",
            "-name", name, "-registry", object_name(registry)]
+    if use_msgpack:
+        cmd.append("-msgpack")
     if verbose:
         cmd.append("-verbose")
     if jobdirs:
@@ -65,17 +104,28 @@ def process_worker(registry,
 
 #    processes[id(p)] = t
 
-    @coroutine_sink
+    @haploid('send')
     def send_job():
         reg = registry()
         while True:
             key, job = yield
-            print(put_job(reg, name, key, job), file=p.stdin, flush=True)
+            # print("job ", key, job, file=sys.stderr, flush=True)
+            if use_msgpack:
+                p.stdin.buffer.write(job_msg(reg, name, key, job))
+                p.stdin.flush()
+            else:
+                print(put_job(reg, name, key, job), file=p.stdin, flush=True)
 
+    @haploid('pull')
     def get_result():
         reg = registry()
-        for line in p.stdout:
-            result = read_result(reg, line)
+        if use_msgpack:
+            messages = msgpack.Unpacker(p.stdout.buffer, object_hook=reg.decode)
+        else:
+            messages = (reg.from_json(line) for line in p.stdout)
+
+        for msg in messages:
+            result = get_result_tuple(msg)
             yield result
 
     if init is not None:

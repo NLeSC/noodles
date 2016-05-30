@@ -65,10 +65,10 @@ class Haploid(object):
             raise RuntimeError('When linking haploids, their modes should match.')
         
         if self.mode == 'pull':
-            return Haploid(lambda *args: self.fn(other.fn(*args)), 'pull')
+            return Haploid(lambda *args: self.fn(lambda: other.fn(*args)), 'pull')
 
         if self.mode == 'send':
-            return Haploid(lambda *args: other.fn(self.fn(*args)), 'send')
+            return Haploid(lambda *args: other.fn(lambda: self.fn(*args)), 'send')
 
     def __call__(self, *args):
         return self.fn(*args)

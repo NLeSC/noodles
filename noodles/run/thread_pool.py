@@ -4,26 +4,6 @@ from .protect import (CatchExceptions)
 import threading
 
 
-def source_branch(*flst):
-    @pull_map
-    def g(*args):
-        for f in flst:
-            f(*args)
-        return args
-
-    return g
-
-
-def sink_branch(*flst):
-    @send_map
-    def g(*args):
-        for f in flst:
-            f(*args)
-        return args
-
-    return g
-
-
 def thread_pool(*workers):
     """Threadpool should run functions. That means that both input and output
     need to be active mode, that this cannot be represented by a simple haploid 
@@ -38,7 +18,7 @@ def thread_pool(*workers):
                 yield run(job)
     
     To mend this, we run the required number of threads with `patch`, taking the
-    workers as input source and a IOQueue sink as output. Then we yield from the
+    workers as input source and a Queue sink as output. Then we yield from the
     Queue's source. The source that this is called with should then be thread-
     safe.
     """
@@ -52,8 +32,8 @@ def thread_pool(*workers):
             t = threading.Thread(
                 target=catch(patch), 
                 args=(
-                    lambda: (source_branch(catch.job_pass).to(s))(source),
-                    lambda: sink_branch(catch.result_pass)(results.sink)),
+                    lambda: (catch.job_source.to(s))(source),
+                    lambda: catch.result_sink(results.sink)),
                 daemon=True)
             t.start()
 
