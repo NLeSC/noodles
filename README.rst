@@ -1,7 +1,7 @@
 Noodles - workflow engine
 =========================
 
-Requires Python 3.5 and Java installed. See http://nlesc.github.io/noodles/ for
+Requires Python 3.5. See http://nlesc.github.io/noodles/ for
 more information.
 
 Installation
@@ -10,20 +10,28 @@ Install the following in a virtualenv:
 
 .. code:: bash
 
-    pip install -r requirements.txt
     pip install .
 
-To run unit tests, run
+To enable Xenon for remote execution, Java must be installed, and Xenon
+can be installed with
 
 .. code:: bash
 
-    pip install -r test_requirements.txt
-    nosetests test
+    pip install '.[xenon]'
 
 If Java cannot be found (needed by Xenon), run
 .. code:: bash
 
     export JAVA_HOME="/usr/lib/jvm/default-java"  # or similar...
+
+in your shell initialization script (like `~/.bashrc`).
+
+To run unit tests, run
+
+.. code:: bash
+
+    pip install '.[test]'
+    nosetests test
 
 The prototype
 -------------
