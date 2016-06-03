@@ -1,6 +1,7 @@
 from importlib import import_module
 import sys
 from copy import copy
+from functools import partial
 
 
 def object_name(obj):
@@ -36,6 +37,15 @@ def unwrap(f):
         return f.__wrapped__
     except AttributeError:
         return f
+
+
+class on:
+    def __init__(self, env, obj):
+        self.env = env
+        self.obj = obj
+
+    def __getattr__(self, name):
+        return lambda *args: on(self.env, self.env[name](self.obj, *args))
 
 
 def deep_map(f, root):

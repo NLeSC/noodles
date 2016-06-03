@@ -213,6 +213,9 @@ class Registry(object):
         cls = look_up(typename)
         return self[cls].decode(cls, rec['data'])
 
+    def deep_encode(self, obj, host=None):
+        return deep_map(lambda o: self.encode(o, host), obj)
+
     def to_json(self, obj, host=None, indent=None):
         """Recursively encode `obj` and convert it to a JSON string.
 

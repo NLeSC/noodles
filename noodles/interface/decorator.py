@@ -1,5 +1,6 @@
 from functools import wraps
 from copy import deepcopy
+import hashlib
 import operator
 
 from ..workflow import (from_call, get_workflow)
@@ -16,6 +17,19 @@ def scheduled_function(f, hints=None):
     scheduler in order to be run on any architecture supporting the current
     python environment.
     """
+    if not hints:
+        hints = {}
+
+    if not 'version' in hints:
+        try:
+            source_bytes = inspect.getsource(f).encode()
+            m = hashlib.md5()
+            m.update(source_bytes)
+            hints['version'] = m.hexdigest()
+
+        except:
+            pass
+
     @wraps(f)
     def wrapped(*args, **kwargs):
         return PromisedObject(from_call(
