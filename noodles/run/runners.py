@@ -41,6 +41,7 @@ def log_job_start(key, job):
 def log_job_schedule(key, job):
     return (key, 'schedule', job, None)
 
+
 def run_parallel_timing(wf, n, timing_file):
     LogQ = Queue()
 
@@ -59,6 +60,7 @@ def run_parallel_timing(wf, n, timing_file):
     result = S.run(W, get_workflow(wf))
     LogQ.wait()
     return result
+
 
 def run_single_with_display(wf, display):
     """Adds a display to the single runner. Everything still runs in a single

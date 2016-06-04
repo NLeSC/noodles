@@ -1,5 +1,7 @@
 from queue import Queue
-from ..utility import object_name, look_up, deep_map
+from ..utility import (
+    object_name, look_up, deep_map, inverse_deep_map)
+
 import noodles
 import json
 # import sys
@@ -215,6 +217,9 @@ class Registry(object):
 
     def deep_encode(self, obj, host=None):
         return deep_map(lambda o: self.encode(o, host), obj)
+
+    def deep_decode(self, rec, deref=False):
+        return inverse_deep_map(lambda r: self.decode(r, deref), rec)
 
     def to_json(self, obj, host=None, indent=None):
         """Recursively encode `obj` and convert it to a JSON string.

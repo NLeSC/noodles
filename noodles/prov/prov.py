@@ -37,10 +37,14 @@ class JobDB:
         self.db = TinyDB(path)
         self.lock = Lock()
 
-    def get_result(self, prov):
+    def get_result(self, key, prov):
         job = Query()
         with self.lock:
-            return self.db.get(job.prov == prov)
+            rec = self.db.get(job.prov == prov)
+            if rec:
+                return key, rec['result']
+            else:
+                return None
 
     def set_result(self, key, result):
         job = Query()
@@ -58,6 +62,8 @@ class JobDB:
                 'function': job_msg['data']['function'],
                 'arguments': job_msg['data']['arguments']
             })
+
+        return prov
 
     def add_time_stamp(self, key, name):
         job = Query()
