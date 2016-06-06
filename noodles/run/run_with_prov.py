@@ -13,6 +13,18 @@ from itertools import (repeat)
 import threading
 
 
+def first_of(*foos):
+    def g(*args)
+        for f in foos:
+            a = f(*args)
+            if a:
+                return a
+
+        return None
+
+    return g
+
+
 def run_single(wf, registry, jobdb_file):
     """Run a workflow in a single thread. This is the absolute minimal 
     runner, consisting of a single queue for jobs and a worker running
@@ -29,8 +41,12 @@ def run_single(wf, registry, jobdb_file):
 
     S = Scheduler()
     W = Queue() \
-        .to(first_of(encode.to(db.new_job).to(db.get_result).maybe_to(decode_result),
-                     worker.to(branch(db_store_result))))
+        .to(first_of(encode_job \
+                       .to(db.new_job) \
+                       .to(db.get_result) \
+                       .to(decode_result),
+                     worker \
+                       .to(branch(db.store_result))))
 
     return S.run(W, get_workflow(wf))
 
