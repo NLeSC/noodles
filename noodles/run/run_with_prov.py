@@ -1,28 +1,16 @@
 from .connection import (Connection)
 from .queue import (Queue)
 from .scheduler import (Scheduler)
-from .haploid import (send_map, sink_map, branch, patch)
+from .haploid import (pull, push, push_map, pull_map, sink_map, branch, patch, composer)
 from .thread_pool import (thread_pool)
-from .worker import (worker)
+from .worker import (worker, run_job)
 from .job_keeper import (JobKeeper, JobTimer)
 
 from ..workflow import (get_workflow)
-from ..prov import (JobDB)
+from ..prov import (JobDB, prov_key)
 
 from itertools import (repeat)
 import threading
-
-
-def first_of(*foos):
-    def g(*args)
-        for f in foos:
-            a = f(*args)
-            if a:
-                return a
-
-        return None
-
-    return g
 
 
 def run_single(wf, registry, jobdb_file):
@@ -32,21 +20,27 @@ def run_single(wf, registry, jobdb_file):
     registry = registry()
     db = JobDB(jobdb_file)
 
-    @pull_map
-    def encode_job(key, job):
-        return key, registry.deep_encode(job.node)
-
     def decode_result(key, obj):
-        return key, 'stored', registry.deep_decode(obj), None
+        return key, 'retrieved', registry.deep_decode(obj), None
 
+    @pull_map
+    def pass_job(key, job):
+        job_msg = registry.deep_encode(job)
+        prov = prov_key(job_msg)
+
+        result = db.get_result(prov)
+        if result:
+            return decode_result(key, result)
+        
+        db.new_job(key, prov, job_msg)
+        result = run_job(key, job)
+        result_msg = registry.deep_encode(result.value)
+        db.store_result(key, result_msg)
+
+        return result
+    
     S = Scheduler()
-    W = Queue() \
-        .to(first_of(encode_job \
-                       .to(db.new_job) \
-                       .to(db.get_result) \
-                       .to(decode_result),
-                     worker \
-                       .to(branch(db.store_result))))
+    W = Queue() >> pass_job
 
     return S.run(W, get_workflow(wf))
 
@@ -54,10 +48,57 @@ def run_single(wf, registry, jobdb_file):
 def run_parallel(wf, n_threads, registry, jobdb_file):
     """Run a workflow in `n_threads` parallel threads. Now we replaced the single
     worker with a thread-pool of workers."""
-    S = Scheduler()
-    W = Queue() \
-        .to(thread_pool(*repeat(worker, n_threads)))
+    registry = registry()
+    db = JobDB(jobdb_file)
 
-    return S.run(W, get_workflow(wf))
+    S = Scheduler()
+
+    jobs = Queue()
+    results = Queue()
+
+    def decode_result(key, obj):
+        return key, 'retrieved', registry.deep_decode(obj), None
+
+    @push
+    def schedule_job():
+        job_sink = jobs.sink()
+        result_sink = results.sink()
+
+        while True:
+            key, job = yield
+            job_msg = registry.deep_encode(job)
+            prov = prov_key(job_msg)
+
+            result = db.get_result(prov)
+            if result:
+                result_sink.send(decode_result(key, result))
+                continue
+        
+            db.new_job(key, prov, job_msg)
+            job_sink.send((key, job))
+    
+    @pull
+    def start_job(source):
+        for key, job in source():
+            db.add_time_stamp(key, 'start')
+            yield key, job
+
+    @pull
+    def store_result(source):
+        for result in source():    
+            result_msg = registry.deep_encode(result.value)
+            db.store_result(result.key, result_msg)
+            yield result
+    
+    @pull
+    def print_result(source):
+        for result in source():
+            print(result)
+            yield result
+             
+    r = jobs >> start_job >> thread_pool(*repeat(worker, n_threads), results=results)
+    j_snk = schedule_job
+    
+    return S.run(Connection(r.source, j_snk), get_workflow(wf))
 
 

@@ -1,10 +1,10 @@
-from .haploid import (haploid, patch, send_map, pull_map)
+from .haploid import (pull, patch, push_map, pull_map)
 from .queue import (Queue)
 from .protect import (CatchExceptions)
 import threading
 
 
-def thread_pool(*workers):
+def thread_pool(*workers, results=None):
     """Threadpool should run functions. That means that both input and output
     need to be active mode, that this cannot be represented by a simple haploid 
     co-routine.
@@ -22,9 +22,9 @@ def thread_pool(*workers):
     Queue's source. The source that this is called with should then be thread-
     safe.
     """
-    results = Queue()
+    results = results if results is not None else Queue()
 
-    @haploid('pull')
+    @pull
     def fn(source):
         for s in workers:
             catch = CatchExceptions(results.sink)
@@ -32,7 +32,7 @@ def thread_pool(*workers):
             t = threading.Thread(
                 target=catch(patch), 
                 args=(
-                    lambda: (catch.job_source.to(s))(source),
+                    lambda: (catch.job_source >> s)(source),
                     lambda: catch.result_sink(results.sink)),
                 daemon=True)
             t.start()

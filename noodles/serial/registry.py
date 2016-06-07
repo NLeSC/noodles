@@ -202,6 +202,9 @@ class Registry(object):
             remote host, reading this file will be slow and result in an
             error if the file is not present.
         :type deref: bool"""
+        if not isinstance(rec, dict):
+            return rec
+
         if not '_noodles' in rec:
             return rec
 

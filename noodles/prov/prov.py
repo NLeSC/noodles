@@ -3,6 +3,8 @@ import hashlib
 import json
 from threading import Lock
 from ..utility import on
+import time
+import uuid
 
 
 def update_object_hash(m, obj):
@@ -29,7 +31,7 @@ def prov_key(job_msg):
 
 
 def time_stamp():
-    return strftime('%Y-%m-%dT%H:%M:%SZ', time.gmtime(time.time()))
+    return time.strftime('%Y-%m-%dT%H:%M:%SZ', time.gmtime(time.time()))
    
 
 class JobDB:
@@ -37,38 +39,41 @@ class JobDB:
         self.db = TinyDB(path)
         self.lock = Lock()
 
-    def get_result(self, key, prov):
+    def get_result(self, prov):
         job = Query()
         with self.lock:
-            rec = self.db.get(job.prov == prov)
+            rec = self.db.get((job.prov == prov) & job.result.exists())
             if rec:
-                return key, rec['result']
+                return rec['result']
             else:
                 return None
 
-    def set_result(self, key, result):
+    def store_result(self, key, result):
         job = Query()
+        self.add_time_stamp(key, 'done')
         with self.lock:
-            self.db.update({'result': result}, job.key == key)
+            self.db.update({'result': result}, job.key == str(key))
 
-    def new_job(self, key, job_msg):
+    def new_job(self, key, prov, job_msg):
         with self.lock:
-            prov = prov_key(job_msg)
             self.db.insert({
-                'key': key,
+                'key': str(key),
                 'prov': prov,
                 'time': {'schedule': time_stamp()},
-                'version': job_msg['data']['hints'].get('version')
+                'version': job_msg['data']['hints'].get('version'),
                 'function': job_msg['data']['function'],
                 'arguments': job_msg['data']['arguments']
             })
 
-        return prov
+        return key, prov
 
     def add_time_stamp(self, key, name):
+        def update(r):
+            r['time'][name] = time_stamp()
+
         job = Query()
         with self.lock:
             self.db.update(
-                lambda r: r['time'][name] = time_stamp(),
-                job.key == key)
+                update,
+                job.key == str(key))
 

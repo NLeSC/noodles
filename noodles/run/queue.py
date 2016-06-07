@@ -1,5 +1,5 @@
 import queue
-from .haploid import haploid
+from .haploid import (push, pull)
 from .connection import Connection
 
 
@@ -19,13 +19,13 @@ class Queue(Connection):
         self.Q = queue.Queue()
         self.blocking = blocking
 
-        @haploid('send')
+        @push
         def sink():
             while True:
                 r = yield
                 self.Q.put(r)
 
-        @haploid('pull')
+        @pull
         def source():
             while True:
                 v = self.Q.get()

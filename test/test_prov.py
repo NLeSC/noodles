@@ -1,7 +1,9 @@
 from noodles.prov import prov_key
-from noodles import serial
-from noodles.tutorial import add, sub, mul
+from noodles import serial, gather
+from noodles.tutorial import add, sub, mul, accumulate
 from noodles.prov import prov_key
+from noodles.run.worker import run_job
+from noodles.run.run_with_prov import run_single, run_parallel
 
 import json
 
@@ -17,4 +19,39 @@ def test_prov_00():
     assert key[0] == key[2]
     assert key[1] != key[0]
     assert key[3] != key[0]
+
+
+def test_prov_01():
+    reg = serial.base()
+    a = add(3, 4)
+
+    enc = reg.deep_encode(a._workflow.root_node)
+    dec = reg.deep_decode(enc)
+
+    result = run_job(0, dec)
+    assert result.value == 7
+
+def test_prov_02():
+    db_file = "prov.json"
+
+    A = add(1, 1)
+    B = sub(3, A)
+
+    multiples = [mul(add(i, B), A) for i in range(6)]
+    C = accumulate(gather(*multiples))
+    
+    result = run_single(C, serial.base, db_file)
+    assert result == 42
+
+def test_prov_03():
+    db_file = "prov.json"
+
+    A = add(1, 1)
+    B = sub(3, A)
+
+    multiples = [mul(add(i, B), A) for i in range(6)]
+    C = accumulate(gather(*multiples))
+    
+    result = run_parallel(C, 4, serial.base, db_file)
+    assert result == 42
 

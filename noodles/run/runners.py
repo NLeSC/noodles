@@ -1,7 +1,7 @@
 from .connection import (Connection)
 from .queue import (Queue)
 from .scheduler import (Scheduler)
-from .haploid import (send_map, sink_map, branch, patch)
+from .haploid import (push_map, sink_map, branch, patch)
 from .thread_pool import (thread_pool)
 from .worker import (worker)
 from ..workflow import (get_workflow)
@@ -16,8 +16,7 @@ def run_single(wf):
     runner, consisting of a single queue for jobs and a worker running
     jobs every time a result is pulled."""
     S = Scheduler()
-    W = Queue() \
-        .to(worker)
+    W = Queue() >> worker
 
     return S.run(W, get_workflow(wf))
 
@@ -26,18 +25,17 @@ def run_parallel(wf, n_threads):
     """Run a workflow in `n_threads` parallel threads. Now we replaced the single
     worker with a thread-pool of workers."""
     S = Scheduler()
-    W = Queue() \
-        .to(thread_pool(*repeat(worker, n_threads)))
+    W = Queue() >> thread_pool(*repeat(worker, n_threads))
 
     return S.run(W, get_workflow(wf))
 
 
-@send_map
+@push_map
 def log_job_start(key, job):
     return (key, 'start', job, None)
 
 
-@send_map
+@push_map
 def log_job_schedule(key, job):
     return (key, 'schedule', job, None)
 
@@ -53,9 +51,9 @@ def run_parallel_timing(wf, n, timing_file):
         daemon=True).start()
 
     W = Queue() \
-        .to(branch(log_job_start.to(LogQ.sink))) \
-        .to(thread_pool(*repeat(worker, n))) \
-        .to(branch(LogQ.sink))
+          >> branch(log_job_start >> LogQ.sink) \
+          >> thread_pool(*repeat(worker, n)) \
+          >> branch(LogQ.sink)
 
     result = S.run(W, get_workflow(wf))
     LogQ.wait()
@@ -68,9 +66,9 @@ def run_single_with_display(wf, display):
     routine; when the job is finished the result is sent to the display routine."""
     S = Scheduler()
     W = Queue() \
-        .to(branch(log_job_start.to(sink_map(display)))) \
-        .to(worker) \
-        .to(branch(sink_map(display)))
+          >> branch(log_job_start.to(sink_map(display))) \
+          >> worker \
+          >> branch(sink_map(display))
 
     return S.run(W, get_workflow(wf))
 
@@ -88,9 +86,9 @@ def run_parallel_with_display(wf, n, display):
         daemon=True).start()
 
     W = Queue() \
-        .to(branch(log_job_start.to(LogQ.sink))) \
-        .to(thread_pool(*repeat(worker, n))) \
-        .to(branch(LogQ.sink))
+          >> branch(log_job_start >> LogQ.sink) \
+          >> thread_pool(*repeat(worker, n)) \
+          >> branch(LogQ.sink)
 
     result = S.run(W, get_workflow(wf))
     LogQ.wait()

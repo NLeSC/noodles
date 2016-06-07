@@ -6,8 +6,8 @@ try:
     from noodles import serial
     from noodles.tutorial import (add, mul, sub, accumulate)
 
-except ImportError:
-    raise SkipTest("No pyXenon installed.")
+except ImportError as e:
+    raise SkipTest(str(e))
 
 
 def test_xenon_42():

@@ -5,7 +5,7 @@ from .queue import Queue
 from .connection import Connection
 from .coroutine import coroutine
 from .protect import CatchExceptions
-from .haploid import patch
+from .haploid import (push, pull, patch)
 from ..utility import unzip_dict
 from .scheduler import Scheduler
 from .worker import run_job
@@ -76,16 +76,16 @@ def hybrid_threaded_worker(selector, workers):
     }
 
     result_source = {
-        k: w.source.to(catch[k].result_source) \
+        k: w.source >> catch[k].result_source \
             for k, w in workers.items()
     }
 
     job_sink = {
-        k: catch[k].job_sink.to(w.sink)() \
+        k: (catch[k].job_sink >> w.sink)() \
             for k, w in workers.items()
     }
 
-    @coroutine
+    @push
     def dispatch_job():
         default_sink = results.sink()
 

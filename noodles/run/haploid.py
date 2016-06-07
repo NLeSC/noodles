@@ -1,6 +1,10 @@
 from .coroutine import coroutine
 
 from itertools import starmap
+from collections import Iterable
+import inspect
+import sys
+
 
 def haploid(mode):
     def wrap(f):
@@ -48,62 +52,134 @@ class Haploid(object):
     def __init__(self, fn, mode):
         self.fn = fn # if mode == 'pull' else coroutine(fn)
         self.mode = mode   # 'send' or 'pull'
+        if mode == 'send':
+            self.mode = 'push'
 
-    def to(self, other):
-        #   def __gt__(self, other):
-        if (self.mode != other.mode):
-            raise RuntimeError('When linking haploids, their modes should match.')
-        
-        if self.mode == 'send':
-            return Haploid(lambda *args: self.fn(lambda: other.fn(*args)), 'send')
-
-        if self.mode == 'pull':
-            return Haploid(lambda *args: other.fn(lambda: self.fn(*args)), 'pull')
-
-    def __lt__(self, other):
-        if not (self.mode == other.mode):
-            raise RuntimeError('When linking haploids, their modes should match.')
-        
-        if self.mode == 'pull':
-            return Haploid(lambda *args: self.fn(lambda: other.fn(*args)), 'pull')
-
-        if self.mode == 'send':
-            return Haploid(lambda *args: other.fn(lambda: self.fn(*args)), 'send')
+    def __rshift__(self, other):
+        return self.__join__(other)
 
     def __call__(self, *args):
         return self.fn(*args)
 
 
-def pull_map(f):
-    @haploid('pull')
-    def gen(source):
-        return starmap(f, source())
-    return gen
+class pull(Haploid):
+    def __init__(self, fn):
+        self.source = fn
+        super(pull, self).__init__(fn, 'pull')
+
+    def __join__(self, other):
+        if hasattr(other, 'source'):
+            return pull(lambda *args: other.source(lambda: self.source(*args)))
+        elif inspect.isfunction(other):
+            return self >> pull_map(other)
+        else:
+            raise TypeError('Cannot join coroutines of different types.')
 
 
-def send_map(f):
-    @haploid('send')
-    def crt(sink):
+class push(Haploid):
+    def __init__(self, fn, dont_wrap=False):
+        if dont_wrap:
+            self.sink = fn
+        else:
+            self.sink = coroutine(fn)
+        super(push, self).__init__(self.sink, 'push')
+
+    def __join__(self, other):
+        if hasattr(other, 'sink'):
+            return push(lambda *args: self.sink(lambda: other.sink(*args)),
+                        dont_wrap=True)
+        elif inspect.isfunction(other):
+            return self >> push_map(other)
+        else:
+            raise TypeError('Cannot join coroutines of different types.')
+
+
+def compose_2(f, g):
+    def h(*args):
+        a = g(*args)
+        if a:
+            return f(*a)
+        else:
+            return None
+
+    return h
+
+
+class composer:
+    def __init__(self, f):
+        self.f = f
+
+    def __call__(self, *args):
+        return self.f(*args)
+
+    def __rshift__(self, other):
+        return composer(compose_2(other, self.f))
+
+
+class pull_map(pull):
+    def __init__(self, f):
+        self.f = f
+        super(pull_map, self).__init__(self.map)
+
+    def __join__(self, other):
+        if not isinstance(other, Haploid) and inspect.isfunction(other):
+            return pull_map(compose_2(other, self.f))
+        
+        if isinstance(other, pull_map):
+            return pull_map(compose_2(other.f, self.f))
+
+        else:
+            return super(pull_map, self).__join__(other)
+        
+    def map(self, source):
+        for args in source():
+            if args:
+                yield self.f(*args)
+            else:
+                yield
+
+
+class push_map(push):
+    def __init__(self, f):
+        self.f = f
+        super(push_map, self).__init__(self.map)
+
+    def __join__(self, other):
+        if not isinstance(other, Haploid) and inspect.isfunction(other):
+            return push_map(compose_2(other, self.f))
+
+        if isinstance(other, push_map):
+            return push_map(compose_2(other.f, self.f))
+
+        else:
+            return super(push_map, self).__join__(other)
+
+    def map(self, sink):
         sink = sink()
         while True:
             args = yield
-            sink.send(f(*args))
-
-    return crt
+            if args:
+                sink.send(self.f(*args))
+            else:
+                raise RuntimeError('Encountered `None` in push_map loop.')
+                # sink.send(None)
 
 
 def sink_map(f):
-    @haploid('send')
+    @push
     def sink():
         while True:
             args = yield
-            f(*args)
+            if args:
+                f(*args)
+            else:
+                raise RuntimeError('Encountered `None` in sink_map loop.')
 
     return sink
 
 
 def branch(*sinks_):
-    @haploid('pull')
+    @pull
     def junction(source):
         sinks = [s() for s in sinks_]
 
@@ -119,5 +195,8 @@ def patch(source, sink):
     """Create a direct link between a source and a sink."""
     sink = sink()
     for v in source():
-        sink.send(v)
+        if v is not None:
+            sink.send(v)
+        else:
+            raise RuntimeError("encountered None in stream") 
 

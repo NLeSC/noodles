@@ -83,6 +83,10 @@ class Scheduler:
 
         # process results
         for job_key, status, result, err_msg in source:
+            if status == 'aborted':
+                print("Got a fatal error: exiting.", file=sys.stderr, flush=True)
+                sys.exit()
+
             if status == 'error':
                 if self.handle_error:
                     wf, n = self.jobs[job_key]

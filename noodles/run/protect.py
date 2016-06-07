@@ -1,5 +1,5 @@
 from functools import wraps
-from .haploid import (send_map, pull_map)
+from .haploid import (push_map, pull_map)
 import threading
 
 
@@ -14,7 +14,7 @@ def source_branch(*flst):
 
 
 def sink_branch(*flst):
-    @send_map
+    @push_map
     def g(*args):
         for f in flst:
             f(*args)
@@ -37,16 +37,16 @@ class CatchExceptions(object):
         self.jobs = set()
         self.lock = threading.Lock()
 
-        self.job_sink = sink_branch(self._job_pass)
-        self.job_source = source_branch(self._job_pass)
-        self.result_sink = sink_branch(self._result_pass)
-        self.result_source = source_branch(self._result_pass)
+        self.job_sink = sink_branch(self.job_pass)
+        self.job_source = source_branch(self.job_pass)
+        self.result_sink = sink_branch(self.result_pass)
+        self.result_source = source_branch(self.result_pass)
 
-    def _job_pass(self, key, job):
+    def job_pass(self, key, job):
         with self.lock:
             self.jobs.add(key)
 
-    def _result_pass(self, key, status, result, err):
+    def result_pass(self, key, status, result, err):
         with self.lock:
             self.jobs.remove(key)
 

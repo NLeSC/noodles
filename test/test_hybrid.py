@@ -15,11 +15,11 @@ from itertools import repeat
 
 
 def single_worker():
-    return Queue().to(worker)
+    return Queue() >> worker
 
 
 def threaded_worker(n_threads):
-    return Queue().to(thread_pool(*repeat(worker, n_threads)))
+    return Queue() >> thread_pool(*repeat(worker, n_threads))
 
 
 @schedule_hint(n=1)

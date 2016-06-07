@@ -1,6 +1,6 @@
-from .haploid import Haploid
+from .haploid import pull
 
-class Connection:
+class Connection(object):
     """
     Combine a source and a sink. These should represent the IO of
     some object, probably a worker. In this case the `source` is a
@@ -31,11 +31,11 @@ class Connection:
         snk = self.sink()
         return src, snk
 
-    def to(self, other):
-        """A connection has one output channel, so the '>' operator
-        connects the source to a coroutine, creating a new connection."""
-        return Connection(Haploid(lambda: other.fn(self.source), 'pull'), self.sink)
+    def __rshift__(self, other):
+        return self.__join__(other)
 
-    def ot(self, other):
-        return Connection(self.source, lambda: other.fn(self.sink))
+    def __join__(self, other):
+        """A connection has one output channel, so the '>>' operator
+        connects the source to a coroutine, creating a new connection."""
+        return Connection(pull(lambda: other.fn(self.source)), self.sink)
 

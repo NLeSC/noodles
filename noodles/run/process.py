@@ -13,7 +13,7 @@ from ..utility import object_name
 from .scheduler import Scheduler
 from .protect import CatchExceptions
 from .hybrid import hybrid_threaded_worker
-from .haploid import haploid
+from .haploid import (pull, push)
 
 try:
     import msgpack
@@ -104,7 +104,7 @@ def process_worker(registry,
 
 #    processes[id(p)] = t
 
-    @haploid('send')
+    @push
     def send_job():
         reg = registry()
         while True:
@@ -116,7 +116,7 @@ def process_worker(registry,
             else:
                 print(put_job(reg, name, key, job), file=p.stdin, flush=True)
 
-    @haploid('pull')
+    @pull
     def get_result():
         reg = registry()
         if use_msgpack:
