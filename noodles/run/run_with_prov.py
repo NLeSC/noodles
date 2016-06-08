@@ -86,19 +86,84 @@ def run_parallel(wf, n_threads, registry, jobdb_file):
     @pull
     def store_result(source):
         for result in source():    
-            result_msg = registry.deep_encode(result.value)
-            db.store_result(result.key, result_msg)
+            result_msg = registry.deep_encode(result[2])
+            db.store_result(result[0], result_msg)
             yield result
     
-    @pull
-    def print_result(source):
-        for result in source():
-            print(result)
-            yield result
+    @sink_map
+    def print_result(key, status, result, msg):
+        print(status, result)
              
-    r = jobs >> start_job >> thread_pool(*repeat(worker, n_threads), results=results)
+    r_src = jobs.source \
+         >> start_job \
+         >> thread_pool(*repeat(worker, n_threads), results=results) \
+         >> store_result \
+         >> branch(print_result)
+
     j_snk = schedule_job
     
-    return S.run(Connection(r.source, j_snk), get_workflow(wf))
+    return S.run(Connection(r_src, j_snk), get_workflow(wf))
 
+
+def run_parallel_optional_prov(wf, n_threads, registry, jobdb_file):
+    """Run a workflow in `n_threads` parallel threads. Now we replaced the single
+    worker with a thread-pool of workers."""
+    registry = registry()
+    db = JobDB(jobdb_file)
+
+    S = Scheduler()
+
+    jobs = Queue()
+    results = Queue()
+
+    def decode_result(key, obj):
+        return key, 'retrieved', registry.deep_decode(obj), None
+
+    @push
+    def schedule_job():
+        job_sink = jobs.sink()
+        result_sink = results.sink()
+
+        while True:
+            key, job = yield
+            
+            if job.hints and 'store' in job.hints:
+                job_msg = registry.deep_encode(job)
+                prov = prov_key(job_msg)
+
+                result = db.get_result(prov)
+                if result:
+                    result_sink.send(decode_result(key, result))
+                    continue
+            
+                db.new_job(key, prov, job_msg)
+
+            job_sink.send((key, job))
+    
+    @pull
+    def start_job(source):
+        for key, job in source():
+            db.add_time_stamp(key, 'start')
+            yield key, job
+
+    @pull
+    def store_result(source):
+        for result in source():    
+            result_msg = registry.deep_encode(result[2])
+            db.store_result(result[0], result_msg)
+            yield result
+    
+    @sink_map
+    def print_result(key, status, result, msg):
+        print(status, result)
+             
+    r_src = jobs.source \
+         >> start_job \
+         >> thread_pool(*repeat(worker, n_threads), results=results) \
+         >> store_result \
+         >> branch(print_result)
+
+    j_snk = schedule_job
+    
+    return S.run(Connection(r_src, j_snk), get_workflow(wf))
 
