@@ -68,7 +68,7 @@ def hybrid_threaded_worker(selector, workers):
     """
     results = Queue()
 
-    print([w.source for k, w in workers.items()])
+    # print([w.source for k, w in workers.items()])
 
     catch = { 
         k: CatchExceptions(results.sink) \
@@ -97,12 +97,19 @@ def hybrid_threaded_worker(selector, workers):
             else:
                 default_sink.send(run_job(key, job))
 
-    for worker, source in result_source.items():
+    for key, worker in workers.items():
         t = threading.Thread(
-            target=patch,
-            args=(source, results.sink))
+            target=catch[key](patch),
+            args=(result_source[key], results.sink))
         t.daemon = True
         t.start()
+
+        if worker.aux:
+            t_aux = threading.Thread(
+                target=catch[key](worker.aux),
+                args=(),
+                daemon=True)
+            t_aux.start()
 
     return Connection(results.source, dispatch_job)
 

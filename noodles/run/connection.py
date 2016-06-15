@@ -6,7 +6,7 @@ class Connection(object):
     some object, probably a worker. In this case the `source` is a
     coroutine generating results, while the sink needs to be fed jobs.
     """
-    def __init__(self, source, sink):
+    def __init__(self, source, sink, aux=None):
         """Connection constructor
 
         :param source:
@@ -19,6 +19,7 @@ class Connection(object):
         """
         self.source = source
         self.sink = sink
+        self.aux = aux
 
     def setup(self):
         """Activate the source and sink functions and return them in

@@ -98,18 +98,15 @@ def process_worker(registry,
         for line in p.stderr:
             log.worker_stderr(name, line)
 
-    t = threading.Thread(target=read_stderr)
-    t.daemon = True
-    t.start()
-
-#    processes[id(p)] = t
+    # t = threading.Thread(target=read_stderr)
+    # t.daemon = True
+    # t.start()
 
     @push
     def send_job():
         reg = registry()
         while True:
             key, job = yield
-            # print("job ", key, job, file=sys.stderr, flush=True)
             if use_msgpack:
                 p.stdin.buffer.write(job_msg(reg, name, key, job))
                 p.stdin.flush()
@@ -138,7 +135,7 @@ def process_worker(registry,
     if finish is not None:
         send_job().send(("finish", finish()._workflow.root_node))
 
-    return Connection(get_result, send_job)
+    return Connection(get_result, send_job, aux=read_stderr)
 
 
 def run_process(wf, n_processes, registry,
