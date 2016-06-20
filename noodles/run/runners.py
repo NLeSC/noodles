@@ -73,7 +73,7 @@ def run_single_with_display(wf, display):
     return S.run(W, get_workflow(wf))
 
 
-def run_parallel_with_display(wf, n, display):
+def run_parallel_with_display(wf, n_threads, display):
     """Adds a display to the parallel runner. Because messages come in asynchronously
     now, we start an extra thread just for the display routine."""
     LogQ = Queue()
@@ -87,7 +87,7 @@ def run_parallel_with_display(wf, n, display):
 
     W = Queue() \
           >> branch(log_job_start >> LogQ.sink) \
-          >> thread_pool(*repeat(worker, n)) \
+          >> thread_pool(*repeat(worker, n_threads)) \
           >> branch(LogQ.sink)
 
     result = S.run(W, get_workflow(wf))

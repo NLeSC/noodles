@@ -21,18 +21,18 @@ def mul(x, y):
 class A:
     def __init__(self, value):
         self.value = value
-        self.attr = 0
+        self.m_attr = 0
 
     @property
     def attr(self):
-        return sqr(self.__attr)
+        return sqr(self.m_attr)
 
     def mul_attr(self, factor=1):
-        return mul(self.__attr, factor)
+        return mul(self.m_attr, factor)
 
     @attr.setter
     def attr(self, x):
-        self.__attr = divide(x, 2)
+        self.m_attr = divide(x, 2)
 
     def multiply(self, factor):
         self.value *= factor

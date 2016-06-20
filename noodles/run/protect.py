@@ -61,4 +61,6 @@ class CatchExceptions(object):
                     for key in self.jobs:
                         sink.send((key, 'aborted', None, exc))
 
+                raise exc
+
         return fn

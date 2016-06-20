@@ -1,24 +1,38 @@
 import uuid
 import time
 import json
+import sys
 
+from threading import Lock
 from .haploid import (sink_map, coroutine)
 
 class JobKeeper(dict):
-    def __init__(self):
+    def __init__(self, keep=True):
         super(JobKeeper, self).__init__()
+        self.keep = keep
+        self.lock = Lock()
 
     def register(self, job):
-        key = uuid.uuid1()
-        self[key] = job
+        with self.lock:
+            key = uuid.uuid1()
+            self[key] = job
         return key, job.node
+
+    def __delitem__(self, key):
+        pass
 
     def store_result(self, key, status, value, err):
         if status != 'done':
             return
 
-        job = self[key]
-        job.node.result = value
+        if key not in self:
+            print("WARNING: store_result without previous job registration:\n" \
+                  "   race condition? Not doing anything.\n", file=sys.stderr)
+            return
+
+        with self.lock:
+            job = self[key]
+            job.node.result = value
 
 
 class JobTimer(dict):
@@ -35,6 +49,9 @@ class JobTimer(dict):
         job.sched_time = time.time()
         self[key] = job
         return key, job.node
+
+    def __delitem__(self, key):
+        pass
 
     # def message(self, key, status, value, err):
     @coroutine

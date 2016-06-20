@@ -2,6 +2,7 @@ from functools import wraps
 from copy import deepcopy
 import hashlib
 import operator
+import sys
 
 from ..workflow import (from_call, get_workflow)
 
@@ -74,7 +75,21 @@ def _getattr(obj, attr):
 
 @schedule
 def _setattr(obj, attr, value):
-    obj.__setattr__(attr, value)
+    try:
+        obj = deepcopy(obj)
+        obj.__setattr__(attr, value)
+
+    except TypeError as err:
+        tb = sys.exc_info()[2]
+        from pprint import PrettyPrinter
+        pp = PrettyPrinter()
+        obj_repr = "<" + obj.__class__.__name__ + ">: " + pp.pformat(obj.__dict__)
+        msg = "In `_setattr` we deepcopy the object *during runtime*. " \
+              "If you're sure that what you're doing is safe, you can overload " \
+              "`__deepcopy__` to get more efficient code. However, something went " \
+              "wrong here: \n" + err.args[0] + '\n' + obj_repr
+        raise TypeError(msg).with_traceback(tb)
+
     return obj
 
 
@@ -213,7 +228,8 @@ class PromisedObject:
             "to unpack a promised tuple.")
 
     def __deepcopy__(self, _):
-        rnode = self._workflow.nodes[self._workflow.root]
+        # rnode = self._workflow.nodes[self._workflow.root]
+        from pprint import PrettyPrinter
         raise TypeError(
             "A PromisedObject cannot be deepcopied. Most probably, you "
             "have a promise stored in another object, which you passed to "

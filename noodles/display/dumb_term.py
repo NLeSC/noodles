@@ -4,22 +4,22 @@ import sys
 
 class DumbDisplay:
     """Monochrome, dumb term display"""
-    def __init__(self, error_filter):
+    def __init__(self, error_filter=None):
         self.jobs = {}
         self.out = OutStream(sys.stdout)
         self.errors = []
         self.error_filter = error_filter
 
-    def start(self, key, job):
+    def start(self, key, job, _):
         if job.hints and 'display' in job.hints:
             self.add_job(key, job.hints)
             self.out << job.hints['display'].format(
                 **job.bound_args.arguments) << "\n"
 
-    def done(self, key, data):
+    def done(self, key, data, msg):
         pass
 
-    def error(self, key, data):
+    def error(self, key, _, msg):
         pass
 
     def add_job(self, key, hints):
@@ -33,10 +33,10 @@ class DumbDisplay:
 
     def report(self):
         if len(self.errors) == 0:
-            self.out << "╰─(success)\n"
+            self.out << "+---(success)\n"
 
         else:
-            self.out << "╰─(ERROR!)\n\n"
+            self.out << "+---(ERROR!)\n\n"
 
             for job, e in self.errors:
                 msg = 'ERROR '
@@ -55,16 +55,16 @@ class DumbDisplay:
                 else:
                     print(e)
 
-    def __call__(self, q):
-        self.q = q
-        for status, key, data in q.source():
-            getattr(self, status)(key, data)
+    def __call__(self, key, status, data, err):
+        #self.q = q
+        #for status, key, data in q.source():
+        getattr(self, status)(key, data, err)
 
     def __enter__(self):
         return self
 
     def __exit__(self, exc_type, exc_val, exc_tb):
-        self.wait()
+        # self.wait()
 
         if exc_type:
             if exc_type is KeyboardInterrupt:
