@@ -312,6 +312,9 @@ class Serialiser(object):
         if obj is None:
             raise RuntimeError("Object None should not reach encoder.")
 
+        if hasattr(obj, '__serialize__'):
+            return obj.__serialize__(make_rec)
+
         msg = "Cannot encode {}: encoder for type `{}` is not implemented." \
             .format(obj, type(obj).__name__)
 
@@ -328,6 +331,10 @@ class Serialiser(object):
         :param data:
             The data is the record that was passed to `make_rec` by
             the encoder."""
+
+        if hasattr(cls, '__construct__'):
+            return cls.__construct__(data)
+
         msg = "Decoder for type `{}` is not implemented." \
             .format(cls.__name__)
 

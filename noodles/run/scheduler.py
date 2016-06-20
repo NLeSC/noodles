@@ -54,7 +54,10 @@ class Scheduler:
     """
     def __init__(self, verbose=False, error_handler=None, job_keeper=None):
         self.dynamic_links = {}
-        self.jobs = job_keeper if job_keeper is not None else JobKeeper()
+        if job_keeper is None:
+            self.jobs = JobKeeper()
+        else:
+            self.jobs = job_keeper
         # I'd rather say: self.jobs = job_keeper or {}
         # but Python thruthiness of {} is False
         self.count = 0

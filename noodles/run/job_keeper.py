@@ -7,7 +7,7 @@ from threading import Lock
 from .haploid import (sink_map, coroutine)
 
 class JobKeeper(dict):
-    def __init__(self, keep=True):
+    def __init__(self, keep=False):
         super(JobKeeper, self).__init__()
         self.keep = keep
         self.lock = Lock()
@@ -15,11 +15,15 @@ class JobKeeper(dict):
     def register(self, job):
         with self.lock:
             key = uuid.uuid1()
+            job.log = []
+            job.log.append((time.time(), 'register', None, None))
             self[key] = job
+
         return key, job.node
 
     def __delitem__(self, key):
-        pass
+        if not self.keep:
+            super(JobKeeper, self).__delitem__(key)
 
     def store_result(self, key, status, value, err):
         if status != 'done':
@@ -33,6 +37,20 @@ class JobKeeper(dict):
         with self.lock:
             job = self[key]
             job.node.result = value
+
+    @coroutine
+    def message(self):
+        while True:
+            key, status, value, err = yield
+
+            with self.lock:
+                if key not in self:
+                    #print("WARNING: message `" + status + "` without previous job registration: " + key.hex + "\n" \
+                    #      "   race condition? Not doing anything.", file=sys.stderr)
+                    continue
+
+                job = self[key]
+                job.log.append((time.time(), status, value, err))
 
 
 class JobTimer(dict):

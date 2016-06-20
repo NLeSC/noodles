@@ -3,6 +3,7 @@ from copy import deepcopy
 import hashlib
 import operator
 import sys
+import inspect
 
 from ..workflow import (from_call, get_workflow)
 
@@ -18,7 +19,7 @@ def scheduled_function(f, hints=None):
     scheduler in order to be run on any architecture supporting the current
     python environment.
     """
-    if not hints:
+    if hints is None:
         hints = {}
 
     if not 'version' in hints:

@@ -43,6 +43,11 @@ class FunctionNode:
         """Convert to a :py:class:`NodeData` for subsequent serial."""
         return NodeData(self.foo, get_arguments(self.bound_args), self.hints)
 
+    def __str__(self):
+        s = self.foo.__name__ + '(' + ", ".join(map(str, self.bound_args.args)) + ')'
+        if self.result != Empty:
+            s += ' -> ' + str(self.result)
+        return s
 
 class Workflow:
     """

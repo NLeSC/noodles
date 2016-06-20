@@ -2,9 +2,10 @@ from tinydb import (TinyDB, Query)
 import hashlib
 import json
 from threading import Lock
-from ..utility import on
+# from ..utility import on
 import time
 import uuid
+import sys
 
 
 def update_object_hash(m, obj):
@@ -34,30 +35,57 @@ def time_stamp():
     return time.strftime('%Y-%m-%dT%H:%M:%SZ', time.gmtime(time.time()))
    
 
+def attach_job(key):
+    def attach_to(rec):
+        rec['attached'].append(key)
+        return rec
+    return attach_to
+
+
 class JobDB:
     def __init__(self, path):
         self.db = TinyDB(path)
         self.lock = Lock()
 
-    def get_result(self, prov):
+    def get_result_or_attach(self, key, prov, running):
         job = Query()
         with self.lock:
-            rec = self.db.get((job.prov == prov) & job.result.exists())
-            if rec:
-                return rec['result']
+            rec = self.db.get(job.prov == prov)
+
+            if 'result' in rec:
+                return 'retrieved', uuid.UUID(rec['key']), rec['result']
+
+            elif uuid.UUID(rec['key']) in running:
+                self.db.update(attach_job(key.hex), job.prov == prov)
+                return 'attached', uuid.UUID(rec['key']), None
+
             else:
-                return None
+                print("WARNING: unfinished job in database. Removing it and rerunning.", file=sys.stderr)
+                self.db.remove(eids=[rec.eid])
+                return 'broken', None, None
+
+    def job_exists(self, prov):
+        job = Query()
+        with self.lock:
+            return self.db.contains(job.prov == prov)
 
     def store_result(self, key, result):
         job = Query()
+        with self.lock:
+            if not self.db.contains(job.key == key.hex):
+                return
+
         self.add_time_stamp(key, 'done')
         with self.lock:
-            self.db.update({'result': result}, job.key == str(key))
+            self.db.update({'result': result}, job.key == key.hex)
+            rec = self.db.get(job.key == key.hex)
+            return map(uuid.UUID, rec['attached'])
 
     def new_job(self, key, prov, job_msg):
         with self.lock:
             self.db.insert({
-                'key': str(key),
+                'key': key.hex,
+                'attached': [],
                 'prov': prov,
                 'time': {'schedule': time_stamp()},
                 'version': job_msg['data']['hints'].get('version'),
@@ -75,5 +103,5 @@ class JobDB:
         with self.lock:
             self.db.update(
                 update,
-                job.key == str(key))
+                job.key == key.hex)
 

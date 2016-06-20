@@ -3,8 +3,9 @@ from noodles import serial, gather, schedule_hint
 from noodles.tutorial import add, sub, mul, accumulate
 from noodles.prov import prov_key
 from noodles.run.worker import run_job
+from noodles.run.job_keeper import JobKeeper
 from noodles.run.run_with_prov import (
-    run_single, run_parallel, run_parallel_optional_prov)
+    run_single, run_parallel, run_parallel_opt)
 
 import json
 
@@ -53,7 +54,7 @@ def test_prov_03():
     multiples = [mul(add(i, B), A) for i in range(6)]
     C = accumulate(gather(*multiples))
     
-    result = run_parallel(C, 4, serial.base, db_file)
+    result = run_parallel(C, 4, serial.base, db_file, JobKeeper(keep=True))
     assert result == 42
 
 
@@ -71,6 +72,6 @@ def test_prov_04():
     multiples = [mul(add2(i, B), A) for i in range(6)]
     C = accumulate(gather(*multiples))
     
-    result = run_parallel_optional_prov(C, 4, serial.base, db_file)
+    result = run_parallel_opt(C, 4, serial.base, db_file)
     assert result == 42
 

@@ -1,4 +1,5 @@
 import time
+import sys
 
 from noodles import schedule, schedule_hint, gather
 from noodles.workflow import get_workflow
@@ -38,7 +39,7 @@ def h(x, y):
 
 
 def selector(job):
-    if job.hints:
+    if job.hints and 'n' in job.hints:
         return job.hints['n']
     else:
         return None
