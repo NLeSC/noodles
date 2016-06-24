@@ -17,8 +17,8 @@ def run_job(key, job):
     try:
         if job.hints and 'annotated' in job.hints:
             result, meta_data = job.foo(
-                    *job.bound_args.args, 
-                    **job.bound_args.kwargs)
+                *job.bound_args.args,
+                **job.bound_args.kwargs)
             return Result(key, 'done', result, meta_data)
 
         else:
@@ -27,5 +27,3 @@ def run_job(key, job):
 
     except Exception as error:
         return Result(key, 'error', None, error)
-
-

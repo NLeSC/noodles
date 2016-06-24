@@ -1,15 +1,10 @@
 from .connection import (Connection)
 from .job_keeper import (JobKeeper)
 from ..workflow import (
-    is_workflow, get_workflow, Empty, invert_links, insert_result,
+    is_workflow, get_workflow, insert_result,
     is_node_ready, Workflow)
-import uuid
+
 import sys
-
-
-def run_job(node):
-    return node.foo(*node.bound_args.args,
-                    **node.bound_args.kwargs)
 
 
 class Job:
@@ -87,7 +82,8 @@ class Scheduler:
         # process results
         for job_key, status, result, err_msg in source:
             if status == 'aborted':
-                print("Got a fatal error: exiting.", file=sys.stderr, flush=True)
+                print("Got a fatal error: exiting.",
+                      file=sys.stderr, flush=True)
                 sys.exit()
 
             if status == 'error':
@@ -144,4 +140,3 @@ class Scheduler:
         for n in wf.nodes:
             if is_node_ready(wf.nodes[n]):
                 self.schedule(Job(workflow=wf, node_id=n), sink)
-

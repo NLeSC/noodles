@@ -4,7 +4,8 @@ import json
 import sys
 
 from threading import Lock
-from .haploid import (sink_map, coroutine)
+from .haploid import (coroutine)
+
 
 class JobKeeper(dict):
     def __init__(self, keep=False):
@@ -30,7 +31,7 @@ class JobKeeper(dict):
             return
 
         if key not in self:
-            print("WARNING: store_result without previous job registration:\n" \
+            print("WARNING: store_result called but job not in registry:\n"
                   "   race condition? Not doing anything.\n", file=sys.stderr)
             return
 
@@ -45,8 +46,6 @@ class JobKeeper(dict):
 
             with self.lock:
                 if key not in self:
-                    #print("WARNING: message `" + status + "` without previous job registration: " + key.hex + "\n" \
-                    #      "   race condition? Not doing anything.", file=sys.stderr)
                     continue
 
                 job = self[key]
@@ -60,7 +59,6 @@ class JobTimer(dict):
             self.fo = open(timing_file, 'w')
         else:
             self.fo = timing_file
-        #h self.registry = registry()
 
     def register(self, job):
         key = uuid.uuid1()
@@ -87,11 +85,14 @@ class JobTimer(dict):
         now = time.time()
         if job.node.hints and 'display' in job.node.hints:
             msg_obj = {
-                'description': job.node.hints['display'].format(**job.node.bound_args.arguments),
-                'schedule_time': time.strftime('%Y-%m-%dT%H:%M:%SZ', time.gmtime(job.sched_time)),
-                'start_time': time.strftime('%Y-%m-%dT%H:%M:%SZ', time.gmtime(job.start_time)),
-                'done_time': time.strftime('%Y-%m-%dT%H:%M:%SZ', time.gmtime(now)),
-                'run_duration': now - job.start_time }
-            self.fo.write('{record},\n'.format(record=json.dumps(msg_obj, indent=2)))
-
-
+                'description': job.node.hints['display'].format(
+                    **job.node.bound_args.arguments),
+                'schedule_time': time.strftime(
+                    '%Y-%m-%dT%H:%M:%SZ', time.gmtime(job.sched_time)),
+                'start_time': time.strftime(
+                    '%Y-%m-%dT%H:%M:%SZ', time.gmtime(job.start_time)),
+                'done_time': time.strftime(
+                    '%Y-%m-%dT%H:%M:%SZ', time.gmtime(now)),
+                'run_duration': now - job.start_time}
+            self.fo.write('{record},\n'.format(record=json.dumps(
+                msg_obj, indent=2)))

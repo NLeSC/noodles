@@ -4,10 +4,8 @@ the different workers. Some of the functionality here may be reinventing
 some batteries. If so, submit an issue and teach me the idiomatic way!
 """
 
-from functools import wraps
 from .coroutine import coroutine
 from .connection import Connection
-from .queue import Queue as IOQueue
 
 coroutine_sink = coroutine
 
@@ -42,5 +40,3 @@ def siphon_source(source, sink):
     for value in source:
         sink.send(value)
         yield value
-
-

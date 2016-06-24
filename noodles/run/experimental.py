@@ -1,8 +1,8 @@
 from .queue import Queue
-from .connection import Connection
 from .coroutine import coroutine
 from .coroutines import (splice_sink, siphon_source, QueueConnection)
-from .scheduler import (run_job, Scheduler)
+from .scheduler import (Scheduler)
+from .worker import (run_job)
 from ..workflow import (get_workflow)
 import threading
 
@@ -53,16 +53,7 @@ def logging_worker(n_threads, display):
     def worker(source, sink):
         splice = splice_sink(sink, log.result_sink())
         for key, job in siphon_source(source, log.job_sink()):
-            try:
-                if job.hints and 'annotated' in job.hints:
-                    result, annot = run_job(job)
-                    splice.send((key, 'done', result, annot))
-                else:
-                    result = run_job(job)
-                    splice.send((key, 'done', result, None))
-
-            except Exception as error:
-                splice.send((key, 'error', None, error))
+            splice.send(run_job(key, job))
 
     for i in range(n_threads):
         t = threading.Thread(

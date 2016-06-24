@@ -1,5 +1,4 @@
 import sys
-import threading
 import uuid
 from subprocess import Popen, PIPE
 
@@ -7,11 +6,10 @@ import os
 import random
 from ..workflow import get_workflow
 from ..logger import log
-from .coroutines import coroutine_sink, Connection
-from ..serial.registry import RefObject
+from .coroutines import Connection
 from ..utility import object_name
 from .scheduler import Scheduler
-from .protect import CatchExceptions
+# from .protect import CatchExceptions
 from .hybrid import hybrid_threaded_worker
 from .haploid import (pull, push)
 
@@ -20,18 +18,6 @@ try:
     has_msgpack = True
 except ImportError:
     has_msgpack = False
-
-
-
-# buf = BytesIO()
-# for i in range(100):
-#    buf.write(msgpack.packb(range(i)))
-# 
-# buf.seek(0)
-# 
-# unpacker = msgpack.Unpacker(buf)
-# for unpacked in unpacker:
-#     print unpacked
 
 
 def get_result_tuple(msg):
@@ -57,6 +43,7 @@ def read_result_json(registry, s):
         pass
 
     return key, status, obj['result'], obj['err_msg']
+
 
 def job_msg(registry, host, key, job):
     obj = {'key': key if isinstance(key, str) else key.hex,
@@ -117,7 +104,8 @@ def process_worker(registry,
     def get_result():
         reg = registry()
         if use_msgpack:
-            messages = msgpack.Unpacker(p.stdout.buffer, object_hook=reg.decode)
+            messages = msgpack.Unpacker(
+                p.stdout.buffer, object_hook=reg.decode)
         else:
             messages = (reg.from_json(line) for line in p.stdout)
 
@@ -159,11 +147,12 @@ def run_process(wf, n_processes, registry,
         Request verbose output on worker side
 
     :param jobdirs:
-        Create a new directory for each job to prevent filename collision. (NYI)
+        Create a new directory for each job to prevent filename collision.(NYI)
 
     :param init:
         An init function that needs to be run in each process before other jobs
-        can be run. This should be a scheduled function returning True on success.
+        can be run. This should be a scheduled function returning True on
+        success.
 
     :param finish:
         A function that wraps up when the worker closes down.

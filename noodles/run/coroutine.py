@@ -1,5 +1,6 @@
 from functools import wraps
 
+
 def coroutine(f):
     """
     A sink should be send `None` first, so that the coroutine arrives
@@ -13,4 +14,3 @@ def coroutine(f):
         return sink
 
     return g
-

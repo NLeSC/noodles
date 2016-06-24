@@ -1,21 +1,20 @@
 from .connection import (Connection)
 from .queue import (Queue)
 from .scheduler import (Scheduler)
-from .haploid import (pull, push, push_map, pull_map, sink_map, branch, patch, composer)
+from .haploid import (pull, push, push_map, sink_map, branch, patch)
 from .thread_pool import (thread_pool)
 from .worker import (worker, run_job)
-from .job_keeper import (JobKeeper, JobTimer)
+from .job_keeper import (JobKeeper)
 
 from ..workflow import (get_workflow)
 from ..prov import (JobDB, prov_key)
 
 from itertools import (repeat)
 import threading
-import sys
 
 
 def run_single(wf, registry, jobdb_file):
-    """Run a workflow in a single thread. This is the absolute minimal 
+    """Run a workflow in a single thread. This is the absolute minimal
     runner, consisting of a single queue for jobs and a worker running
     jobs every time a result is pulled."""
     registry = registry()
@@ -31,7 +30,8 @@ def run_single(wf, registry, jobdb_file):
             prov = prov_key(job_msg)
 
             if db.job_exists(prov):
-                status, other_key, result = db.get_result_or_attach(key, prov, {})
+                status, other_key, result = db.get_result_or_attach(
+                    key, prov, {})
                 if status == 'retrieved':
                     yield decode_result(key, result)
                     continue
@@ -43,7 +43,7 @@ def run_single(wf, registry, jobdb_file):
             result_msg = registry.deep_encode(result.value)
             db.store_result(key, result_msg)
             yield result
-   
+
     S = Scheduler()
     W = Queue() >> pass_job
 
@@ -74,20 +74,22 @@ def run_parallel(wf, n_threads, registry, jobdb_file, job_keeper=None):
             prov = prov_key(job_msg)
 
             if db.job_exists(prov):
-                status, other_key, result = db.get_result_or_attach(key, prov, job_keeper)
+                status, other_key, result = db.get_result_or_attach(
+                    key, prov, job_keeper)
                 if status == 'retrieved':
-                    result_sink.send((key, 'retrieved', registry.deep_decode(result), None))
+                    result_sink.send((
+                        key, 'retrieved', registry.deep_decode(result), None))
                     continue
                 elif status == 'attached':
                     continue
                 elif status == 'broken':
                     db.new_job(key, prov, job_msg)
                     job_sink.send((key, job))
-                
+
             else:
                 db.new_job(key, prov, job_msg)
                 job_sink.send((key, job))
-    
+
     @pull
     def start_job(source):
         for key, job in source():
@@ -104,42 +106,42 @@ def run_parallel(wf, n_threads, registry, jobdb_file, job_keeper=None):
             if attached:
                 for key in attached:
                     yield (key, 'attached', result, msg)
-    
+
     @sink_map
     def print_result(key, status, result, msg):
         print(status, result)
-             
+
     if job_keeper is not None:
         LogQ = Queue()
-        t = threading.Thread(
-                target=patch,
-                args=(LogQ.source, job_keeper.message),
-                daemon=True).start()
+        threading.Thread(
+            target=patch,
+            args=(LogQ.source, job_keeper.message),
+            daemon=True).start()
 
         @push_map
         def log_job_start(key, job):
             return (key, 'start', job, None)
 
         r_src = jobs.source \
-             >> start_job \
-             >> branch(log_job_start >> LogQ.sink) \
-             >> thread_pool(*repeat(worker, n_threads), results=results) \
-             >> store_result \
-             >> branch(LogQ.sink)
+            >> start_job \
+            >> branch(log_job_start >> LogQ.sink) \
+            >> thread_pool(*repeat(worker, n_threads), results=results) \
+            >> store_result \
+            >> branch(LogQ.sink)
 
         j_snk = schedule_job
-    
+
         return S.run(Connection(r_src, j_snk), get_workflow(wf))
 
     else:
         r_src = jobs.source \
-             >> start_job \
-             >> thread_pool(*repeat(worker, n_threads), results=results) \
-             >> store_result \
-             >> branch(print_result)
+            >> start_job \
+            >> thread_pool(*repeat(worker, n_threads), results=results) \
+            >> store_result \
+            >> branch(print_result)
 
         j_snk = schedule_job
-    
+
         return S.run(Connection(r_src, j_snk), get_workflow(wf))
 
 
@@ -169,23 +171,26 @@ def run_parallel_opt(wf, n_threads, registry, jobdb_file, job_keeper=None):
                 prov = prov_key(job_msg)
 
                 if db.job_exists(prov):
-                    status, other_key, result = db.get_result_or_attach(key, prov, job_keeper)
+                    status, other_key, result = db.get_result_or_attach(
+                        key, prov, job_keeper)
                     if status == 'retrieved':
-                        result_sink.send((key, 'retrieved', registry.deep_decode(result), None))
+                        result_sink.send(
+                            (key, 'retrieved',
+                             registry.deep_decode(result), None))
                         continue
                     elif status == 'attached':
                         continue
                     elif status == 'broken':
                         db.new_job(key, prov, job_msg)
                         job_sink.send((key, job))
-                    
+
                 else:
                     db.new_job(key, prov, job_msg)
                     job_sink.send((key, job))
 
             else:
                 job_sink.send((key, job))
-    
+
     @pull
     def start_job(source):
         for key, job in source():
@@ -206,42 +211,40 @@ def run_parallel_opt(wf, n_threads, registry, jobdb_file, job_keeper=None):
                         yield (akey, 'attached', result, msg)
 
             yield (key, status, result, msg)
-    
+
     @sink_map
     def print_result(key, status, result, msg):
         print(status, result)
-             
+
     if job_keeper is not None:
         LogQ = Queue()
-        t = threading.Thread(
-                target=patch,
-                args=(LogQ.source, job_keeper.message),
-                daemon=True).start()
+        threading.Thread(
+            target=patch,
+            args=(LogQ.source, job_keeper.message),
+            daemon=True).start()
 
         @push_map
         def log_job_start(key, job):
             return (key, 'start', job, None)
 
         r_src = jobs.source \
-             >> start_job \
-             >> branch(log_job_start >> LogQ.sink) \
-             >> thread_pool(*repeat(worker, n_threads), results=results) \
-             >> store_result \
-             >> branch(LogQ.sink)
+            >> start_job \
+            >> branch(log_job_start >> LogQ.sink) \
+            >> thread_pool(*repeat(worker, n_threads), results=results) \
+            >> store_result \
+            >> branch(LogQ.sink)
 
         j_snk = schedule_job
-    
+
         return S.run(Connection(r_src, j_snk), get_workflow(wf))
 
     else:
         r_src = jobs.source \
-             >> start_job \
-             >> thread_pool(*repeat(worker, n_threads), results=results) \
-             >> store_result \
-             >> branch(print_result)
+            >> start_job \
+            >> thread_pool(*repeat(worker, n_threads), results=results) \
+            >> store_result \
+            >> branch(print_result)
 
         j_snk = schedule_job
-    
+
         return S.run(Connection(r_src, j_snk), get_workflow(wf))
-
-

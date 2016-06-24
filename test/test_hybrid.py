@@ -1,10 +1,10 @@
 import time
-import sys
 
 from noodles import schedule, schedule_hint, gather
 from noodles.workflow import get_workflow
 from noodles.run.connection import Connection
-from noodles.run.scheduler import Scheduler, run_job
+from noodles.run.scheduler import Scheduler
+from noodles.run.worker import run_job
 from noodles.run.hybrid import hybrid_coroutine_worker
 from noodles.run.hybrid import run_hybrid
 
@@ -85,7 +85,7 @@ def tic_worker(tic):
 
         for key, job in source:
             tic()
-            yield (key, 'done', run_job(job), None)
+            yield run_job(key, job)
 
     return Connection(get_result, jobs.sink)
 

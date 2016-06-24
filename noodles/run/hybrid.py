@@ -3,9 +3,8 @@ import threading
 from ..workflow import get_workflow
 from .queue import Queue
 from .connection import Connection
-from .coroutine import coroutine
 from .protect import CatchExceptions
-from .haploid import (push, pull, patch)
+from .haploid import (push, patch)
 from ..utility import unzip_dict
 from .scheduler import Scheduler
 from .worker import run_job
@@ -70,19 +69,19 @@ def hybrid_threaded_worker(selector, workers):
 
     # print([w.source for k, w in workers.items()])
 
-    catch = { 
-        k: CatchExceptions(results.sink) \
-            for k, w in workers.items() 
+    catch = {
+        k: CatchExceptions(results.sink)
+        for k, w in workers.items()
     }
 
     result_source = {
-        k: w.source >> catch[k].result_source \
-            for k, w in workers.items()
+        k: w.source >> catch[k].result_source
+        for k, w in workers.items()
     }
 
     job_sink = {
-        k: (catch[k].job_sink >> w.sink)() \
-            for k, w in workers.items()
+        k: (catch[k].job_sink >> w.sink)()
+        for k, w in workers.items()
     }
 
     @push

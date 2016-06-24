@@ -1,9 +1,6 @@
 from .coroutine import coroutine
 
-from itertools import starmap
-from collections import Iterable
 import inspect
-import sys
 
 
 def haploid(mode):
@@ -38,9 +35,9 @@ class Haploid(object):
     The difference between these two modes is all about ownership of execution.
     If we want to link a haploid with active output (a sender) to a puller
     having active input, it is assumed the data transfer is approached from two
-    different thread points (either two different threads simultaneously, or the
-    same thread at a different point of execution). The universal way of fixing
-    this is by putting a Queue object in between.
+    different thread points (either two different threads simultaneously, or
+    the same thread at a different point of execution). The universal way of
+    fixing this is by putting a Queue object in between.
 
     The other way around, having two passive ends, requires the insertion of a
     thread running the simple function:
@@ -50,7 +47,7 @@ class Haploid(object):
                 sink.send(item)
     """
     def __init__(self, fn, mode):
-        self.fn = fn # if mode == 'pull' else coroutine(fn)
+        self.fn = fn       # if mode == 'pull' else coroutine(fn)
         self.mode = mode   # 'send' or 'pull'
         if mode == 'send':
             self.mode = 'push'
@@ -124,13 +121,13 @@ class pull_map(pull):
     def __join__(self, other):
         if not isinstance(other, Haploid) and inspect.isfunction(other):
             return pull_map(compose_2(other, self.f))
-        
+
         if isinstance(other, pull_map):
             return pull_map(compose_2(other.f, self.f))
 
         else:
             return super(pull_map, self).__join__(other)
-        
+
     def map(self, source):
         for args in source():
             if args:
@@ -198,5 +195,4 @@ def patch(source, sink):
         if v is not None:
             sink.send(v)
         else:
-            raise RuntimeError("encountered None in stream") 
-
+            raise RuntimeError("encountered None in stream")

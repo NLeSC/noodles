@@ -30,7 +30,7 @@ import uuid
 from contextlib import redirect_stdout
 
 import os
-from noodles.run.scheduler import run_job
+from noodles.run.worker import run_job
 from .utility import (look_up)
 
 try:
@@ -77,13 +77,12 @@ def run_online_mode(args):
         finish = None
 
         if args.msgpack:
-            messages = msgpack.Unpacker(sys.stdin.buffer)# , 
-                #object_hook=lambda o: registry.decode(o, deref=True))
+            messages = msgpack.Unpacker(sys.stdin.buffer)
         else:
             def msg_stream():
                 for line in sys.stdin:
                     yield registry.from_json(line, deref=True)
-            
+
             messages = msg_stream()
 
         # run the init function if it is given
@@ -94,13 +93,15 @@ def run_online_mode(args):
                 raise RuntimeError("Expected init function.")
 
             with redirect_stdout(sys.stderr):
-                result = run_job(job)
+                result = run_job(key, job)
 
             if args.msgpack:
-                sys.stdout.buffer.write(put_result_msgpack(registry, args.name, key, 'success', result, None))
+                sys.stdout.buffer.write(put_result_msgpack(
+                    registry, args.name, *result))
                 sys.stdout.flush()
             else:
-                print(put_result_json(registry, args.name, key, 'success', result, None), flush=True)
+                print(put_result_json(registry, args.name, *result),
+                      flush=True)
 
         if args.finish:
             # line = sys.stdin.readline()
@@ -126,7 +127,7 @@ def run_online_mode(args):
                       file=sys.stderr, flush=True)
 
             with redirect_stdout(sys.stderr):
-                result = run_job(job)
+                result = run_job(key, job)
 
             if args.verbose:
                 print("result: ", result, file=sys.stderr, flush=True)
@@ -139,13 +140,16 @@ def run_online_mode(args):
                 os.chdir("..")
 
             if args.msgpack:
-                sys.stdout.buffer.write(put_result_msgpack(registry, args.name, key, 'success', result, None))
+                sys.stdout.buffer.write(put_result_msgpack(
+                    registry, args.name, *result))
                 sys.stdout.flush()
             else:
-                print(put_result_json(registry, args.name, key, 'success', result, None), flush=True)
+                print(put_result_json(registry, args.name, *result),
+                      flush=True)
 
         if finish:
-            run_job(finish)
+            run_job(0, finish)
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(

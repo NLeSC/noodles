@@ -36,5 +36,3 @@ class Queue(Connection):
 
     def wait(self):
         self.Q.join()
-
-

@@ -27,7 +27,7 @@ class CatchExceptions(object):
     """Catches exceptions running a function and passes them
     on to a Queue. This should be used when running a critical
     thread.
-    
+
     The CatchExceptions object has two important members:
     `job_pass` and `result_pass`, the first is a `pull_map`,
     the second a `send_map`, assuming we pull and send to an
