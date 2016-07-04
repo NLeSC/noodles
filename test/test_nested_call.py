@@ -38,13 +38,8 @@ def f(x):
 
 
 class Display:
-    def __call__(self, q):
-        self.q = q
-        for status, key, data, err_msg in q.source():
-            print(status, key, data, file=sys.stdout)
-
-    def wait(self):
-        self.q.wait()
+    def __call__(self, key, status, data, err_msg):
+        print(status, data, err_msg)
 
     def error_handler(self, job, xcptn):
         pass
@@ -53,7 +48,6 @@ class Display:
         return self
 
     def __exit__(self, exc_type, exc_val, exc_tb):
-        self.wait()
         return False
 
 

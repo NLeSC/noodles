@@ -2,16 +2,16 @@ from .registry import (Registry, Serialiser)
 from ..interface import (PromisedObject)
 from ..utility import (object_name, look_up, importable)
 from ..workflow import (Workflow, NodeData, FunctionNode, ArgumentAddress,
-                         ArgumentKind, reset_workflow, get_workflow)
+                        ArgumentKind, reset_workflow, get_workflow)
 from ..storable import (Storable)
-from .as_dict import (AsDict)
-
-from enum import Enum
+# from .as_dict import (AsDict)
+# from enum import Enum
 from inspect import isfunction
 # from collections import namedtuple
 from itertools import count
 # import json
-import sys
+# import sys
+
 
 class SerDict(Serialiser):
     def __init__(self):
@@ -69,9 +69,8 @@ class SerWorkflow(Serialiser):
 
         nodes = dict(zip(count(), data['nodes']))
 
-        links = {l['node']:
-                     {(target['node'], target['address'])
-                      for target in l['to']}
+        links = {l['node']: {(target['node'], target['address'])
+                             for target in l['to']}
                  for l in data['links']}
 
         return reset_workflow(Workflow(root, nodes, links))

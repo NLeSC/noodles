@@ -1,12 +1,11 @@
 from collections import namedtuple
-from ..utility import unwrap
+from ..utility import (unwrap)
 from .arguments import (bind_arguments, get_arguments, ref_argument,
                         serialize_arguments, Empty)
 
-
 NodeData = namedtuple(
     'NodeData',
-    ['function', 'arguments', 'hints'])
+    ['function', 'arguments', 'hints', 'preprov'])
 
 
 class FunctionNode:
@@ -29,11 +28,12 @@ class FunctionNode:
         bound_args = bind_arguments(foo, data.arguments)
         return FunctionNode(foo, bound_args, data.hints)
 
-    def __init__(self, foo, bound_args, hints, result=Empty):
+    def __init__(self, foo, bound_args, hints, preprov=None, result=Empty):
         self.foo = foo
         self.bound_args = bound_args
         self.hints = hints
         self.result = result
+        self.preprov = preprov
 
     def apply(self):
         return self.foo(*self.bound_args.args, **self.bound_args.kwargs)
@@ -41,13 +41,17 @@ class FunctionNode:
     @property
     def data(self):
         """Convert to a :py:class:`NodeData` for subsequent serial."""
-        return NodeData(self.foo, get_arguments(self.bound_args), self.hints)
+        return NodeData(
+            self.foo, get_arguments(self.bound_args),
+            self.hints, self.preprov)
 
     def __str__(self):
-        s = self.foo.__name__ + '(' + ", ".join(map(str, self.bound_args.args)) + ')'
+        s = self.foo.__name__ + '(' + \
+            ", ".join(map(str, self.bound_args.args)) + ')'
         if self.result != Empty:
             s += ' -> ' + str(self.result)
         return s
+
 
 class Workflow:
     """
@@ -70,6 +74,7 @@ class Workflow:
         self.root = root
         self.nodes = nodes
         self.links = links
+        self.inverse_links = None
 
     def __iter__(self):
         return iter((self.root, self.nodes, self.links))
@@ -77,6 +82,14 @@ class Workflow:
     @property
     def root_node(self):
         return self.nodes[self.root]
+
+    def create_inverse_links(self):
+        self.inverse_links = {}
+        for k, v in self.links.items():
+            for target, _ in v:
+                if target not in self.inverse_links:
+                    self.inverse_links[target] = set()
+                self.inverse_links[target].add(k)
 
 
 def is_workflow(x):
@@ -99,3 +112,6 @@ def is_node_ready(node):
     return all(ref_argument(node.bound_args, a) is not Empty
                for a in serialize_arguments(node.bound_args))
 
+
+def walk_workflow():
+    pass

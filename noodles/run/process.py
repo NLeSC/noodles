@@ -6,7 +6,7 @@ import os
 import random
 from ..workflow import get_workflow
 from ..logger import log
-from .coroutines import Connection
+from .connection import Connection
 from ..utility import object_name
 from .scheduler import Scheduler
 # from .protect import CatchExceptions

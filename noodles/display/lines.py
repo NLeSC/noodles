@@ -4,7 +4,7 @@
 ○◉□▣◔◑◕●♾⚝☺☹✨✩❄❅❆✾⚛✗✓✔✘
 """
 
-import sys
+# import sys
 
 from .termapp import TermApp
 
@@ -134,10 +134,10 @@ if __name__ == "__main__":
         tout << ['setfg', 160, 220, 100] << ['cup', 3, 20]
         tout << ['sitm']
         tout << " Noodles 0.1.0 - worker console "
-        tout << ['cup', 4, 20] << ['rev'] << ['setfg', 40, 40, 40] << "▆"*(width - 24)
+        tout << ['cup', 4, 20] << ['rev'] << ['setfg', 40, 40, 40] \
+             << "▆"*(width - 24)
 
         tout << ['sgr0'] << ['op'] << ['setfg', 100, 160, 60] << ['sitm']
         tout << ['cup', 5, 19] << "(status)"
         tout << ['cup', 13, 19] << "(job list)"
         tout << ['cup', 25, 1] << ['op'] << ['sgr0']
-

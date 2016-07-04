@@ -64,7 +64,7 @@ def run_single_with_display(wf, display):
     thread. Every time a job is pulled by the worker, a message goes to the
     display routine; when the job is finished the result is sent to the display
     routine."""
-    S = Scheduler()
+    S = Scheduler(error_handler=display.error_handler)
     W = Queue() \
         >> branch(log_job_start.to(sink_map(display))) \
         >> worker \
@@ -79,7 +79,7 @@ def run_parallel_with_display(wf, n_threads, display):
     routine."""
     LogQ = Queue()
 
-    S = Scheduler()
+    S = Scheduler(error_handler=display.error_handler)
 
     threading.Thread(
         target=patch,

@@ -1,7 +1,7 @@
 from functools import wraps
 from copy import deepcopy
 import hashlib
-import operator
+# import operator
 import sys
 import inspect
 
@@ -22,7 +22,7 @@ def scheduled_function(f, hints=None):
     if hints is None:
         hints = {}
 
-    if not 'version' in hints:
+    if 'version' not in hints:
         try:
             source_bytes = inspect.getsource(f).encode()
             m = hashlib.md5()
@@ -36,7 +36,7 @@ def scheduled_function(f, hints=None):
     def wrapped(*args, **kwargs):
         return PromisedObject(from_call(
             f, args, kwargs, deepcopy(hints),
-            call_by_value = config['call_by_value']))
+            call_by_value=config['call_by_value']))
 
     return wrapped
 
@@ -84,10 +84,12 @@ def _setattr(obj, attr, value):
         tb = sys.exc_info()[2]
         from pprint import PrettyPrinter
         pp = PrettyPrinter()
-        obj_repr = "<" + obj.__class__.__name__ + ">: " + pp.pformat(obj.__dict__)
+        obj_repr = "<" + obj.__class__.__name__ + ">: " \
+            + pp.pformat(obj.__dict__)
         msg = "In `_setattr` we deepcopy the object *during runtime*. " \
-              "If you're sure that what you're doing is safe, you can overload " \
-              "`__deepcopy__` to get more efficient code. However, something went " \
+              "If you're sure that what you're doing is safe, you can " \
+              " overload `__deepcopy__` to get more efficient code. " \
+              "However, something went " \
               "wrong here: \n" + err.args[0] + '\n' + obj_repr
         raise TypeError(msg).with_traceback(tb)
 
@@ -230,11 +232,9 @@ class PromisedObject:
 
     def __deepcopy__(self, _):
         # rnode = self._workflow.nodes[self._workflow.root]
-        from pprint import PrettyPrinter
+        # from pprint import PrettyPrinter
         raise TypeError(
             "A PromisedObject cannot be deepcopied. Most probably, you "
             "have a promise stored in another object, which you passed to "
-            "a scheduled function. To transform an object with nested promises "
-            "to a top-level promise, apply the `lift` function.")
-
-
+            "a scheduled function. To transform an object with nested "
+            "promises to a top-level promise, apply the `lift` function.")

@@ -10,12 +10,9 @@ class termcap(dict):
     strings. A list for boolean (or flag caps) called 'flag', a 'num' list for
     numerical caps, and a 'str' for strings. Or just leave it empty, and add
     the items manually later on."""
-    def __init__(self):
-        dict.__init__(self)
-
     def __init__(self, cap_list):
         dict.__init__(self)
-        
+
         for i in cap_list['flag']:
             self.getflag(i)
 
@@ -24,21 +21,24 @@ class termcap(dict):
 
         for i in cap_list['str']:
             self.getstr(i)
-            
+
     def getstr(self, capname):
         self[capname] = curses.tigetstr(capname)
-        if self[capname] == None:
-            raise RuntimeError('This terminal is not capable of doing ' + capname)
+        if self[capname] is None:
+            raise RuntimeError(
+                'This terminal is not capable of doing ' + capname)
 
     def getnum(self, capname):
         self[capname] = curses.tigetnum(capname)
-        if self[capname] == None:
-            raise RuntimeError('This terminal is not capable of doing ' + capname)
+        if self[capname] is None:
+            raise RuntimeError(
+                'This terminal is not capable of doing ' + capname)
 
     def getflag(self, capname):
         self[capname] = curses.tigetflag(capname)
-        if self[capname] == None:
-            raise RuntimeError('This terminal is not capable of doing ' + capname)
+        if self[capname] is None:
+            raise RuntimeError(
+                'This terminal is not capable of doing ' + capname)
 
 
 class ostream:
@@ -48,15 +48,16 @@ class ostream:
         self.extra = extra
 
     def __lshift__(self, q):
-        if isinstance(q, str): 
+        if isinstance(q, str):
             self.fo.write(q)
-        
+
         elif isinstance(q, list):
             cmd = q[0]
             args = q[1:]
 
             if cmd in self.caps:
-                self.fo.write(curses.tparm(self.caps[cmd], *args).decode('ascii'))
+                self.fo.write(curses.tparm(
+                    self.caps[cmd], *args).decode('ascii'))
             elif self.extra and cmd in self.extra:
                 self.fo.write(self.extra[cmd](*args))
             else:
@@ -65,7 +66,7 @@ class ostream:
         elif hasattr(q, '__iter__'):
             for item in q:
                 self << item
-            
+
         self.fo.flush()
         return self
 
@@ -95,14 +96,14 @@ class TermApp(ostream):
 
             'civis',    # invisible cursor
             'cnorm',    # visible cursor
-            
+
             'clear',    # clear the entire screen
             'el1',        # clear to beginning of line
             'el',        # clear to end of line
             'ed',        # clear to end of display
             'dch',        # clear n chars
             'dl',        # delete n lines
-            
+
             'op',        # reset terminal colors
             'sgr0',        # turn off attributes
             'sitm',     # italics
@@ -111,8 +112,8 @@ class TermApp(ostream):
             'smul',        # underline mode
             'setab',    # set background
             'setaf'    # set foreground
-            #'setb',    # set background
-            #'setf',    # set foreground
+            # 'setb',    # set background
+            # 'setf',    # set foreground
         ]
     }
 
@@ -129,12 +130,11 @@ class TermApp(ostream):
 
         super(TermApp, self).__init__(self.output, caps, extra)
 
-
     def __enter__(self):
         curses.setupterm()
         self.orig_attr = termios.tcgetattr(self.output.fileno())
-        
-        self.new_attr = list(self.orig_attr) # make a copy
+
+        self.new_attr = list(self.orig_attr)  # make a copy
         self.new_attr[3] &= ~(termios.ECHO | termios.ICANON)
         self.new_attr[6][termios.VMIN] = 0
         self.new_attr[6][termios.VTIME] = 0
@@ -144,22 +144,24 @@ class TermApp(ostream):
         self.restore_term()
 
     def restore_term(self):
-        self << "\033[?25h" # cursor on
-        termios.tcsetattr(self.output.fileno(), termios.TCSANOW, self.orig_attr)
-        
+        self << "\033[?25h"  # cursor on
+        termios.tcsetattr(self.output.fileno(), termios.TCSANOW,
+                          self.orig_attr)
+
     def setup_term(self):
-        self << "\033[?25l" # cursor off
-        termios.tcsetattr(self.output.fileno(), termios.TCSANOW, self.new_attr)
+        self << "\033[?25l"  # cursor off
+        termios.tcsetattr(self.output.fileno(), termios.TCSANOW,
+                          self.new_attr)
 
     def set_im(self, vt, vm):
         self.new_termios[6][termios.VTIME] = vt
         self.new_termios[6][termios.VMIN] = vm
         termios.tcsetattr(self.output, termios.TCSANOW, self.new_termios)
-    
+
     def refresh_size(self):
         self.getnum('lines')
         self.getnum('cols')
-        
+
     def get_cols(self):
         return self.caps['cols']
 
@@ -190,16 +192,16 @@ class TermApp(ostream):
     def movexy(self, x, y):
         return self.moveyx(y, x)
 
-    def move_down(self, n = 1):
+    def move_down(self, n=1):
         return curses.tparm(self.caps['cud'], n)
 
-    def move_up(self, n = 1):
+    def move_up(self, n=1):
         return curses.tparm(self.caps['cuu'], n)
 
-    def move_left(self, n = 1):
+    def move_left(self, n=1):
         return curses.tparm(self.caps['cub'], n)
 
-    def move_right(self, n = 1):
+    def move_right(self, n=1):
         return curses.tparm(self.caps['cuf'], n)
 
     def cr(self):
@@ -217,7 +219,5 @@ class TermApp(ostream):
     def cursor_off(self):
         return self.caps['civis']
 
-    def reset_color(self):        
+    def reset_color(self):
         return self.caps['op'] + self.caps['sgr0']
-
-

@@ -1,5 +1,5 @@
 from .decorator import (schedule, PromisedObject)
-from copy import deepcopy
+# from copy import deepcopy
 
 
 @schedule
@@ -95,7 +95,7 @@ def lift(obj, memo=None):
             return obj
 
     subclass = next(filter(
-        lambda x: issubclass(obj.__class__, x), 
+        lambda x: issubclass(obj.__class__, x),
         actions.keys()), None)
 
     if subclass:
@@ -121,5 +121,3 @@ def lift(obj, memo=None):
 
     memo[id(obj)] = rv
     return rv
-
-        

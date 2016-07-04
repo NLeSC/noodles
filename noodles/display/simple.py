@@ -28,9 +28,9 @@ class Display:
     def done(self, key, data, msg):
         if key in self.jobs and 'confirm' in self.jobs[key]:
             self.out << ['save'] << ['up', self.jobs[key]['line']] \
-            << ['forward', max(50, self.jobs[key]['length'] + 2)]
+                << ['forward', max(50, self.jobs[key]['length'] + 2)]
             self.out << "(" << ['fg', 60, 180, 100] << "✔" << ['reset'] \
-            << ")" << ['restore']
+                << ")" << ['restore']
 
         if key in self.jobs and msg:
             self.message_handler(self.jobs[key], msg)
@@ -38,9 +38,9 @@ class Display:
     def error(self, key, _, data):
         if key in self.jobs and 'confirm' in self.jobs[key]:
             self.out << ['save'] << ['up', self.jobs[key]['line']] \
-            << ['forward', max(50, self.jobs[key]['length'] + 2)]
+                << ['forward', max(50, self.jobs[key]['length'] + 2)]
             self.out << "(" << ['fg', 240, 100, 60] << "✘" << ['reset'] \
-            << ")" << ['restore']
+                << ")" << ['restore']
 
     def add_job(self, key, job, msg):
         for k in self.jobs:
@@ -119,5 +119,3 @@ class Display:
 
     def wait(self):
         self.q.wait()
-
-

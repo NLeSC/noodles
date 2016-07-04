@@ -15,11 +15,8 @@ Promised object
 
 Runners
 -------
-.. automodule:: noodles.run.coroutines
-    :members: IOQueue, Connection, QueueConnection, patch
-
 .. automodule:: noodles.run.scheduler
-    :members: run_job, Scheduler
+    :members: Scheduler
 
 .. automodule:: noodles.run.hybrid
     :members: hybrid_threaded_worker, run_hybrid

@@ -2,7 +2,7 @@ from noodles.interface import (
     delay, gather, lift, schedule, schedule_hint, unwrap,
     has_scheduled_methods, update_hints, unpack)
 from .eval_data import Lambda
-from .run.experimental import run_logging
+from .run.runners import run_parallel_with_display as run_logging
 from .run.runners import (run_single, run_parallel)
 from .run.process import run_process
 from .run.scheduler import Scheduler

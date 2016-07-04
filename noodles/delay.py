@@ -21,4 +21,3 @@ def force(dw):
     else:
         return dw
 
-

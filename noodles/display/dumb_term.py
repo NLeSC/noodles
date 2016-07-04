@@ -56,8 +56,8 @@ class DumbDisplay:
                     print(e)
 
     def __call__(self, key, status, data, err):
-        #self.q = q
-        #for status, key, data in q.source():
+        # self.q = q
+        # for status, key, data in q.source():
         getattr(self, status)(key, data, err)
 
     def __enter__(self):
@@ -78,4 +78,3 @@ class DumbDisplay:
 
     def wait(self):
         self.q.wait()
-

@@ -28,9 +28,9 @@ class Display:
     def done(self, key, data, msg):
         if key in self.jobs and 'confirm' in self.jobs[key]:
             self.out << ['save'] << ['up', self.jobs[key]['line']] \
-            << ['forward', max(50, self.jobs[key]['length'] + 2)]
+                << ['forward', max(50, self.jobs[key]['length'] + 2)]
             self.out << "(" << ['fg', 60, 180, 100] << "✔" << ['reset'] \
-            << ")" << ['restore']
+                << ")" << ['restore']
 
         if key in self.jobs and msg:
             self.message_handler(self.jobs[key], msg)
@@ -38,9 +38,9 @@ class Display:
     def error(self, key, _, data):
         if key in self.jobs and 'confirm' in self.jobs[key]:
             self.out << ['save'] << ['up', self.jobs[key]['line']] \
-            << ['forward', max(50, self.jobs[key]['length'] + 2)]
+                << ['forward', max(50, self.jobs[key]['length'] + 2)]
             self.out << "(" << ['fg', 240, 100, 60] << "✘" << ['reset'] \
-            << ")" << ['restore']
+                << ")" << ['restore']
 
     def add_job(self, key, job, msg):
         for k in self.jobs:
@@ -49,7 +49,12 @@ class Display:
         self.jobs[key].update(job.hints)
 
     def error_handler(self, job, xcptn):
-        self.errors.append((job, xcptn))
+        msg = self.error_filter(xcptn)
+        if msg:
+            self.errors.append((job, msg))
+            return True
+        else:
+            return False
 
     def message_handler(self, job, warning):
         self.messages.append((job['job'], warning))
@@ -88,11 +93,7 @@ class Display:
                     )
 
                 print(msg)
-                err_msg = self.error_filter(e)
-                if err_msg:
-                    print(err_msg)
-                else:
-                    print(e)
+                print(e)
 
     def __call__(self, key, status, data, err_msg):
         getattr(self, status)(key, data, err_msg)
@@ -110,9 +111,10 @@ class Display:
                          << ['reset']
                 return True
 
-            print("Internal error encountered. Contact the developers.")
+            if exc_type is SystemExit:
+                return False
+
+            print("Internal error encountered. Contact the developers: \n", exc_type, exc_val)
             return False
 
         self.report()
-
-

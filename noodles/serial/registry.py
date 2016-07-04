@@ -205,7 +205,7 @@ class Registry(object):
         if not isinstance(rec, dict):
             return rec
 
-        if not '_noodles' in rec:
+        if '_noodles' not in rec:
             return rec
 
         if rec.get('ref', False) and not deref:
@@ -233,7 +233,8 @@ class Registry(object):
         :param host:
             hostname where this object is being encoded.
         :type host: str"""
-        return json.dumps(deep_map(lambda o: self.encode(o, host), obj), indent=indent)
+        return json.dumps(deep_map(lambda o: self.encode(o, host), obj),
+                          indent=indent)
 
     def to_msgpack(self, obj, host=None):
         return msgpack.packb(deep_map(lambda o: self.encode(o, host), obj))
@@ -253,7 +254,9 @@ class Registry(object):
         return json.loads(data, object_hook=lambda o: self.decode(o, deref))
 
     def from_msgpack(self, data, deref=False):
-        return msgpack.unpackb(data, object_hook=lambda o: self.decode(o, deref))
+        return msgpack.unpackb(
+            data,
+            object_hook=lambda o: self.decode(o, deref))
 
     def dereference(self, data, host):
         """Dereferences RefObjects stuck in the hierarchy. This is a bit
@@ -296,8 +299,8 @@ class Serialiser(object):
         If encoding and decoding is somewhat cosuming on resources, the
         encoder may call with `ref=True`. Then the resulting record won't
         be decoded until needed by the next job. This is most certainly
-        the case when an external file was written. In this case the filename(s)
-        should be passed as a list by `files=[...]`.
+        the case when an external file was written. In this case the
+        filename(s) should be passed as a list by `files=[...]`.
 
         The `files` list is not passed back to the decoder. Rather it is used
         by noodles to keep track of written files and copy them between hosts
@@ -339,4 +342,3 @@ class Serialiser(object):
             .format(cls.__name__)
 
         raise NotImplementedError(msg)
-

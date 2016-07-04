@@ -1,4 +1,5 @@
 from tinydb import (TinyDB, Query)
+from base64 import (b64encode, b64decode)
 import hashlib
 import json
 from threading import Lock
@@ -43,7 +44,17 @@ def attach_job(key):
     return attach_to
 
 
+def append_link(preprov):
+    def append_to(rec):
+        rec['links'].append(preprov)
+        return rec
+    return append_to
+
+
 class JobDB:
+    """Keeps a database of jobs, with a MD5 hash that encodes the function
+    name, version, and all arguments to the function.
+    """
     def __init__(self, path):
         self.db = TinyDB(path)
         self.lock = Lock()
@@ -56,15 +67,18 @@ class JobDB:
             if 'result' in rec:
                 return 'retrieved', uuid.UUID(rec['key']), rec['result']
 
-            elif uuid.UUID(rec['key']) in running:
+            job_running = uuid.UUID(rec['key']) in running
+            wf_running = rec['links'] and \
+                b64decode(rec['links'][-1]) in running.wf
+
+            if job_running or wf_running:
                 self.db.update(attach_job(key.hex), job.prov == prov)
                 return 'attached', uuid.UUID(rec['key']), None
 
-            else:
-                print("WARNING: unfinished job in database. Removing it and "
-                      " rerunning.", file=sys.stderr)
-                self.db.remove(eids=[rec.eid])
-                return 'broken', None, None
+            print("WARNING: unfinished job in database. Removing it and "
+                  " rerunning.", file=sys.stderr)
+            self.db.remove(eids=[rec.eid])
+            return 'broken', None, None
 
     def job_exists(self, prov):
         job = Query()
@@ -89,7 +103,7 @@ class JobDB:
                 'key': key.hex,
                 'attached': [],
                 'prov': prov,
-                'deferred': [],
+                'links': [],
                 'time': {'schedule': time_stamp()},
                 'version': job_msg['data']['hints'].get('version'),
                 'function': job_msg['data']['function'],
@@ -97,6 +111,23 @@ class JobDB:
             })
 
         return key, prov
+
+    def add_link(self, key, ppn):
+        job = Query()
+        with self.lock:
+            self.db.update(append_link(b64encode(ppn)), job.key == key.hex)
+
+    def extend_link(self, pp1, ppn):
+        job = Query()
+        with self.lock:
+            self.db.update(append_link(b64encode(ppn)),
+                           job.links.test(lambda l: b64encode(pp1) in l))
+
+    def get_linked_jobs(self, ppn):
+        job = Query()
+        with self.lock:
+            rec = self.db.search(job.links.test(lambda l: b64encode(ppn) in l))
+            return [uuid.UUID(r['key']) for r in rec]
 
     def add_time_stamp(self, key, name):
         def update(r):

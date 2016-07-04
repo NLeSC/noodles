@@ -10,7 +10,7 @@ import re
 
 
 import noodles
-from noodles.display import SimpleDisplay, DumbDisplay
+from noodles.display import NCDisplay, DumbDisplay
 
 
 def find_files(path, ext):
@@ -91,8 +91,8 @@ def object_filename(srcdir, filename, config):
                        annotated=True)
 def compile_source(source_file, object_file, config):
     p = subprocess.run(
-        [config['cc'], '-c'] + config['cflags'].split() \
-            + [source_file, '-o', object_file],
+        [config['cc'], '-c'] + config['cflags'].split() +
+        [source_file, '-o', object_file],
         stderr=subprocess.PIPE, universal_newlines=True)
     p.check_returncode()
 
@@ -123,8 +123,8 @@ def get_object_file(src_dir, src_file, config):
                        annotated=True)
 def link(object_files, config):
     p = subprocess.run(
-        [config['cc']] + object_files + ['-o', config['target']] \
-            + config['ldflags'].split(),
+        [config['cc']] + object_files + ['-o', config['target']] +
+        config['ldflags'].split(),
         stderr=subprocess.PIPE, universal_newlines=True)
     p.check_returncode()
 
@@ -254,13 +254,13 @@ if __name__ == '__main__':
             target_config['ldflags'] += ' ' + a
 
             a = try_to_run(
-                ['pkg-config', '--cflags'] + target_config['libraries'].split(),
+                ['pkg-config', '--cflags'] +
+                target_config['libraries'].split(),
                 err_prefix="Error running pkg-config: ")
 
             target_config['cflags'] += ' ' + a
 
         work = make_target(target_config)
-        display_type = DumbDisplay if args.dumb else SimpleDisplay
+        display_type = DumbDisplay if args.dumb else NCDisplay
         with display_type(error_filter) as display:
             noodles.run_logging(work, args.n_threads, display)
-

@@ -14,6 +14,8 @@ Contents:
    Introduction <self>
    eating
    cooking
+   first_steps
+   poetry_tutorial
    boil_tutorial
    development
    scheduler

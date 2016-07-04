@@ -63,4 +63,3 @@ class Storable:
             return schedule(from_dict)(cls, **tmp)
         else:
             return cls.from_dict(**tmp)
-

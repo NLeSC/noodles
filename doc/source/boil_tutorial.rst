@@ -2,7 +2,7 @@
     :linenothreshold: 5
 
 
-Real World Tutorial 1: Boil, a make tool.
+Real World Tutorial 2: Boil, a make tool.
 =========================================
 
 .. toctree::

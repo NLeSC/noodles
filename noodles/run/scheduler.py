@@ -41,6 +41,14 @@ class DynamicLink:
         return iter((self.source, self.target, self.node))
 
 
+error_msg_1 = \
+    "A job reported an unexpected error. If this error is not so " \
+    "unexpected, consider capturing it with an error handler inside " \
+    "the scheduled function or with an error handler in the scheduler " \
+    "for a more graceful display and exit.\n" \
+    "Infringing job: \n        {}\n"
+
+
 class Scheduler:
     """
     Schedules jobs, recieves results, then schedules more jobs as they
@@ -89,8 +97,15 @@ class Scheduler:
             if status == 'error':
                 if self.handle_error:
                     wf, n = self.jobs[job_key]
-                    self.handle_error(wf.nodes[n], err_msg)
-                    graceful_exit = True
+                    if self.handle_error(wf.nodes[n], err_msg):
+                        graceful_exit = True
+                    else:
+                        sys.stderr.flush()
+                        print(error_msg_1.format(wf.nodes[n]),
+                              file=sys.stderr, flush=True)
+                        print("Exception raised: \n", err_msg,
+                              file=sys.stderr, flush=True)
+                        sys.exit(1)
                 else:
                     raise err_msg
 
@@ -108,6 +123,7 @@ class Scheduler:
             # we do this before scheduling a child workflow, as to
             # achieve tail-call elimination.
             while n == wf.root and wf != master:
+                self.jobs.delete_workflow(wf.root_node.preprov)
                 child = id(wf)
                 _, wf, n = self.dynamic_links[child]
                 del self.dynamic_links[child]
@@ -134,6 +150,8 @@ class Scheduler:
         sink.send(self.jobs.register(job))
 
     def add_workflow(self, wf, target, node, sink):
+        self.jobs.register_workflow(wf.root_node.preprov, wf)
+
         self.dynamic_links[id(wf)] = DynamicLink(
             source=wf, target=target, node=node)
 
