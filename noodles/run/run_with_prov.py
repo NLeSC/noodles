@@ -11,7 +11,6 @@ from ..prov import (JobDB, prov_key)
 
 from itertools import (repeat)
 import threading
-import sys
 
 
 def run_single(wf, registry, jobdb_file):
@@ -134,19 +133,25 @@ def store_result_deep(registry, db, job_keeper=None, pred=lambda job: True):
     @pull
     def f(source):
         for key, status, result, msg in source():
-            job = job_keeper[key].node
+            wf, n = job_keeper[key]
+            job = wf.nodes[n]
 
-            print(job, job.preprov, file=sys.stderr, flush=True)
-            linked_jobs = db.get_linked_jobs(job.preprov)
             if pred(job):
-                linked_jobs.append(key)
+                if is_workflow(result):
+                    db.add_link(key, id(get_workflow(result)))
+                else:
+                    yield from store_result(key, result, msg)
 
-            if is_workflow(result):
-                for k in linked_jobs:
-                    db.add_link(k, get_workflow(result).root_node.preprov)
-            else:
-                for k in linked_jobs:
-                    yield from store_result(k, result, msg)
+            if wf.root == n:
+                linked_jobs = db.get_linked_jobs(id(wf))
+
+                if is_workflow(result):
+                    for k in linked_jobs:
+                        db.add_link(k, id(get_workflow(result)))
+
+                else:
+                    for k in linked_jobs:
+                        yield from store_result(k, result, msg)
 
             yield (key, status, result, msg)
 

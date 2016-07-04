@@ -5,7 +5,7 @@ from .arguments import (bind_arguments, get_arguments, ref_argument,
 
 NodeData = namedtuple(
     'NodeData',
-    ['function', 'arguments', 'hints', 'preprov'])
+    ['function', 'arguments', 'hints'])
 
 
 class FunctionNode:
@@ -28,12 +28,11 @@ class FunctionNode:
         bound_args = bind_arguments(foo, data.arguments)
         return FunctionNode(foo, bound_args, data.hints)
 
-    def __init__(self, foo, bound_args, hints, preprov=None, result=Empty):
+    def __init__(self, foo, bound_args, hints, result=Empty):
         self.foo = foo
         self.bound_args = bound_args
         self.hints = hints
         self.result = result
-        self.preprov = preprov
 
     def apply(self):
         return self.foo(*self.bound_args.args, **self.bound_args.kwargs)
@@ -43,7 +42,7 @@ class FunctionNode:
         """Convert to a :py:class:`NodeData` for subsequent serial."""
         return NodeData(
             self.foo, get_arguments(self.bound_args),
-            self.hints, self.preprov)
+            self.hints)
 
     def __str__(self):
         s = self.foo.__name__ + '(' + \
@@ -74,7 +73,6 @@ class Workflow:
         self.root = root
         self.nodes = nodes
         self.links = links
-        self.inverse_links = None
 
     def __iter__(self):
         return iter((self.root, self.nodes, self.links))
@@ -111,7 +109,3 @@ def is_node_ready(node):
     """
     return all(ref_argument(node.bound_args, a) is not Empty
                for a in serialize_arguments(node.bound_args))
-
-
-def walk_workflow():
-    pass

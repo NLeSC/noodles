@@ -1,5 +1,4 @@
 from tinydb import (TinyDB, Query)
-from base64 import (b64encode, b64decode)
 import hashlib
 import json
 from threading import Lock
@@ -68,8 +67,7 @@ class JobDB:
                 return 'retrieved', uuid.UUID(rec['key']), rec['result']
 
             job_running = uuid.UUID(rec['key']) in running
-            wf_running = rec['links'] and \
-                b64decode(rec['links'][-1]) in running.wf
+            wf_running = rec['link'] in running.workflows
 
             if job_running or wf_running:
                 self.db.update(attach_job(key.hex), job.prov == prov)
@@ -93,7 +91,9 @@ class JobDB:
 
         self.add_time_stamp(key, 'done')
         with self.lock:
-            self.db.update({'result': result}, job.key == key.hex)
+            self.db.update(
+                    {'result': result, 'link': None},
+                    job.key == key.hex)
             rec = self.db.get(job.key == key.hex)
             return map(uuid.UUID, rec['attached'])
 
@@ -103,7 +103,7 @@ class JobDB:
                 'key': key.hex,
                 'attached': [],
                 'prov': prov,
-                'links': [],
+                'link': None,
                 'time': {'schedule': time_stamp()},
                 'version': job_msg['data']['hints'].get('version'),
                 'function': job_msg['data']['function'],
@@ -115,18 +115,12 @@ class JobDB:
     def add_link(self, key, ppn):
         job = Query()
         with self.lock:
-            self.db.update(append_link(b64encode(ppn)), job.key == key.hex)
-
-    def extend_link(self, pp1, ppn):
-        job = Query()
-        with self.lock:
-            self.db.update(append_link(b64encode(ppn)),
-                           job.links.test(lambda l: b64encode(pp1) in l))
+            self.db.update({'link': ppn}, job.key == key.hex)
 
     def get_linked_jobs(self, ppn):
         job = Query()
         with self.lock:
-            rec = self.db.search(job.links.test(lambda l: b64encode(ppn) in l))
+            rec = self.db.search(job.link == ppn)
             return [uuid.UUID(r['key']) for r in rec]
 
     def add_time_stamp(self, key, name):

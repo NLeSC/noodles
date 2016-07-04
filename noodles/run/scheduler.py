@@ -56,11 +56,11 @@ class Scheduler:
     by means of coroutines.
     """
     def __init__(self, verbose=False, error_handler=None, job_keeper=None):
-        self.dynamic_links = {}
         if job_keeper is None:
             self.jobs = JobKeeper()
         else:
             self.jobs = job_keeper
+        self.dynamic_links = self.jobs.workflows
         # I'd rather say: self.jobs = job_keeper or {}
         # but Python thruthiness of {} is False
         self.count = 0
@@ -122,8 +122,7 @@ class Scheduler:
             # if this result is the root of a workflow, pop to parent
             # we do this before scheduling a child workflow, as to
             # achieve tail-call elimination.
-            while n == wf.root and wf != master:
-                self.jobs.delete_workflow(wf.root_node.preprov)
+            while n == wf.root and wf is not master:
                 child = id(wf)
                 _, wf, n = self.dynamic_links[child]
                 del self.dynamic_links[child]
@@ -150,8 +149,6 @@ class Scheduler:
         sink.send(self.jobs.register(job))
 
     def add_workflow(self, wf, target, node, sink):
-        self.jobs.register_workflow(wf.root_node.preprov, wf)
-
         self.dynamic_links[id(wf)] = DynamicLink(
             source=wf, target=target, node=node)
 

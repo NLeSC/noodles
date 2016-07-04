@@ -23,16 +23,6 @@ class JobKeeper(dict):
 
         return key, job.node
 
-    def register_workflow(self, prov, wf):
-        if prov:
-            with self.lock:
-                self.wf[prov] = wf
-
-    def delete_workflow(self, prov):
-        if prov:
-            with self.lock:
-                del self.wf[prov]
-
     def __delitem__(self, key):
         if not self.keep:
             super(JobKeeper, self).__delitem__(key)
@@ -78,12 +68,6 @@ class JobTimer(dict):
         return key, job.node
 
     def __delitem__(self, key):
-        pass
-
-    def register_workflow(self, prov, wf):
-        pass
-
-    def delete_workflow(self, prov):
         pass
 
     # def message(self, key, status, value, err):
