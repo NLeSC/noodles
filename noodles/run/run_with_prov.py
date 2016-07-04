@@ -158,7 +158,7 @@ def store_result_deep(registry, db, job_keeper=None, pred=lambda job: True):
     return f
 
 
-def run_parallel_deep(wf, n_threads, registry, jobdb_file, job_keeper=None):
+def run_parallel(wf, n_threads, registry, jobdb_file, job_keeper=None):
     """Run a workflow in `n_threads` parallel threads. Now we replaced the single
     worker with a thread-pool of workers."""
     registry = registry()
@@ -195,51 +195,51 @@ def run_parallel_deep(wf, n_threads, registry, jobdb_file, job_keeper=None):
     return S.run(Connection(r_src, j_snk), get_workflow(wf))
 
 
-def run_parallel(wf, n_threads, registry, jobdb_file, job_keeper=None):
-    """Run a workflow in `n_threads` parallel threads. Now we replaced the single
-    worker with a thread-pool of workers."""
-    registry = registry()
-    db = JobDB(jobdb_file)
+# def run_parallel(wf, n_threads, registry, jobdb_file, job_keeper=None):
+#     """Run a workflow in `n_threads` parallel threads. Now we replaced the
+#     single worker with a thread-pool of workers."""
+#     registry = registry()
+#     db = JobDB(jobdb_file)
 
-    if job_keeper is None:
-        job_keeper = JobKeeper()
-    S = Scheduler(job_keeper=job_keeper)
+#     if job_keeper is None:
+#         job_keeper = JobKeeper()
+#     S = Scheduler(job_keeper=job_keeper)
 
-    jobs = Queue()
-    results = Queue()
+#     jobs = Queue()
+#     results = Queue()
 
-    if job_keeper is not None:
-        LogQ = Queue()
-        threading.Thread(
-            target=patch,
-            args=(LogQ.source, job_keeper.message),
-            daemon=True).start()
+#     if job_keeper is not None:
+#         LogQ = Queue()
+#         threading.Thread(
+#             target=patch,
+#             args=(LogQ.source, job_keeper.message),
+#             daemon=True).start()
 
-        @push_map
-        def log_job_start(key, job):
-            return (key, 'start', job, None)
+#         @push_map
+#         def log_job_start(key, job):
+#             return (key, 'start', job, None)
 
-        r_src = jobs.source \
-            >> start_job(db) \
-            >> branch(log_job_start >> LogQ.sink) \
-            >> thread_pool(*repeat(worker, n_threads), results=results) \
-            >> store_result(registry, db, job_keeper) \
-            >> branch(LogQ.sink)
+#         r_src = jobs.source \
+#             >> start_job(db) \
+#             >> branch(log_job_start >> LogQ.sink) \
+#             >> thread_pool(*repeat(worker, n_threads), results=results) \
+#             >> store_result(registry, db, job_keeper) \
+#             >> branch(LogQ.sink)
 
-        j_snk = schedule_job(jobs, results, registry, db, job_keeper)
+#         j_snk = schedule_job(jobs, results, registry, db, job_keeper)
 
-        return S.run(Connection(r_src, j_snk), get_workflow(wf))
+#         return S.run(Connection(r_src, j_snk), get_workflow(wf))
 
-    else:
-        r_src = jobs.source \
-            >> start_job(db) \
-            >> thread_pool(*repeat(worker, n_threads), results=results) \
-            >> store_result(registry, db) \
-            >> branch(print_result)
+#     else:
+#         r_src = jobs.source \
+#             >> start_job(db) \
+#             >> thread_pool(*repeat(worker, n_threads), results=results) \
+#             >> store_result(registry, db) \
+#             >> branch(print_result)
 
-        j_snk = schedule_job(jobs, results, registry, db, job_keeper)
+#         j_snk = schedule_job(jobs, results, registry, db, job_keeper)
 
-        return S.run(Connection(r_src, j_snk), get_workflow(wf))
+#         return S.run(Connection(r_src, j_snk), get_workflow(wf))
 
 
 def run_parallel_opt(wf, n_threads, registry, jobdb_file, job_keeper=None):

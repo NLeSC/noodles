@@ -56,6 +56,8 @@ class JobKeeper(dict):
 class JobTimer(dict):
     def __init__(self, timing_file, registry=None):
         super(JobTimer, self).__init__()
+        self.workflows = {}
+
         if isinstance(timing_file, str):
             self.fo = open(timing_file, 'w')
         else:
