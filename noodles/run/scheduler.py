@@ -107,7 +107,11 @@ class Scheduler:
                               file=sys.stderr, flush=True)
                         sys.exit(1)
                 else:
-                    raise err_msg
+                    if isinstance(err_msg, Exception):
+                        exc_info = sys.exc_info()
+                        raise err_msg.with_traceback(exc_info[2])
+                    else:
+                        raise RuntimeError(err_msg)
 
             if self.verbose:
                 print("sched result [{0}]: ".format(self.key_map[job_key]),

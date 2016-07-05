@@ -63,7 +63,7 @@ def test_hybrid_threaded_runner_02():
     start = time.time()
     assert run_hybrid(B, selector, {1: threaded_worker(8)}) == 8
     end = time.time()
-    assert (end - start) < 0.02
+    assert (end - start) < 0.05
 
 
 def test_hybrid_threaded_runner_03():
