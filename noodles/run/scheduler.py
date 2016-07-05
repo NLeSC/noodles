@@ -3,7 +3,7 @@ from .job_keeper import (JobKeeper)
 from ..workflow import (
     is_workflow, get_workflow, insert_result,
     is_node_ready, Workflow)
-
+from ..interface import (JobException)
 import sys
 
 
@@ -107,11 +107,10 @@ class Scheduler:
                               file=sys.stderr, flush=True)
                         sys.exit(1)
                 else:
-                    if isinstance(err_msg, Exception):
-                        exc_info = sys.exc_info()
-                        raise err_msg.with_traceback(exc_info[2])
-                    else:
-                        raise RuntimeError(err_msg)
+                    if isinstance(err_msg, JobException):
+                        err_msg.reraise()
+                    elif isinstance(err_msg, Exception):
+                        raise err_msg
 
             if self.verbose:
                 print("sched result [{0}]: ".format(self.key_map[job_key]),

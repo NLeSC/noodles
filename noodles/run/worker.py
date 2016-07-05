@@ -1,7 +1,9 @@
 from .haploid import (pull_map)
 from .scheduler import (Result)
-from ..interface import (AnnotatedValue)
+from ..interface import (AnnotatedValue, JobException)
 from ..utility import (object_name)
+import sys
+
 
 @pull_map
 def worker(key, job):
@@ -36,4 +38,5 @@ def run_job(key, job):
             return Result(key, 'done', result, None)
 
     except Exception as error:
-        return Result(key, 'error', None, error)
+        exc_info = sys.exc_info()
+        return Result(key, 'error', None, JobException(*exc_info))
