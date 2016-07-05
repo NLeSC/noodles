@@ -1,6 +1,7 @@
 from .haploid import (pull_map)
 from .scheduler import (Result)
-
+from ..interface import (AnnotatedValue)
+from ..utility import (object_name)
 
 @pull_map
 def worker(key, job):
@@ -16,13 +17,22 @@ def run_job(key, job):
     sent on in the error message slot."""
     try:
         if job.hints and 'annotated' in job.hints:
-            result, meta_data = job.foo(
-                *job.bound_args.args,
-                **job.bound_args.kwargs)
-            return Result(key, 'done', result, meta_data)
+            result = job.apply()
+            if isinstance(result, tuple) and len(result) == 2:
+                value, msg = result
+                return Result(key, 'done', value, msg)
+            else:
+                raise TypeError("You promised annotation in call "
+                                "to function {} but return value "
+                                "is incompatible with 2-tuple."
+                                .format(object_name(job.foo)))
 
         else:
-            result = job.foo(*job.bound_args.args, **job.bound_args.kwargs)
+            result = job.apply()
+            if isinstance(result, AnnotatedValue):
+                value, message = result
+                return Result(key, 'done', value, message)
+
             return Result(key, 'done', result, None)
 
     except Exception as error:
