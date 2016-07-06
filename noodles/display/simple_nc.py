@@ -114,7 +114,8 @@ class Display:
             if exc_type is SystemExit:
                 return False
 
-            print("Internal error encountered. Contact the developers: \n", exc_type, exc_val)
+            print("Internal error encountered. Contact the developers: \n",
+                  exc_type, exc_val)
             return False
 
         self.report()

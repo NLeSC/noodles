@@ -94,29 +94,35 @@ class Scheduler:
                       file=sys.stderr, flush=True)
                 sys.exit()
 
+            wf, n = self.jobs[job_key]
             if status == 'error':
                 if self.handle_error:
-                    wf, n = self.jobs[job_key]
                     if self.handle_error(wf.nodes[n], err_msg):
                         graceful_exit = True
                     else:
-                        sys.stderr.flush()
-                        print(error_msg_1.format(wf.nodes[n]),
-                              file=sys.stderr, flush=True)
-                        print("Exception raised: \n", err_msg,
-                              file=sys.stderr, flush=True)
-                        sys.exit(1)
+                        if isinstance(err_msg, JobException):
+                            err_msg.reraise()
+                        elif isinstance(err_msg, Exception):
+                            raise err_msg
+                        else:
+                            raise RuntimeError(
+                                error_msg_1.format(wf.nodes[n]) + "\n"
+                                "Exception raised: {}".format(err_msg))
+
                 else:
                     if isinstance(err_msg, JobException):
                         err_msg.reraise()
                     elif isinstance(err_msg, Exception):
                         raise err_msg
+                    else:
+                        raise RuntimeError(
+                            error_msg_1.format(wf.nodes[n]) + "\n"
+                            "Exception raised: {}".format(err_msg))
 
             if self.verbose:
                 print("sched result [{0}]: ".format(self.key_map[job_key]),
                       result,
                       file=sys.stderr, flush=True)
-            wf, n = self.jobs[job_key]
 
             del self.jobs[job_key]
             if len(self.jobs) == 0 and graceful_exit:
