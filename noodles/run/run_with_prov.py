@@ -1,7 +1,9 @@
 from .connection import (Connection)
 from .queue import (Queue)
 from .scheduler import (Scheduler)
-from .haploid import (pull, push, push_map, sink_map, branch, patch)
+from .haploid import (
+    pull, push, push_map, sink_map,
+    branch, patch, broadcast)
 from .thread_pool import (thread_pool)
 from .worker import (worker, run_job)
 from .job_keeper import (JobKeeper)
@@ -195,56 +197,10 @@ def run_parallel(wf, n_threads, registry, jobdb_file, job_keeper=None):
     return S.run(Connection(r_src, j_snk), get_workflow(wf))
 
 
-# def run_parallel(wf, n_threads, registry, jobdb_file, job_keeper=None):
-#     """Run a workflow in `n_threads` parallel threads. Now we replaced the
-#     single worker with a thread-pool of workers."""
-#     registry = registry()
-#     db = JobDB(jobdb_file)
-
-#     if job_keeper is None:
-#         job_keeper = JobKeeper()
-#     S = Scheduler(job_keeper=job_keeper)
-
-#     jobs = Queue()
-#     results = Queue()
-
-#     if job_keeper is not None:
-#         LogQ = Queue()
-#         threading.Thread(
-#             target=patch,
-#             args=(LogQ.source, job_keeper.message),
-#             daemon=True).start()
-
-#         @push_map
-#         def log_job_start(key, job):
-#             return (key, 'start', job, None)
-
-#         r_src = jobs.source \
-#             >> start_job(db) \
-#             >> branch(log_job_start >> LogQ.sink) \
-#             >> thread_pool(*repeat(worker, n_threads), results=results) \
-#             >> store_result(registry, db, job_keeper) \
-#             >> branch(LogQ.sink)
-
-#         j_snk = schedule_job(jobs, results, registry, db, job_keeper)
-
-#         return S.run(Connection(r_src, j_snk), get_workflow(wf))
-
-#     else:
-#         r_src = jobs.source \
-#             >> start_job(db) \
-#             >> thread_pool(*repeat(worker, n_threads), results=results) \
-#             >> store_result(registry, db) \
-#             >> branch(print_result)
-
-#         j_snk = schedule_job(jobs, results, registry, db, job_keeper)
-
-#         return S.run(Connection(r_src, j_snk), get_workflow(wf))
-
-
-def run_parallel_opt(wf, n_threads, registry, jobdb_file, job_keeper=None):
-    """Run a workflow in `n_threads` parallel threads. Now we replaced the single
-    worker with a thread-pool of workers."""
+def run_parallel_opt(wf, n_threads, registry, jobdb_file,
+                     job_keeper=None, display=None):
+    """Run a workflow in `n_threads` parallel threads. Now we replaced the
+    single worker with a thread-pool of workers."""
     registry = registry()
     db = JobDB(jobdb_file)
 
@@ -258,35 +214,34 @@ def run_parallel_opt(wf, n_threads, registry, jobdb_file, job_keeper=None):
     def pred(job):
         return job.hints and 'store' in job.hints
 
-    if job_keeper is not None:
-        LogQ = Queue()
-        threading.Thread(
-            target=patch,
-            args=(LogQ.source, job_keeper.message),
-            daemon=True).start()
-
-        @push_map
-        def log_job_start(key, job):
-            return (key, 'start', job, None)
-
-        r_src = jobs.source \
-            >> start_job(db) \
-            >> branch(log_job_start >> LogQ.sink) \
-            >> thread_pool(*repeat(worker, n_threads), results=results) \
-            >> store_result(registry, db, job_keeper, pred) \
-            >> branch(LogQ.sink)
-
-        j_snk = schedule_job(jobs, results, registry, db, job_keeper, pred)
-
-        return S.run(Connection(r_src, j_snk), get_workflow(wf))
-
+    LogQ = Queue()
+    if display:
+        tgt = sink_map(display)
     else:
-        r_src = jobs.source \
-            >> start_job(db) \
-            >> thread_pool(*repeat(worker, n_threads), results=results) \
-            >> store_result \
-            >> branch(print_result)
+        tgt = job_keeper.message
 
-        j_snk = schedule_job(jobs, results, registry, db, job_keeper, pred)
+    threading.Thread(
+        target=patch,
+        args=(LogQ.source, tgt),
+        daemon=True).start()
 
-        return S.run(Connection(r_src, j_snk), get_workflow(wf))
+    @push_map
+    def log_job_start(key, job):
+        return (key, 'start', job, None)
+
+    r_src = jobs.source \
+        >> start_job(db) \
+        >> branch(log_job_start >> LogQ.sink) \
+        >> thread_pool(*repeat(worker, n_threads), results=results) \
+        >> store_result_deep(registry, db, job_keeper, pred) \
+        >> branch(LogQ.sink)
+
+    @push_map
+    def log_job_sched(key, job):
+        return (key, 'schedule', job, None)
+
+    j_snk = broadcast(
+        log_job_sched >> LogQ.sink,
+        schedule_job(jobs, results, registry, db, job_keeper, pred))
+
+    return S.run(Connection(r_src, j_snk), get_workflow(wf))

@@ -188,6 +188,18 @@ def branch(*sinks_):
     return junction
 
 
+def broadcast(*sinks_):
+    @push
+    def bc():
+        sinks = [s() for s in sinks_]
+        while True:
+            msg = yield
+            for s in sinks:
+                s.send(msg)
+
+    return bc
+
+
 def patch(source, sink):
     """Create a direct link between a source and a sink."""
     sink = sink()

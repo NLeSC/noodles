@@ -21,9 +21,15 @@ class Display:
 
     def start(self, key, job, _):
         if job.hints and 'display' in job.hints:
-            msg = job.hints['display'].format(**job.bound_args.arguments)[:70]
-            self.add_job(key, job, msg)
-            self.out << msg << "\n"
+            if key not in self.jobs:
+                msg = job.hints['display'].format(
+                    **job.bound_args.arguments)[:70]
+                self.add_job(key, job, msg)
+                self.out << msg << "\n"
+            else:
+                self.out << ['save'] << ['up', self.jobs[key]['line']] \
+                    << ['forward', max(50, self.jobs[key]['length'] + 2)]
+                self.out << "( )" << ['restore']
 
     def done(self, key, data, msg):
         if key in self.jobs and 'confirm' in self.jobs[key]:
@@ -31,6 +37,22 @@ class Display:
                 << ['forward', max(50, self.jobs[key]['length'] + 2)]
             self.out << "(" << ['fg', 60, 180, 100] << "✔" << ['reset'] \
                 << ")" << ['restore']
+
+        if key in self.jobs and msg:
+            self.message_handler(self.jobs[key], msg)
+
+    def schedule(self, key, job, _):
+        if job.hints and 'display' in job.hints:
+            msg = job.hints['display'].format(**job.bound_args.arguments)[:70]
+            self.add_job(key, job, msg)
+            self.out << "│ " << msg << "\n"
+
+    def retrieved(self, key, data, msg):
+        if key in self.jobs and 'confirm' in self.jobs[key]:
+            self.out << ['save'] << ['up', self.jobs[key]['line']] \
+                << ['forward', max(50, self.jobs[key]['length'] + 2)]
+            self.out << "(" << ['fg', 60, 180, 100] << "retrieved" \
+                << ['reset'] << ")" << ['restore']
 
         if key in self.jobs and msg:
             self.message_handler(self.jobs[key], msg)

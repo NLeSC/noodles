@@ -1,4 +1,4 @@
-from .termapp import TermApp
+# from .termapp import TermApp
 
 
 class Display:
