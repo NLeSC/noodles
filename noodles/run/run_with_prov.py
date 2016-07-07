@@ -216,7 +216,7 @@ def run_parallel_opt(wf, n_threads, registry, jobdb_file,
 
     LogQ = Queue()
     if display:
-        tgt = sink_map(display)
+        tgt = broadcast(job_keeper.message, sink_map(display))
     else:
         tgt = job_keeper.message
 

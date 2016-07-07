@@ -1,7 +1,7 @@
 from .connection import Connection
 from .coroutine import coroutine
 from .queue import Queue
-from ..logger import log
+# from ..logger import log
 from ..utility import object_name
 from noodles import serial
 # from .hybrid import hybrid_threaded_worker
@@ -24,6 +24,7 @@ import jpype
 xenon.init()  # noqa
 
 from xenon import java
+
 
 def read_result(registry, s):
     obj = registry.from_json(s)
@@ -50,20 +51,52 @@ jScanner = java.util.Scanner
 
 
 class XenonConfig:
-    def __init__(self, **kwargs):
-        self.name = "xenon-" + str(uuid.uuid4())
-        self.jobs_scheme = 'local'
-        self.files_scheme = 'local'
-        self.location = None
-        self.credential = None
-        self.jobs_properties = None
-        self.files_properties = None
+    """Configuration to the Xenon library.
 
-        for key, value in kwargs.items():
-            if key in dir(self):
-                setattr(self, key, value)
-            else:
-                raise ValueError("Keyword `{}' not part of Xenon config.".format(key))
+    Xenon is a Java library that offers a uniform interface to execute jobs.
+    These jobs may be run locally, over ssh ar against a queue manager like
+    SLURM.
+
+    [Documentation to Xenon can be found online](http://nlesc.github.io/xenon)
+
+    :param name:
+        The quasi human readable name to give to this Xenon instance.
+        This defaults to a generated UUID.
+
+    :param jobs_scheme:
+        The scheme by which to schedule jobs. Should be one of 'local', 'ssh',
+        'slurm' etc. See the Xenon documentation.
+
+    :param files_scheme:
+        The scheme by which to transfer files. Should be 'local' or 'ssh'.
+        See the Xenon documentation.
+
+    :param location:
+        A location. This can be the host of the 'ssh' or 'slurm' server.
+
+    :param credential:
+        To enter a server through ssh, we need to have some credentials.
+        Preferably, you have a private/public key pair by which you can
+        identify yourself. Otherwise, this would be a combination of
+        username/password. This functions that can create a credential
+        object can be found in Xenon.credentials in the Xenon documentation.
+
+    :param jobs_properties:
+        Configuration to the Xenon.jobs module.
+
+    :param files_properties:
+        Configuration to the Xenon.files module.
+    """
+    def __init__(self, *, name=None, jobs_scheme='local', files_scheme='local',
+                 location=None, credential=None, jobs_properties=None,
+                 files_properties=None):
+        self.name = name or ("xenon-" + str(uuid.uuid4()))
+        self.jobs_scheme = jobs_scheme
+        self.files_scheme = files_scheme
+        self.location = location
+        self.credential = credential
+        self.jobs_properties = jobs_properties
+        self.files_properties = files_properties
 
     @property
     def scheduler_args(self):
@@ -78,23 +111,56 @@ class XenonConfig:
 
 
 class RemoteJobConfig(object):
-    def __init__(self, **kwargs):
-        self.name = "remote-" + str(uuid.uuid4())
-        self.working_dir = os.getcwd()
-        self.prefix = sys.prefix
-        self.exec_command = None
-        self.registry = serial.base
-        self.init = None
-        self.finish = None
-        self.verbose = False
-        self.queue = None
-        self.time_out = 5000  # 5 seconds
+    """Configuration for a single remote Job.
 
-        for key, value in kwargs.items():
-            if key in dir(self):
-                setattr(self, key, value)
-            else:
-                raise ValueError("Keyword `{}' not part of Remote Job config.".format(key))
+    :param name:
+        A quasi human recognizable name for this job. This will default to
+        'remote-xxxxxx' where 'xxxxx' is some UUID.
+
+    :param working_dir:
+        The work directory where the job runs. Defaults to the current working
+        directory.
+
+    :param prefix:
+        The path prefix of the Python system we're running on. This defaults to
+        `sys.prefix`. If we are in a VirtualEnv, this means that the spawned
+        job will run in the same VirtualEnv.
+
+    :param exec_command:
+        The command that is being executed. This defaults to `worker.sh` which
+        should be located in the `working_dir`. This default script initialises
+        the VirtualEnv en starts Python with `-m noodles.worker`, acting as a
+        pilot job.
+
+    :param init:
+        You may specify a function that needs to be run before any jobs are
+        being executed. There exist frameworks in the wild, which won't
+        function otherwise.
+
+    :param finish:
+        This function may do some clean up, after all jobs have been done.
+
+    :param verbose:
+        Be verbose about what we're doing. This is for debugging purposes only.
+
+    :param time_out:
+        It may take a while before a job is actually running. This specifies
+        the time to wait before giving up.
+    """
+    def __init__(self, *, name=None, working_dir=None, prefix=None,
+                 exec_command=None, registry=serial.base,
+                 init=None, finish=None, verbose=False,
+                 queue=None, time_out=5000):
+        self.name = name or ("remote-" + str(uuid.uuid4()))
+        self.working_dir = working_dir or os.getcwd()
+        self.prefix = prefix or sys.prefix
+        self.exec_command = exec_command
+        self.registry = registry
+        self.init = init
+        self.finish = finish
+        self.verbose = verbose
+        self.queue = queue
+        self.time_out = time_out
 
     def command_line(self):
         cmd = ['/bin/bash',
@@ -115,6 +181,17 @@ class RemoteJobConfig(object):
 
 
 class XenonJob:
+    """Representative of a XenonJob.
+
+    :param keeper:
+        The XenonKeeper object.
+
+    :param job:
+        The internal job object.
+
+    :param desc:
+        The job description.
+    """
     def __init__(self, keeper, job, desc):
         self.keeper = keeper
         self.job = job
@@ -201,9 +278,10 @@ def xenon_interactive_worker(XeS: XenonScheduler, job_config):
     # if not status.isRunning():
     #     raise RuntimeError("Could not get the job running")
     # else:
-    #     print(job_config.name + " is now running.", file=sys.stderr, flush=True)
+    #     print(job_config.name + " is now running.",
+    # file=sys.stderr, flush=True)
 
-    print(job_config.name + " is now running.", file=sys.stderr, flush=True)
+    # print(job_config.name + " is now running.", file=sys.stderr, flush=True)
 
     def read_stderr():
         jpype.attachThreadToJVM()
@@ -279,11 +357,12 @@ def run_xenon(Xe, n_processes, xenon_config, job_config, wf, deref=False):
         Number of processes to start.
 
     :param xenon_config:
-        The :py:class:`XenonConfig` object that gives tells us how to use Xenon.
+        The :py:class:`XenonConfig` object that gives tells us how to use
+        Xenon.
 
     :param job_config:
-        The :py:class:`RemoteJobConfig` object that specifies the command to run
-        remotely for each worker.
+        The :py:class:`RemoteJobConfig` object that specifies the command to
+        run remotely for each worker.
 
     :param deref:
         Set this to True to pass the result through one more encoding and
@@ -309,5 +388,3 @@ def run_xenon(Xe, n_processes, xenon_config, job_config, wf, deref=False):
         return job_config.registry().dereference(result, host='localhost')
     else:
         return result
-
-
