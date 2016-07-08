@@ -15,10 +15,13 @@ from itertools import (repeat)
 import threading
 
 
-def run_single(wf, registry, jobdb_file):
+def run_single(wf, registry, jobdb_file, display=None):
     """Run a workflow in a single thread. This is the absolute minimal
     runner, consisting of a single queue for jobs and a worker running
-    jobs every time a result is pulled."""
+    jobs every time a result is pulled.
+
+    This version integrates with the JobDB.
+    """
     registry = registry()
     db = JobDB(jobdb_file)
 
@@ -53,32 +56,14 @@ def run_single(wf, registry, jobdb_file):
 
 
 def start_job(db):
+    """Adds a time stamp to the database."""
     @pull
-    def f(source):
+    def start_job_f(source):
         for key, job in source():
             db.add_time_stamp(key, 'start')
             yield key, job
 
-    return f
-
-
-def store_result(registry, db, job_keeper=None, pred=lambda job: True):
-    @pull
-    def f(source):
-        for key, status, result, msg in source():
-            job = job_keeper[key].node if job_keeper else None
-
-            if pred(job):
-                result_msg = registry.deep_encode(result)
-                attached = db.store_result(key, result_msg)
-
-                if attached:
-                    for akey in attached:
-                        yield (akey, 'attached', result, msg)
-
-            yield (key, status, result, msg)
-
-    return f
+    return start_job_f
 
 
 @sink_map
@@ -88,6 +73,18 @@ def print_result(key, status, result, msg):
 
 def schedule_job(jobs, results, registry, db,
                  job_keeper=None, pred=lambda job: True):
+    """Schedule a job, providing there is no result for it in the database yet.
+
+    First the database checks if there is a previous job that is identical to
+    the current one. If this is the case, the result is 'retrieved'.
+
+    If there is no result, but the job description is in the database, either
+    the job is still running, or it was tried before but Noodles crashed.
+
+    In the first case, the job is 'attached' to the already running job.
+    In the second case, the record of the previous job is deleted and the new
+    job is scheduled.
+    """
     @push
     def schedule_f():
         job_sink = jobs.sink()
@@ -125,6 +122,11 @@ def schedule_job(jobs, results, registry, db,
 
 
 def store_result_deep(registry, db, job_keeper=None, pred=lambda job: True):
+    """When the result is known, we can insert it in the database. This is
+    only done if the result is not a workflow. If the result is a workflow,
+    a 'link' is added in the database, identifying the workflow by the Python
+    `id` of the workflow object. When this workflow is finished the final
+    result is inserted in the database."""
     def store_result(key, result, msg):
         result_msg = registry.deep_encode(result)
         attached = db.store_result(key, result_msg)
@@ -161,8 +163,10 @@ def store_result_deep(registry, db, job_keeper=None, pred=lambda job: True):
 
 
 def run_parallel(wf, n_threads, registry, jobdb_file, job_keeper=None):
-    """Run a workflow in `n_threads` parallel threads. Now we replaced the single
-    worker with a thread-pool of workers."""
+    """Run a workflow in `n_threads` parallel threads. Now we replaced the
+    single worker with a thread-pool of workers.
+
+    This version works with the JobDB to cache results."""
     registry = registry()
     db = JobDB(jobdb_file)
 
@@ -200,7 +204,32 @@ def run_parallel(wf, n_threads, registry, jobdb_file, job_keeper=None):
 def run_parallel_opt(wf, n_threads, registry, jobdb_file,
                      job_keeper=None, display=None):
     """Run a workflow in `n_threads` parallel threads. Now we replaced the
-    single worker with a thread-pool of workers."""
+    single worker with a thread-pool of workers.
+
+    This version works with the JobDB to cache results; however we only store
+    the jobs that are hinted with the 'store' keyword.
+
+    :param wf:
+        The workflow.
+
+    :param n_threads:
+        The number of threads to start.
+
+    :param registry:
+        The serialisation to use in order to store results in the database,
+        as well as identify jobs.
+
+    :param jobdb_file:
+        The filename of the job database.
+
+    :param job_keeper:
+        The JobKeeper instance to keep runtime information in. If not given,
+        we create one for you and throw it in the trash when we're done.
+
+    :param display:
+        The display routine to display activity. If not given, we won't report
+        on any activity.
+    """
     registry = registry()
     db = JobDB(jobdb_file)
 
