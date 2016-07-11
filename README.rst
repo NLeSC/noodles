@@ -26,12 +26,25 @@ If Java cannot be found (needed by Xenon), run
 
 in your shell initialization script (like `~/.bashrc`).
 
+To enable the TinyDB based job database, run
+
+.. code:: bash
+
+    pip install '.[prov]'
+
+This is needed if you want to interrupt a running workflow and resume where
+you left of, or to reuse results over multiple runs.
+
 To run unit tests, run
 
 .. code:: bash
 
     pip install '.[test]'
     nosetests test
+
+Some tests depend on the optional modules being installed. Those are skipped if
+if imports fail. If you want to test everything, make sure you have NumPy
+installed as well.
 
 The prototype
 -------------

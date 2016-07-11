@@ -1,10 +1,18 @@
-from noodles.prov import prov_key
+from nose.plugins.skip import SkipTest
+
+try:
+    from noodles.prov import prov_key
+    from noodles.run.run_with_prov import (
+        run_single, run_parallel, run_parallel_opt)
+
+except ImportError as e:
+    raise SkipTest(str(e))
+
 from noodles import serial, gather, schedule_hint
-from noodles.tutorial import add, sub, mul, accumulate
+from noodles.tutorial import (add, mul, sub, accumulate)
+
 from noodles.run.worker import run_job
 from noodles.run.job_keeper import JobKeeper
-from noodles.run.run_with_prov import (
-    run_single, run_parallel, run_parallel_opt)
 
 import os
 
