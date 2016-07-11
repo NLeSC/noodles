@@ -20,6 +20,7 @@ can be installed with
     pip install '.[xenon]'
 
 If Java cannot be found (needed by Xenon), run
+
 .. code:: bash
 
     export JAVA_HOME="/usr/lib/jvm/default-java"  # or similar...

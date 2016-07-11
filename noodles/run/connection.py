@@ -21,6 +21,7 @@ class Connection(object):
         self.source = source
         self.sink = sink
         self.aux = aux
+        self.online = False
 
     def setup(self):
         """Activate the source and sink functions and return them in
@@ -31,6 +32,7 @@ class Connection(object):
         :rtype: tuple"""
         src = self.source()
         snk = self.sink()
+        self.online = True
         return src, snk
 
     def __rshift__(self, other):
