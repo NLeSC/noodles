@@ -8,7 +8,7 @@ class Path:
 
 class SerPath(Serialiser):
     def __init__(self):
-        super(Serialiser, self).__init__(self, Path)
+        super(SerPath, self).__init__(Path)
 
     def encode(self, obj, make_rec):
         return make_rec({'path': obj.path}, files=[obj.path])
