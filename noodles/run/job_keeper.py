@@ -60,8 +60,10 @@ class JobTimer(dict):
 
         if isinstance(timing_file, str):
             self.fo = open(timing_file, 'w')
+            self.owner = True
         else:
             self.fo = timing_file
+            self.owner = False
 
     def register(self, job):
         key = uuid.uuid1()
@@ -99,3 +101,10 @@ class JobTimer(dict):
                 'run_duration': now - job.start_time}
             self.fo.write('{record},\n'.format(record=json.dumps(
                 msg_obj, indent=2)))
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, e_type, e_value, e_tb):
+        if self.owner:
+            self.fo.close()

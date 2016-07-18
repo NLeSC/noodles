@@ -148,13 +148,14 @@ class RemoteJobConfig(object):
         the time to wait before giving up.
     """
     def __init__(self, *, name=None, working_dir=None, prefix=None,
-                 exec_command=None, registry=serial.base,
+                 exec_command=None, n_threads=1, registry=serial.base,
                  init=None, finish=None, verbose=False,
                  queue=None, time_out=5000):
         self.name = name or ("remote-" + str(uuid.uuid4()))
         self.working_dir = working_dir or os.getcwd()
         self.prefix = prefix or sys.prefix
         self.exec_command = exec_command
+        self.n_threads = n_threads
         self.registry = registry
         self.init = init
         self.finish = finish

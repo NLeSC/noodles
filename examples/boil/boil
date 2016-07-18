@@ -190,9 +190,9 @@ def read_config(filename):
     return {k: dict(reader[k]) for k in reader.sections()}
 
 
-def error_filter(xcptn):
-    if isinstance(xcptn, subprocess.CalledProcessError):
-        return xcptn.stderr
+def error_filter(type, value, tb):
+    if type is subprocess.CalledProcessError:
+        return value.stderr
     else:
         return None
 

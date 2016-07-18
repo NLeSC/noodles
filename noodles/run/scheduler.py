@@ -96,18 +96,11 @@ class Scheduler:
 
             wf, n = self.jobs[job_key]
             if status == 'error':
-                if self.handle_error:
-                    if self.handle_error(wf.nodes[n], err_msg):
+                if self.handle_error and isinstance(err_msg, JobException):
+                    if self.handle_error(wf.nodes[n], *err_msg):
                         graceful_exit = True
                     else:
-                        if isinstance(err_msg, JobException):
-                            err_msg.reraise()
-                        elif isinstance(err_msg, Exception):
-                            raise err_msg
-                        else:
-                            raise RuntimeError(
-                                error_msg_1.format(wf.nodes[n]) + "\n"
-                                "Exception raised: {}".format(err_msg))
+                        err_msg.reraise()
 
                 else:
                     if isinstance(err_msg, JobException):

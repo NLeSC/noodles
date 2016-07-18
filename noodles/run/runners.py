@@ -42,21 +42,21 @@ def log_job_schedule(key, job):
 def run_parallel_timing(wf, n, timing_file):
     LogQ = Queue()
 
-    J = JobTimer(timing_file)
-    S = Scheduler(job_keeper=J)
-    threading.Thread(
-        target=patch,
-        args=(LogQ.source, J.message),
-        daemon=True).start()
+    with JobTimer(timing_file) as J:
+        S = Scheduler(job_keeper=J)
+        threading.Thread(
+            target=patch,
+            args=(LogQ.source, J.message),
+            daemon=True).start()
 
-    W = Queue() \
-        >> branch(log_job_start >> LogQ.sink) \
-        >> thread_pool(*repeat(worker, n)) \
-        >> branch(LogQ.sink)
+        W = Queue() \
+            >> branch(log_job_start >> LogQ.sink) \
+            >> thread_pool(*repeat(worker, n)) \
+            >> branch(LogQ.sink)
 
-    result = S.run(W, get_workflow(wf))
-    LogQ.wait()
-    return result
+        result = S.run(W, get_workflow(wf))
+        LogQ.wait()
+        return result
 
 
 def run_single_with_display(wf, display):

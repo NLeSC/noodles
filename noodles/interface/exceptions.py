@@ -7,3 +7,6 @@ class JobException(Exception):
 
     def reraise(self):
         raise self.exc_value.with_traceback(self.exc_tb)
+
+    def __iter__(self):
+        return iter((self.exc_type, self.exc_value, self.exc_tb))

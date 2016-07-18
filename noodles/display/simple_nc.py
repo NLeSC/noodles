@@ -70,8 +70,8 @@ class Display:
         self.jobs[key] = {'line': 1, 'job': job, 'length': len(msg)}
         self.jobs[key].update(job.hints)
 
-    def error_handler(self, job, xcptn):
-        msg = self.error_filter(xcptn)
+    def error_handler(self, job, *exception):
+        msg = self.error_filter(*exception)
         if msg:
             self.errors.append((job, msg))
             return True

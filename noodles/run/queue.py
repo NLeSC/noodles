@@ -34,5 +34,8 @@ class Queue(Connection):
 
         super(Queue, self).__init__(source, sink)
 
+    def empty(self):
+        return self.Q.empty()
+
     def wait(self):
         self.Q.join()

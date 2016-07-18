@@ -12,7 +12,7 @@ with open(path.join(here, 'README.rst'), encoding='utf-8') as f:
 
 setup(
     name='Noodles',
-    version='0.1.9.3',
+    version='0.1.9300',
     description='Workflow Engine',
     author='Johan Hidding',
     url='https://github.com/NLeSC/noodles',

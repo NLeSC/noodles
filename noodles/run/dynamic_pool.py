@@ -1,9 +1,8 @@
 from .queue import Queue
 from .connection import Connection
 from .coroutine import coroutine
-from .protect import CatchExceptions
-from .haploid import (push, patch)
-from .worker import run_job
+from .haploid import (push)
+from .scheduler import Result
 
 import xenon
 import jpype
@@ -11,16 +10,10 @@ import jpype
 import threading
 import sys
 import uuid
+from collections import namedtuple
 
-from .xenon import (XenonScheduler)
+from .xenon import (XenonKeeper, XenonConfig, XenonScheduler)
 
-
-class DynamicPool:
-    def __init__(self):
-        self.workers = []
-        self.lock = threading.Lock()
-
-    def add_worker(self, job_config):
 
 def read_result(registry, s):
     obj = registry.from_json(s)
@@ -31,7 +24,7 @@ def read_result(registry, s):
     except ValueError:
         pass
 
-    return key, status, obj['result'], obj['err_msg']
+    return Result(key, status, obj['result'], obj['err_msg'])
 
 
 def put_job(registry, host, key, job):
@@ -55,15 +48,6 @@ def xenon_interactive_worker(XeS: XenonScheduler, job_config):
     """
     cmd = job_config.command_line()
     J = XeS.submit(cmd, interactive=True)
-
-    # status = J.wait_until_running(job_config.time_out)
-    # if not status.isRunning():
-    #     raise RuntimeError("Could not get the job running")
-    # else:
-    #     print(job_config.name + " is now running.",
-    # file=sys.stderr, flush=True)
-
-    # print(job_config.name + " is now running.", file=sys.stderr, flush=True)
 
     def read_stderr():
         jpype.attachThreadToJVM()
@@ -90,106 +74,134 @@ def xenon_interactive_worker(XeS: XenonScheduler, job_config):
         for line in xenon.conversions.read_lines(J.streams.getStdout()):
             yield read_result(registry, line)
 
-    if job_config.init is not None:
-        send_job().send(("init", job_config.init()._workflow.root_node))
-        key, status, result, err_msg = next(get_result())
-        if key != "init" or not result:
-            raise RuntimeError("The initializer function did not succeed on "
-                               "worker.")
-
-    if job_config.finish is not None:
-        send_job().send(("finish", job_config.finish()._workflow.root_node))
-
-    return Connection(get_result, send_job)
+    return Connection(get_result, send_job, aux=J)
 
 
-def hybrid_threaded_worker(selector, workers):
-    """Runs a set of workers, each in a separate thread.
-
-    :param selector:
-        A function that takes a hints-tuple and returns a key
-        indexing a worker in the `workers` dictionary.
-    :param workers:
-        A dictionary of workers.
-
-    :returns:
-        A connection for the scheduler.
-    :rtype: Connection
-
-    The hybrid worker dispatches jobs to the different workers
-    based on the information contained in the hints. If no hints
-    were given, the job is run in the main thread.
-
-    Dispatching is done in the main thread. Retrieving results is
-    done in a separate thread for each worker. In this design it is
-    assumed that dispatching a job takes little time, while waiting for
-    one to return a result may take a long time.
+class XenonInteractiveWorker(Connection):
+    """Submits a new job to the specified queue. Starts a thread to
+    read and forward stderr. Then acts as a `Connection` that goes
+    online as soon as the submitted job is running.
     """
-    results = Queue()
+    def __init__(self, sched, job_config):
+        connection = xenon_interactive_worker(sched, job_config)
+        super(XenonInteractiveWorker, self).__init__(*connection)
 
-    # print([w.source for k, w in workers.items()])
+        self.job_config = job_config
+        self.job = connection.aux
+        self.online = False
 
-    catch = {
-        k: CatchExceptions(results.sink)
-        for k, w in workers.items()
-    }
+    def init_worker(self):
+        """Sends the `init` and `finish` jobs to the worker if this is needed.
+        This part will be called first, after a remote worker goes online."""
+        if self.job_config.init is not None:
+            self.sink().send(
+                ("init", self.job_config.init()._workflow.root_node))
+            key, status, result, err_msg = next(self.source())
+            if key != "init" or not result:
+                raise RuntimeError(
+                    "The initializer function did not succeed on worker.")
 
-    result_source = {
-        k: w.source >> catch[k].result_source
-        for k, w in workers.items()
-    }
+        if self.job_config.finish is not None:
+            self.sink().send(
+                ("finish", self.job_config.finish()._workflow.root_node))
 
-    job_sink = {
-        k: (catch[k].job_sink >> w.sink)()
-        for k, w in workers.items()
-    }
-
-    @push
-    def dispatch_job():
-        default_sink = results.sink()
-
-        while True:
-            key, job = yield
-            worker = selector(job)
-            if worker:
-                job_sink[worker].send((key, job))
-            else:
-                default_sink.send(run_job(key, job))
-
-    for key, worker in workers.items():
-        t = threading.Thread(
-            target=catch[key](patch),
-            args=(result_source[key], results.sink))
-        t.daemon = True
-        t.start()
-
-        if worker.aux:
-            t_aux = threading.Thread(
-                target=catch[key](worker.aux),
-                args=(),
-                daemon=True)
-            t_aux.start()
-
-    return Connection(results.source, dispatch_job)
+    def wait_until_running(self, callback=None):
+        """Waits until the remote worker is running, then calls the callback.
+        Usually, this method is passed to a different thread; the callback
+        is then a function patching results through to the result queue."""
+        status = self.job.wait_until_running(self.job_config.time_out)
+        if status.isRunning():
+            self.online = True
+            self.init_worker()
+            if callback:
+                callback(self)
+        else:
+            raise TimeoutError("Timeout while waiting for worker to run: " +
+                               self.job_config.name)
 
 
-def buffered_dispatcher(workers):
-    jobs = Queue()
-    results = Queue()
+RemoteWorker = namedtuple('RemoteWorker', [
+    'name', 'lock', 'max', 'jobs', 'source', 'sink'])
 
-    def dispatcher(source, sink):
-        jpype.attachThreadToJVM()
-        result_sink = results.sink()
 
-        for job in jobs.source():
-            sink.send(job)
-            result_sink.send(next(source))
+class DynamicPool(Connection):
+    """Keeps a pool of Xenon workers. At each instant, when a job is sent to
+    the recieving coroutine associated with this `Connection`, we look if
+    there is a worker idle and send it there. If no worker is idle, the job
+    is pushed on the queue. Whenever a worker returns a result, we replennish
+    its list of jobs from the queue. In this way we can supply a variable
+    amount of workers, each with their own preferred amount of jobs. As of
+    yet, we have no mechanism to distribute the jobs between workers in any
+    way more knowledgable than that."""
+    def __init__(self, Xe: XenonKeeper, xenon_config: XenonConfig):
+        self.workers = {}
+        self.XeS = XenonScheduler(Xe, xenon_config)
+        self.job_queue = Queue()
+        self.result_queue = Queue()
+        self.lock = threading.Lock()
 
-    for w in workers.values():
-        t = threading.Thread(
-            target=dispatcher,
-            args=w.setup())
-        t.daemon = True
-        t.start()
+        @push
+        def dispatch_jobs():
+            job_sink = self.job_queue.sink()
 
-    return Connection(results.source, jobs.sink)
+            while True:
+                key, job = yield
+
+                for w in self.workers.values():
+                    with w.lock:  # Worker lock ~~~~~~~~~~~~~~~~~~~~~
+                        if len(w.jobs) < w.max:
+                            w.sink.send((key, job))
+                            w.jobs.append(key)
+                            break
+                    # lock end ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+                else:
+                    job_sink.send(job)
+
+        super(DynamicPool, self).__init__(
+            self.result_queue.source, dispatch_jobs)
+
+    def add_xenon_worker(self, job_config):
+        """Adds a worker to the pool; sets gears in motion."""
+        c = XenonInteractiveWorker(self.XeS, job_config)
+        w = RemoteWorker(
+            job_config.name, job_config.n_threads, [],
+            threading.Lock(), c.source, c.sink)
+
+        with self.lock:
+            self.workers[job_config.name] = w
+
+        def populate():
+            """Populate the worker with jobs, if jobs are available."""
+            with w.lock, self.lock:  # Worker lock ~~~~~~~~~~~~~~~~~~
+                while len(w.jobs < w.max) and \
+                        not self.job_queue.empty():
+                    key, job = next(self.job_queue.source())
+                    w.sink.send((key, job))
+                    w.jobs.append(key)
+            # lock end ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+        def activate():
+            """Activate the worker."""
+            populate()
+
+            def patch():
+                """Send results to the result queue. Replennish with jobs."""
+                sink = self.result_queue.sink()
+                for result in w.source():
+                    sink.send(result)
+
+                    # do bookkeeping and submit a new job to the worker
+                    with w.lock:  # Worker lock ~~~~~~~~~~~~~~~~~~~~~
+                        w.jobs.remove(result.key)
+                    populate()
+                    # lock end ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+                for key in w.jobs:
+                    sink.send(Result(key, 'aborted', None,
+                                     'connection to remote worker lost.'))
+
+            threading.Thread(patch, daemon=True).start()
+
+        threading.Thread(
+            target=c.wait_until_running, args=(activate,),
+            daemon=True).start()
