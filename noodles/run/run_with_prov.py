@@ -1,6 +1,6 @@
 from .connection import (Connection)
 from .queue import (Queue)
-from .scheduler import (Scheduler)
+from .scheduler import (Scheduler, Result)
 from .haploid import (
     pull, push, push_map, sink_map,
     branch, patch, broadcast)
@@ -26,7 +26,7 @@ def run_single(wf, registry, jobdb_file, display=None):
     db = JobDB(jobdb_file)
 
     def decode_result(key, obj):
-        return key, 'retrieved', registry.deep_decode(obj), None
+        return Result(key, 'retrieved', registry.deep_decode(obj), None)
 
     @pull
     def pass_job(source):
@@ -71,7 +71,7 @@ def print_result(key, status, result, msg):
     print(status, result)
 
 
-def schedule_job(jobs, results, registry, db,
+def schedule_job(results, registry, db,
                  job_keeper=None, pred=lambda job: True):
     """Schedule a job, providing there is no result for it in the database yet.
 
@@ -86,8 +86,8 @@ def schedule_job(jobs, results, registry, db,
     job is scheduled.
     """
     @push
-    def schedule_f():
-        job_sink = jobs.sink()
+    def schedule_f(job_sink_):
+        job_sink = job_sink_()
         result_sink = results.sink()
 
         while True:
@@ -196,9 +196,61 @@ def run_parallel(wf, n_threads, registry, jobdb_file, job_keeper=None):
         >> store_result_deep(registry, db, job_keeper) \
         >> branch(LogQ.sink)
 
-    j_snk = schedule_job(jobs, results, registry, db, job_keeper)
+    j_snk = schedule_job(results, registry, db, job_keeper) >> jobs.sink
 
     return S.run(Connection(r_src, j_snk), get_workflow(wf))
+
+
+def create_prov_worker(
+        worker, results, registry, jobdb_file, job_keeper,
+        pred=lambda x: True, log_q=None):
+    registry = registry()
+    db = JobDB(jobdb_file)
+
+    jobs = Queue()
+
+    @push_map
+    def log_job_start(key, job):
+        return (key, 'start', job, None)
+
+    r_src = jobs.source \
+        >> start_job(db) \
+        >> worker \
+        >> store_result_deep(registry, db, job_keeper, pred)
+
+    @push_map
+    def log_job_sched(key, job):
+        return (key, 'schedule', job, None)
+
+    j_snk = broadcast(
+        log_job_sched >> log_q.sink,
+        schedule_job(results, registry, db, job_keeper, pred) >> jobs.sink)
+
+    return Connection(r_src, j_snk)
+
+
+def prov_wrap_connection(
+        worker, results, registry, jobdb_file, job_keeper,
+        pred=lambda x: True, log_q=None):
+    registry = registry()
+    db = JobDB(jobdb_file)
+
+    @push_map
+    def log_job_start(key, job):
+        return (key, 'start', job, None)
+
+    r_src = worker.source \
+        >> store_result_deep(registry, db, job_keeper, pred)
+
+    @push_map
+    def log_job_sched(key, job):
+        return (key, 'schedule', job, None)
+
+    j_snk = broadcast(
+        log_job_sched >> log_q.sink,
+        schedule_job(results, registry, db, job_keeper, pred) >> worker.sink)
+
+    return Connection(r_src, j_snk)
 
 
 def run_parallel_opt(wf, n_threads, registry, jobdb_file,
@@ -230,14 +282,10 @@ def run_parallel_opt(wf, n_threads, registry, jobdb_file,
         The display routine to display activity. If not given, we won't report
         on any activity.
     """
-    registry = registry()
-    db = JobDB(jobdb_file)
-
     if job_keeper is None:
         job_keeper = JobKeeper()
     S = Scheduler(job_keeper=job_keeper)
 
-    jobs = Queue()
     results = Queue()
 
     def pred(job):
@@ -254,23 +302,12 @@ def run_parallel_opt(wf, n_threads, registry, jobdb_file,
         args=(LogQ.source, tgt),
         daemon=True).start()
 
-    @push_map
-    def log_job_start(key, job):
-        return (key, 'start', job, None)
+    parallel_worker = \
+        thread_pool(*repeat(worker, n_threads), results=results) >> \
+        branch(LogQ.sink)
 
-    r_src = jobs.source \
-        >> start_job(db) \
-        >> branch(log_job_start >> LogQ.sink) \
-        >> thread_pool(*repeat(worker, n_threads), results=results) \
-        >> store_result_deep(registry, db, job_keeper, pred) \
-        >> branch(LogQ.sink)
-
-    @push_map
-    def log_job_sched(key, job):
-        return (key, 'schedule', job, None)
-
-    j_snk = broadcast(
-        log_job_sched >> LogQ.sink,
-        schedule_job(jobs, results, registry, db, job_keeper, pred))
-
-    return S.run(Connection(r_src, j_snk), get_workflow(wf))
+    return S.run(
+        create_prov_worker(
+            parallel_worker, results, registry, jobdb_file, job_keeper,
+            pred, LogQ),
+        get_workflow(wf))

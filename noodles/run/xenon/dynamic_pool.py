@@ -1,8 +1,8 @@
-from .queue import Queue
-from .connection import Connection
-from .coroutine import coroutine
-from .haploid import (push)
-from .scheduler import Result
+from ..queue import Queue
+from ..connection import Connection
+from ..coroutine import coroutine
+from ..haploid import (push)
+from ..scheduler import Result
 
 import xenon
 import jpype
@@ -109,6 +109,7 @@ class XenonInteractiveWorker(Connection):
         """Waits until the remote worker is running, then calls the callback.
         Usually, this method is passed to a different thread; the callback
         is then a function patching results through to the result queue."""
+        jpype.attachThreadToJVM()
         status = self.job.wait_until_running(self.job_config.time_out)
         if status.isRunning():
             self.online = True
@@ -155,7 +156,7 @@ class DynamicPool(Connection):
                             break
                     # lock end ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
                 else:
-                    job_sink.send(job)
+                    job_sink.send((key, job))
 
         super(DynamicPool, self).__init__(
             self.result_queue.source, dispatch_jobs)
@@ -164,43 +165,46 @@ class DynamicPool(Connection):
         """Adds a worker to the pool; sets gears in motion."""
         c = XenonInteractiveWorker(self.XeS, job_config)
         w = RemoteWorker(
-            job_config.name, job_config.n_threads, [],
-            threading.Lock(), c.source, c.sink)
+            job_config.name, threading.Lock(),
+            job_config.n_threads, [],
+            *c.setup())
 
         with self.lock:
             self.workers[job_config.name] = w
 
-        def populate():
+        def populate(job_source):
             """Populate the worker with jobs, if jobs are available."""
             with w.lock, self.lock:  # Worker lock ~~~~~~~~~~~~~~~~~~
-                while len(w.jobs < w.max) and \
-                        not self.job_queue.empty():
-                    key, job = next(self.job_queue.source())
+                while len(w.jobs) < w.max and not self.job_queue.empty():
+                    key, job = next(job_source)
                     w.sink.send((key, job))
                     w.jobs.append(key)
             # lock end ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-        def activate():
+        def activate(_):
             """Activate the worker."""
-            populate()
+            job_source = self.job_queue.source()
+            populate(job_source)
 
             def patch():
                 """Send results to the result queue. Replennish with jobs."""
+                jpype.attachThreadToJVM()
                 sink = self.result_queue.sink()
-                for result in w.source():
+
+                for result in w.source:
                     sink.send(result)
 
                     # do bookkeeping and submit a new job to the worker
                     with w.lock:  # Worker lock ~~~~~~~~~~~~~~~~~~~~~
                         w.jobs.remove(result.key)
-                    populate()
+                    populate(job_source)
                     # lock end ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
                 for key in w.jobs:
                     sink.send(Result(key, 'aborted', None,
                                      'connection to remote worker lost.'))
 
-            threading.Thread(patch, daemon=True).start()
+            threading.Thread(target=patch, daemon=True).start()
 
         threading.Thread(
             target=c.wait_until_running, args=(activate,),

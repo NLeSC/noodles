@@ -1,53 +1,18 @@
-from .connection import Connection
-from .coroutine import coroutine
-from .queue import Queue
 # from ..logger import log
-from ..utility import object_name
+from ...utility import object_name
 from noodles import serial
 # from .hybrid import hybrid_threaded_worker
-from .scheduler import Scheduler
-from ..workflow import get_workflow
-
-from copy import copy
 
 # import random
 import uuid
 import xenon
 import os
 import sys
-import threading
-import jpype
 
 # from contextlib import redirect_stderr
 # xenon_log = open('xenon_log.txt', 'w')
 # with redirect_stderr(xenon_log):
 xenon.init()  # noqa
-
-from xenon import java
-
-
-def read_result(registry, s):
-    obj = registry.from_json(s)
-    status = obj['status']
-    key = obj['key']
-    try:
-        key = uuid.UUID(key)
-    except ValueError:
-        pass
-
-    return key, status, obj['result'], obj['err_msg']
-
-
-def put_job(registry, host, key, job):
-    obj = {'key': key if isinstance(key, str) else key.hex,
-           'node': job}
-    return registry.to_json(obj, host=host)
-
-
-jPrintStream = java.io.PrintStream
-jBufferedReader = java.io.BufferedReader
-jInputStreamReader = java.io.InputStreamReader
-jScanner = java.util.Scanner
 
 
 class XenonConfig:
@@ -257,135 +222,3 @@ class XenonScheduler:
 
         job = self._x.jobs.submitJob(self._s, desc)
         return XenonJob(self._x, job, desc)
-
-
-def xenon_interactive_worker(XeS: XenonScheduler, job_config):
-    """Uses Xenon to run a single remote interactive worker.
-
-    Jobs are read from stdin, and results written to stdout.
-
-    :param XeS:
-        The :py:class:`XenonScheduler` object that allows us to schedule the
-        new worker.
-    :type Xe: XenonScheduler
-
-    :param job_config:
-        Job configuration. Specifies the command to be run remotely.
-    """
-    cmd = job_config.command_line()
-    J = XeS.submit(cmd, interactive=True)
-
-    # status = J.wait_until_running(job_config.time_out)
-    # if not status.isRunning():
-    #     raise RuntimeError("Could not get the job running")
-    # else:
-    #     print(job_config.name + " is now running.",
-    # file=sys.stderr, flush=True)
-
-    # print(job_config.name + " is now running.", file=sys.stderr, flush=True)
-
-    def read_stderr():
-        jpype.attachThreadToJVM()
-        for line in xenon.conversions.read_lines(J.streams.getStderr()):
-            print(job_config.name + ": " + line, file=sys.stderr, flush=True)
-
-    J.stderr_thread = threading.Thread(target=read_stderr)
-    J.stderr_thread.daemon = True
-    J.stderr_thread.start()
-
-    registry = job_config.registry()
-
-    @coroutine
-    def send_job():
-        out = jPrintStream(J.streams.getStdin())
-
-        while True:
-            key, ujob = yield
-            out.println(put_job(registry, 'scheduler', key, ujob))
-            out.flush()
-
-    def get_result():
-        """ Returns a result tuple: key, status, result, err_msg """
-        for line in xenon.conversions.read_lines(J.streams.getStdout()):
-            yield read_result(registry, line)
-
-    if job_config.init is not None:
-        send_job().send(("init", job_config.init()._workflow.root_node))
-        key, status, result, err_msg = next(get_result())
-        if key != "init" or not result:
-            raise RuntimeError("The initializer function did not succeed on "
-                               "worker.")
-
-    if job_config.finish is not None:
-        send_job().send(("finish", job_config.finish()._workflow.root_node))
-
-    return Connection(get_result, send_job)
-
-
-def buffered_dispatcher(workers):
-    jobs = Queue()
-    results = Queue()
-
-    def dispatcher(source, sink):
-        jpype.attachThreadToJVM()
-        result_sink = results.sink()
-
-        for job in jobs.source():
-            sink.send(job)
-            result_sink.send(next(source))
-
-    for w in workers.values():
-        t = threading.Thread(
-            target=dispatcher,
-            args=w.setup())
-        t.daemon = True
-        t.start()
-
-    return Connection(results.source, jobs.sink)
-
-
-def run_xenon(Xe, n_processes, xenon_config, job_config, wf, deref=False):
-    """Run the workflow using a number of online Xenon workers.
-
-    :param Xe:
-        The XenonKeeper instance.
-
-    :param wf:
-        The workflow.
-    :type wf: `Workflow` or `PromisedObject`
-
-    :param n_processes:
-        Number of processes to start.
-
-    :param xenon_config:
-        The :py:class:`XenonConfig` object that gives tells us how to use
-        Xenon.
-
-    :param job_config:
-        The :py:class:`RemoteJobConfig` object that specifies the command to
-        run remotely for each worker.
-
-    :param deref:
-        Set this to True to pass the result through one more encoding and
-        decoding step with object derefencing turned on.
-    :type deref: bool
-
-    :returns: the result of evaluating the workflow
-    :rtype: any
-    """
-    XeS = XenonScheduler(Xe, xenon_config)
-
-    workers = {}
-    for i in range(n_processes):
-        cfg = copy(job_config)
-        cfg.name = 'remote-{0:02}'.format(i)
-        new_worker = xenon_interactive_worker(XeS, cfg)
-        workers[cfg.name] = new_worker
-
-    master_worker = buffered_dispatcher(workers)
-    result = Scheduler().run(master_worker, get_workflow(wf))
-
-    if deref:
-        return job_config.registry().dereference(result, host='localhost')
-    else:
-        return result

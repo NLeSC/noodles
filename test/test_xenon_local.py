@@ -29,6 +29,6 @@ def test_xenon_42():
     )
 
     with XenonKeeper() as Xe:
-        result = run_xenon(Xe, 2, xenon_config, job_config, C)
+        result = run_xenon(C, Xe, "cache.json", 2, xenon_config, job_config)
 
     assert(result == 42)

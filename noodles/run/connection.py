@@ -35,7 +35,7 @@ class Connection(object):
         return src, snk
 
     def __iter__(self):
-        return (self.source, self.sink)
+        return iter((self.source, self.sink))
 
     def __rshift__(self, other):
         return self.__join__(other)
