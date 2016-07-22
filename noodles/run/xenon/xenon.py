@@ -9,10 +9,11 @@ import xenon
 import os
 import sys
 
+
 # from contextlib import redirect_stderr
 # xenon_log = open('xenon_log.txt', 'w')
 # with redirect_stderr(xenon_log):
-xenon.init()  # noqa
+xenon.init(log_level='ERROR')  # noqa
 
 
 class XenonConfig:

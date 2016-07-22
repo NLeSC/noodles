@@ -183,29 +183,27 @@ class DynamicPool(Connection):
 
         def activate(_):
             """Activate the worker."""
+            jpype.attachThreadToJVM()
+
             job_source = self.job_queue.source()
             populate(job_source)
 
-            def patch():
-                """Send results to the result queue. Replennish with jobs."""
-                jpype.attachThreadToJVM()
-                sink = self.result_queue.sink()
+            sink = self.result_queue.sink()
 
-                for result in w.source:
-                    sink.send(result)
+            for result in w.source:
+                sink.send(result)
 
-                    # do bookkeeping and submit a new job to the worker
-                    with w.lock:  # Worker lock ~~~~~~~~~~~~~~~~~~~~~
-                        w.jobs.remove(result.key)
-                    populate(job_source)
-                    # lock end ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+                # do bookkeeping and submit a new job to the worker
+                with w.lock:  # Worker lock ~~~~~~~~~~~~~~~~~~~~~
+                    w.jobs.remove(result.key)
+                populate(job_source)
+                # lock end ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-                for key in w.jobs:
-                    sink.send(Result(key, 'aborted', None,
-                                     'connection to remote worker lost.'))
+            for key in w.jobs:
+                sink.send(Result(key, 'aborted', None,
+                                 'connection to remote worker lost.'))
 
-            threading.Thread(target=patch, daemon=True).start()
-
+        # Start the `activate` function when the worker goes online.
         threading.Thread(
             target=c.wait_until_running, args=(activate,),
             daemon=True).start()
