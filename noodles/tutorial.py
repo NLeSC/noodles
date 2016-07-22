@@ -1,9 +1,14 @@
-from . import schedule
+from . import schedule, schedule_hint
 
 
 @schedule
 def add(x, y):
     return x + y
+
+
+@schedule_hint(display="{a} + {b}", confirm=True)
+def log_add(a, b):
+    return a + b
 
 
 @schedule
