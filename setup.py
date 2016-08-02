@@ -17,7 +17,8 @@ setup(
     author='Johan Hidding',
     url='https://github.com/NLeSC/noodles',
     packages=[
-        'noodles', 'noodles.serial', 'noodles.run', 'noodles.display',
+        'noodles', 'noodles.serial', 'noodles.run', 'noodles.run.xenon',
+        'noodles.display',
         'noodles.interface', 'noodles.workflow', 'noodles.files',
         'noodles.prov'],
 
