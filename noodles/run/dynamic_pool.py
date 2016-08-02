@@ -1,8 +1,8 @@
-from ..queue import Queue
-from ..connection import Connection
-from ..coroutine import coroutine
-from ..haploid import (push)
-from ..scheduler import Result
+from .queue import Queue
+from .connection import Connection
+from .coroutine import coroutine
+from .haploid import (push)
+from .scheduler import Result
 
 import xenon
 import jpype

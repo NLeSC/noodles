@@ -1,11 +1,11 @@
 from .dynamic_pool import DynamicPool
-from ..scheduler import Scheduler
-from ..job_keeper import JobKeeper
-from ..haploid import (broadcast, sink_map, patch, branch)
-from ..run_with_prov import (prov_wrap_connection)
-from ..queue import Queue
+from .scheduler import Scheduler
+from .job_keeper import JobKeeper
+from .haploid import (broadcast, sink_map, patch, branch)
+from .run_with_prov import (prov_wrap_connection)
+from .queue import Queue
 
-from ...workflow import (get_workflow)
+from ..workflow import (get_workflow)
 
 import threading
 from copy import copy
