@@ -1,9 +1,8 @@
 from nose.plugins.skip import SkipTest
 
 try:
-    from noodles.run.xenon import (
-        run_xenon_prov, XenonConfig,
-        RemoteJobConfig, XenonKeeper)
+    from noodles.xenon import (XenonConfig, RemoteJobConfig, XenonKeeper)
+    from noodles.runner_xenon import run_xenon_prov
 
 except ImportError as e:
     raise SkipTest(str(e))
