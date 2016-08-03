@@ -1,8 +1,12 @@
 import noodles
 from noodles.workflow import (get_workflow)
-from noodles.run.coroutines import (Connection, coroutine_sink)
-from noodles.run.experimental import (logging_worker)
-from noodles.display import SimpleDisplay
+from noodles.run.connection import (Connection)
+from noodles.run.queue import (Queue)
+from noodles.run.haploid import (push, branch, patch, sink_map, push_map)
+from noodles.run.worker import (worker)
+from noodles.run.thread_pool import (thread_pool)
+from noodles.run.scheduler import (Scheduler)
+from noodles.display import NCDisplay
 
 import subprocess
 import sys
@@ -10,6 +14,17 @@ import argparse
 import json
 import time
 import shlex
+import threading
+from itertools import repeat
+
+@push_map
+def log_job_start(key, job):
+    return (key, 'start', job, None)
+
+
+@push_map
+def log_job_schedule(key, job):
+    return (key, 'schedule', job, None)
 
 
 class Job:
@@ -37,12 +52,27 @@ def dynamic_exclusion_worker(display, n_threads):
     Using this worker, when task ``a`` is sent to the underlying worker,
     task ``b`` is blocked until ``a`` completes, and vice versa.
     """
-    result_source, job_sink = logging_worker(n_threads, display).setup()
+
+    LogQ = Queue()
+
+    S = Scheduler(error_handler=display.error_handler)
+
+    threading.Thread(
+        target=patch,
+        args=(LogQ.source, sink_map(display)),
+        daemon=True).start()
+
+    W = Queue() \
+        >> branch(log_job_start >> LogQ.sink) \
+        >> thread_pool(*repeat(worker, n_threads)) \
+        >> branch(LogQ.sink)
+
+    result_source, job_sink = W.setup()
 
     jobs = {}
     key_task = {}
 
-    @coroutine_sink
+    @push
     def pass_job():
         """The scheduler sends jobs to this coroutine. If the 'exclude' key
         is found in the hints, it is run in exclusive mode. We keep an internal
@@ -122,9 +152,9 @@ def make_job(cmd, task_id, exclude):
     return j
 
 
-def error_filter(xcptn):
-    if isinstance(xcptn, subprocess.CalledProcessError):
-        return xcptn.stderr
+def error_filter(ex_type, ex_value, ex_tb):
+    if ex_type is subprocess.CalledProcessError:
+        return ex_value.stderr
     else:
         return None
 
@@ -147,5 +177,5 @@ if __name__ == "__main__":
     jobs = [make_job(td['command'],
                      td['task'], td['exclude']) for td in input]
     wf = noodles.gather(*jobs)
-    with SimpleDisplay(error_filter) as display:
+    with NCDisplay(error_filter) as display:
         run(wf, display=display, n_threads=args.n_threads)
