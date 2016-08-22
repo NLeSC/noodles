@@ -12,7 +12,7 @@ with open(path.join(here, 'README.rst'), encoding='utf-8') as f:
 
 setup(
     name='Noodles',
-    version='0.1.9300',
+    version='0.1.9301',
     description='Workflow Engine',
     author='Johan Hidding',
     url='https://github.com/NLeSC/noodles',
@@ -36,6 +36,6 @@ setup(
     extras_require={
         'prov': ['tinydb'],
         'xenon': ['pyxenon'],
-        'test': ['nose', 'coverage', 'pyflakes', 'pep8']
+        'test': ['nose', 'coverage', 'pyflakes', 'pep8', 'docker-py']
     },
 )

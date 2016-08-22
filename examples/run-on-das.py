@@ -2,18 +2,21 @@ from noodles import (
     serial, gather)
 
 from noodles.run.xenon import (
-    XenonConfig, RemoteJobConfig, XenonKeeper, run_xenon)
+    XenonConfig, RemoteJobConfig, XenonKeeper, run_xenon_prov)
+
+from noodles.display import (
+    NCDisplay)
 
 from noodles.tutorial import (
-    add, mul, sub, accumulate)
+    log_add, mul, sub, accumulate)
 
 import os
 
 if __name__ == '__main__':
-    A = add(1, 1)
+    A = log_add(1, 1)
     B = sub(3, A)
 
-    multiples = [mul(add(i, B), A) for i in range(6)]
+    multiples = [mul(log_add(i, B), A) for i in range(6)]
     C = accumulate(gather(*multiples))
 
     with XenonKeeper() as Xe:
@@ -22,17 +25,22 @@ if __name__ == '__main__':
 
         xenon_config = XenonConfig(
             jobs_scheme='slurm',
-            location=None,
-            # credential=certificate
+            location='<login-address>',
+            credential=certificate,
+            jobs_properties={
+                'xenon.adaptors.slurm.ignore.version': 'true'
+            }
         )
 
         job_config = RemoteJobConfig(
             registry=serial.base,
-            prefix='/home/jhidding/venv',
-            working_dir='/home/jhidding/noodles',
-            time_out=1
+            prefix='<path-to-virtual-env>',
+            working_dir='<project-path>',
+            time_out=5000
         )
 
-        result = run_xenon(Xe, 2, xenon_config, job_config, C)
+        with NCDisplay() as display:
+            result = run_xenon_prov(
+                C, Xe, "cache.json", 2,
+                xenon_config, job_config, display=display)
         print("The answer is", result)
-
