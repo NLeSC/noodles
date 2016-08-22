@@ -36,6 +36,6 @@ setup(
     extras_require={
         'prov': ['tinydb'],
         'xenon': ['pyxenon'],
-        'test': ['nose', 'coverage', 'pyflakes', 'pep8']
+        'test': ['nose', 'coverage', 'pyflakes', 'pep8', 'docker-py']
     },
 )

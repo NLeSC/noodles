@@ -4,7 +4,6 @@ try:
     from noodles.prov import prov_key
     from noodles.run.run_with_prov import (
         run_single, run_parallel, run_parallel_opt)
-
 except ImportError as e:
     raise SkipTest(str(e))
 

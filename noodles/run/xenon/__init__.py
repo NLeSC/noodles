@@ -1,5 +1,13 @@
-from .runner import (run_xenon, run_xenon_prov)
-from .xenon import (XenonConfig, RemoteJobConfig, XenonKeeper)
+from .runner import (run_xenon)
+from .xenon import (XenonJob, XenonScheduler, XenonConfig, RemoteJobConfig,
+                    XenonKeeper)
 
-__all__ = ['XenonConfig', 'RemoteJobConfig', 'XenonKeeper',
-           'run_xenon', 'run_xenon_prov']
+# Only export run_xenon_prov if provenance is installed
+try:
+    from .runner import run_xenon_prov
+    __all__ = ['run_xenon_prov']
+except ImportError:
+    __all__ = []
+
+__all__ += ['XenonConfig', 'XenonJob', 'XenonScheduler', 'RemoteJobConfig',
+            'XenonKeeper', 'run_xenon']
