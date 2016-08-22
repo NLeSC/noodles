@@ -10,12 +10,6 @@ import os
 import sys
 
 
-# from contextlib import redirect_stderr
-# xenon_log = open('xenon_log.txt', 'w')
-# with redirect_stderr(xenon_log):
-xenon.init(log_level='ERROR')  # noqa
-
-
 class XenonConfig:
     """Configuration to the Xenon library.
 
@@ -186,7 +180,13 @@ class XenonJob:
 
 
 class XenonKeeper:
+    is_initialized = False
+
     def __init__(self):
+        if not XenonKeeper.is_initialized:
+            xenon.init(log_level='ERROR')  # noqa
+            XenonKeeper.is_initialized = True
+
         self._x = xenon.Xenon()
         self.jobs = self._x.jobs()
         self.credentials = self._x.credentials()
