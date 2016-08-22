@@ -86,7 +86,7 @@ def object_filename(srcdir, filename, config):
     return os.path.join(target_dir, basename + '.o')
 
 
-@noodles.schedule_hint(display="│   Compiling {source_file} ... ",
+@noodles.schedule_hint(display="  Compiling {source_file} ... ",
                        confirm=True,
                        annotated=True)
 def compile_source(source_file, object_file, config):
@@ -118,7 +118,7 @@ def get_object_file(src_dir, src_file, config):
         return obj_path
 
 
-@noodles.schedule_hint(display="│   Linking ... ",
+@noodles.schedule_hint(display="  Linking ... ",
                        confirm=True,
                        annotated=True)
 def link(object_files, config):
@@ -147,10 +147,10 @@ def get_target(obj_files, config):
     if is_out_of_date(config['target'], obj_files):
         return link(obj_files, config)
     else:
-        return message("│   target is up-to-date.")
+        return message("target is up-to-date.")
 
 
-@noodles.schedule_hint(display="╭─(Building target {config[target]})")
+@noodles.schedule_hint(display="Building target {config[target]}")
 def make_target(config):
     """Make a target. First compiles the source files, then
     links the object files to create an executable.

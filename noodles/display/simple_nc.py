@@ -12,12 +12,37 @@ class Display:
 
     'check' Makes sure that the user gets feedback on the success or failure
     of the job, meaning a green V or red X will appear behind the ."""
-    def __init__(self, error_filter=None):
+    def __init__(self, error_filter=None, title='running jobs'):
         self.jobs = {}
         self.out = OutStream(sys.stdout)
         self.errors = []
         self.error_filter = error_filter or (lambda e: None)
         self.messages = []
+
+        ascii_chars = {
+            'check':        'V',
+            'fail':         'X',
+            'line-hor':     '-',
+            'line-ver':     '|',
+            'line-tl':      '+',
+            'line-bl':      '+'
+        }
+
+        utf8_chars = {
+            'check':        '✔',
+            'fail':         '✘',
+            'line-hor':     '─',
+            'line-ver':     '│',
+            'line-tl':      '╭',
+            'line-bl':      '╰'
+        }
+
+        self.chars = utf8_chars \
+            if sys.stdout.encoding == 'UTF-8' \
+            else ascii_chars
+
+        self.out << self.chars['line-tl'] << self.chars['line-hor'] \
+                 << '(' << title << ')' << "\n"
 
     def start(self, key, job, _):
         if job.hints and 'display' in job.hints:
@@ -25,7 +50,7 @@ class Display:
                 msg = job.hints['display'].format(
                     **job.bound_args.arguments)[:70]
                 self.add_job(key, job, msg)
-                self.out << msg << "\n"
+                self.out << self.chars['line-ver'] << "    " << msg << "\n"
             else:
                 self.out << ['save'] << ['up', self.jobs[key]['line']] \
                     << ['forward', max(50, self.jobs[key]['length'] + 2)]
@@ -35,8 +60,8 @@ class Display:
         if key in self.jobs and 'confirm' in self.jobs[key]:
             self.out << ['save'] << ['up', self.jobs[key]['line']] \
                 << ['forward', max(50, self.jobs[key]['length'] + 2)]
-            self.out << "(" << ['fg', 60, 180, 100] << "✔" << ['reset'] \
-                << ")" << ['restore']
+            self.out << "(" << ['fg', 60, 180, 100] << self.chars['check'] \
+                << ['reset'] << ")" << ['restore']
 
         if key in self.jobs and msg:
             self.message_handler(self.jobs[key], msg)
@@ -45,7 +70,7 @@ class Display:
         if job.hints and 'display' in job.hints:
             msg = job.hints['display'].format(**job.bound_args.arguments)[:70]
             self.add_job(key, job, msg)
-            self.out << "│ " << msg << "\n"
+            self.out << self.chars['line-ver'] << " " << msg << "\n"
 
     def retrieved(self, key, data, msg):
         if key in self.jobs and 'confirm' in self.jobs[key]:
@@ -61,8 +86,8 @@ class Display:
         if key in self.jobs and 'confirm' in self.jobs[key]:
             self.out << ['save'] << ['up', self.jobs[key]['line']] \
                 << ['forward', max(50, self.jobs[key]['length'] + 2)]
-            self.out << "(" << ['fg', 240, 100, 60] << "✘" << ['reset'] \
-                << ")" << ['restore']
+            self.out << "(" << ['fg', 240, 100, 60] << self.chars['fail'] \
+                << ['reset'] << ")" << ['restore']
 
     def add_job(self, key, job, msg):
         for k in self.jobs:
@@ -83,7 +108,8 @@ class Display:
 
     def report(self):
         if len(self.errors) == 0:
-            self.out << "╰─(success)\n"
+            self.out << self.chars['line-bl'] << self.chars['line-hor'] \
+                     << "(success)\n"
 
             if len(self.messages) != 0:
                 self.out << "There were warnings: \n\n"
@@ -101,7 +127,8 @@ class Display:
                     print(w)
 
         else:
-            self.out << "╰─(" << ['fg', 240, 100, 60] << "ERROR!" \
+            self.out << self.chars['line-bl'] << self.chars['line-hor'] \
+                     << "(" << ['fg', 240, 100, 60] << "ERROR!" \
                      << ['reset'] << ")\n\n"
 
             for job, e in self.errors:
