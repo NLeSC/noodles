@@ -11,12 +11,7 @@ except ImportError as e:
 import noodles
 from noodles.display import (NCDisplay)
 from noodles import serial
-from noodles.tutorial import (mul, sub, accumulate)
-
-
-@noodles.schedule_hint(display="{a} + {b}", confirm=True)
-def log_add(a, b):
-    return a + b
+from noodles.tutorial import (log_add, mul, sub, accumulate)
 
 
 def test_xenon_42():
