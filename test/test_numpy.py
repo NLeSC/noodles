@@ -1,11 +1,10 @@
 from nose.plugins.skip import SkipTest
 
 try:
-    import numpy
     import numpy as np
     from numpy import (random, fft, exp)
 
-    from noodles.serial.numpy import registry as numpy_registry
+    from noodles.serial.numpy import arrays_to_file
 
 except ImportError:
     raise SkipTest("No NumPy installed.")
@@ -13,11 +12,11 @@ except ImportError:
 
 from noodles import schedule, run_process, serial
 import os
-from shutil import (copyfile, rmtree)
+from shutil import (rmtree)
 
 
 def registry():
-    return serial.base() + numpy_registry(file_prefix='test-numpy/')
+    return serial.base() + arrays_to_file(file_prefix='test-numpy/')
 
 
 @schedule
@@ -43,6 +42,7 @@ def apply_filter(a, b):
 @schedule
 def make_noise(n):
     return random.normal(0, 1, n)
+
 
 def test_pickle():
     x = make_noise(256)
