@@ -2,20 +2,23 @@ from .registry import (Serialiser, Registry)
 from ..utility import look_up
 import numpy
 import uuid
+import io
+import base64
 
 
 class SerNumpyArray(Serialiser):
     def __init__(self, file_prefix=None):
         super(SerNumpyArray, self).__init__(numpy.ndarray)
-        self.file_prefix = file_prefix if file_prefix else ''
+        # self.file_prefix = file_prefix if file_prefix else ''
 
     def encode(self, obj, make_rec):
-        filename = self.file_prefix + str(uuid.uuid4()) + '.npy'
-        numpy.save(filename, obj)
-        return make_rec(filename, ref=True, files=[filename])
+        fo = io.BytesIO()
+        numpy.save(fo, obj, allow_pickle=False)
+        return make_rec(base64.b64encode(fo.getvalue()).decode())
 
-    def decode(self, cls, filename):
-        return numpy.load(filename)
+    def decode(self, cls, data):
+        fi = io.BytesIO(base64.b64decode(data.encode()))
+        return numpy.load(fi)
 
 
 class SerUFunc(Serialiser):

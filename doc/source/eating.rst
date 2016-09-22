@@ -195,9 +195,12 @@ If you need to setup some more aspects of the environment, load modules, set var
 
 ::
 
-    from noodles import schedule, Scheduler, gather
-    from noodles.datamodel import get_workflow
-    from noodles.run_xenon import xenon_interactive_worker, XenonConfig
+    from noodles import (
+        serial, gather)
+    from noodles.run.xenon import (
+        XenonConfig, RemoteJobConfig, XenonKeeper, run_xenon_prov)
+    from noodles.display import (
+        NCDisplay)
 
     from noodles.tutorial import add, accumulate
 
@@ -205,23 +208,39 @@ If you need to setup some more aspects of the environment, load modules, set var
         a = [add(i, j) for i in range(5) for j in range(5)]
         b = accumulate(gather(*a))
 
-        config = XenonConfig()             # use default settings
-        config.working_dir = sys.getcwd()  # this actually is the default
-        config.prefix = sys.prefix         # virtual-env prefix or just '/usr'
+        # XenonKeeper is the root Xenon object that gives access 
+        # to the Xenon Java library
+        with XenonKeeper() as Xe:
+            # We recommend loging in on your compute resource 
+            # through private/public key pairs. This prevents 
+            # passwords ending up as ASCII in your source files.
+            certificate = Xe.credentials.newCertificateCredential(
+                'ssh', os.environ['HOME'] + '/.ssh/id_rsa', '<username>', '', None)
 
-        # options given to Xenon.newScheduler()
-        config.schedule_args = ('ssh', 'localhost', None, None)
+            # Configure Xenon to access your favourite super computer.
+            xenon_config = XenonConfig(
+                jobs_scheme='slurm',
+                location='login.super-duper-computer.darpa.net',
+                credential=certificate
+            )
 
-        result = Scheduler().run(
-            xenon_interactive_worker(config),
-            get_workflow(b))
+            # Specify how to submit jobs.
+            job_config = RemoteJobConfig(
+                registry=serial.base,
+                prefix='<path-to-virtualenv>',
+                working_dir='<project-path>',
+                time_out=5000
+            )
+
+
+            # Run jobs with NCurses based console feedback
+            with NCDisplay() as display:
+                result = run_xenon_prov(
+                    b, Xe, "cache.json", 2, xenon_config, job_config,
+                    display=display)
 
         print("This test is working {0}%!".format(result))
 
-
-Fireworks
-~~~~~~~~~
-Fireworks_ is a workflow engine that runs workflows as stored in a MongoDB. This is the `Dicke Bertha`_ in our armoury. Fireworks support is still in an early stage of development. The advantage of Fireworks is that it is here, it works and it is robust. However, it may be a hassle with the system admins to setup a MongoDB and be allowed to communicate with it from within the cluster environment.
 
 Hybrid mode
 ~~~~~~~~~~~
@@ -231,7 +250,5 @@ We provide an example on how to use the hybrid worker in the source.
 
 If you really need to, it is not too complicated to develop your own job runner based on some of these examples. Elsewhere in this documentation we elaborate on the architecture and interaction between runners and the scheduler, see: :ref:`noodles-scheduler`.
 
-.. _Fireworks: https://pythonhosted.org/FireWorks/index.html
-.. _Dicke Bertha: https://en.wikipedia.org/wiki/Big_Bertha_%28howitzer%29
 .. _Xenon: http://nlesc.github.io/Xenon/
 .. _pyxenon: http://github.com/NLeSC/pyxenon

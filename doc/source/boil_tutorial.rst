@@ -47,7 +47,7 @@ The function for linking object files to an executable looks very similar::
 
         return config['target']
 
-In this case the function takes a list of object file names and the same configuration object that we saw before. Again, this function returns the name of the target executable file. The caller of this function already knows the name of the target file, but we need it to track dependencies.
+In this case the function takes a list of object file names and the same configuration object that we saw before. Again, this function returns the name of the target executable file. The caller of this function already knows the name of the target file, but we need it to track dependencies between function calls.
 
 Since both the :py:func:`link` and the :py:func:`compile_source` functions do actual work that we'd like to see being done in a concurrent environment, they need to be decorated with the :py:func:`schedule` decorator.
 

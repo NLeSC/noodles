@@ -6,23 +6,10 @@
 Welcome to Noodles's documentation!
 ===================================
 
-Contents:
-
-.. toctree::
-   :maxdepth: 2
-
-   Introduction <self>
-   eating
-   cooking
-   first_steps
-   poetry_tutorial
-   boil_tutorial
-   development
-   scheduler
-   brokers
-
 Introduction
-============
+------------
+Noodles offers a model for parallel programming in Python. It can be used for a variety of tasks including data pipelines, and computational workflows. 
+
 The primary goal of Noodles is to make it easy to run jobs on cluster supercomputers, in parallel, straight from a Python shell. The user enters a Python script that looks and feels like a serial program. The Noodles engine then converts this script into a call graph. This graph can be executed on a variety of machines using the different back-end runners that Noodles provides. This is not so much a design driven by technology but by social considerations. The end user may expect an elegant, easy to understand, interface to a computational library. This user experience we refer to as *eating of noodles*.
 
 The computational library that is exposed to the user by means of Noodles needs to adhere to some design principles that are more strict than plain Python gives us. The library should follow a functional style of programming and is limited by the fact that function arguments need to pass through a layer where data is converted to and from a JSON format. The design of such a library is the *cooking of noodles*. As it is with ramen noodles, ofttimes the cook is also an avid consumer of noodles.
@@ -45,21 +32,43 @@ The core of Noodles runs on **Python 3.5**. To run Noodles on your own machine, 
 
 .. code-block:: bash
 
-    # pyxenon needs Java, which may needs JAVA_HOME set, put it in .bashrc
+    # pyxenon needs Java, which may need JAVA_HOME to be set, put it in .bashrc
     export JAVA_HOME="/usr/lib/jvm/default-java"  # or similar...
 
     # create the virtualenv
-    pyvenv-3.5 <venv-dir>
+    virtualenv -p python3 <venv-dir>
     . <venv-dir>/bin/activate
 
     # install noodles
-    cd noodles          # git pull git@github.com:NLeSC/noodles.git
-    pip install -r requirements.txt
-    pip install .
+    pip install noodles
 
-.. NOTE:: In the future this will reduce to `pip install noodles`.
+Noodles has several optional dependencies. To be able to use the Xenon job scheduler, install Noodles with::
 
-To run the nosetests, you will need passwordless access to localhost with ssh. This is achieved by appending ``.ssh/id_rsa.pub`` to ``.ssh/authorized_keys``. If ``id_rsa.pub`` does not yet exist, generate it (GitHub has a good article on `generating SSH keys`_).
+    pip install noodles[xenon]
+
+The provenance/caching feature needs TinyDB installed::
+
+    pip install noodles[prov]
+
+To be able to run the unit tests::
+
+    pip install noodles[test]
+
+Documentation Contents
+======================
+
+.. toctree::
+   :maxdepth: 2
+
+   Introduction <self>
+   eating
+   cooking
+   first_steps
+   poetry_tutorial
+   boil_tutorial
+   development
+   scheduler
+   brokers
 
 Indices and tables
 ==================
