@@ -31,7 +31,7 @@ def test_xenon_42():
 
     job_config = RemoteJobConfig(
         registry=serial.base,
-        time_out=1
+        time_out=1000
     )
 
     with XenonKeeper() as Xe, NCDisplay() as display:
