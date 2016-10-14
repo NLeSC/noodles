@@ -8,7 +8,7 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
-  <title>Development documentation &mdash; Noodles 0.1.0 documentation</title>
+  <title>Development documentation &mdash; Noodles 0.2.0 documentation</title>
   
 
   
@@ -30,9 +30,9 @@
   
 
   
-    <link rel="top" title="Noodles 0.1.0 documentation" href="index.html"/>
+    <link rel="top" title="Noodles 0.2.0 documentation" href="index.html"/>
         <link rel="next" title="The Noodles Scheduler" href="scheduler.html"/>
-        <link rel="prev" title="Cooking of Noodles (library docs)" href="cooking.html"/> 
+        <link rel="prev" title="Boil: the source" href="boil_source.html"/> 
 
   
   <script src="_static/js/modernizr.min.js"></script>
@@ -63,7 +63,7 @@
             
             
               <div class="version">
-                0.1.0
+                0.2
               </div>
             
           
@@ -88,14 +88,19 @@
 <li class="toctree-l1"><a class="reference internal" href="index.html">Introduction</a></li>
 <li class="toctree-l1"><a class="reference internal" href="eating.html">Eating of Noodles (user docs)</a></li>
 <li class="toctree-l1"><a class="reference internal" href="cooking.html">Cooking of Noodles (library docs)</a></li>
-<li class="toctree-l1 current"><a class="current reference internal" href="">Development documentation</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="#module-noodles.datamodel">Internal Specs</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#module-noodles.decorator">Promised object</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#module-noodles.coroutines">Runners</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#module-noodles.worker">Worker executable</a></li>
+<li class="toctree-l1"><a class="reference internal" href="first_steps.html">First Steps</a></li>
+<li class="toctree-l1"><a class="reference internal" href="poetry_tutorial.html">Real World Tutorial 1: Translating Poetry</a></li>
+<li class="toctree-l1"><a class="reference internal" href="boil_tutorial.html">Real World Tutorial 2: Boil, a make tool.</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Development documentation</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#internal-specs">Internal Specs</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#promised-object">Promised object</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#runners">Runners</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#serialisation">Serialisation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#worker-executable">Worker executable</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="scheduler.html">The Noodles Scheduler</a></li>
+<li class="toctree-l1"><a class="reference internal" href="brokers.html">Co-routine brokers</a></li>
 </ul>
 
             
@@ -118,7 +123,7 @@
         <div class="rst-content">
           
 
-
+ 
 
 
 
@@ -140,372 +145,22 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
             
-  <div class="section" id="module-noodles">
-<span id="development-documentation"></span><h1>Development documentation<a class="headerlink" href="#module-noodles" title="Permalink to this headline">¶</a></h1>
-<dl class="function">
-<dt id="noodles.schedule">
-<code class="descclassname">noodles.</code><code class="descname">schedule</code><span class="sig-paren">(</span><em>f</em>, <em>hints=None</em><span class="sig-paren">)</span><a class="headerlink" href="#noodles.schedule" title="Permalink to this definition">¶</a></dt>
-<dd><p>The Noodles schedule function decorator.</p>
-<p>The decorated function will return a workflow in stead of
-being applied immediately. This workflow can then be passed to a job
-scheduler in order to be run on any architecture supporting the current
-python environment.</p>
-</dd></dl>
-
-<dl class="function">
-<dt id="noodles.run">
-<code class="descclassname">noodles.</code><code class="descname">run</code><span class="sig-paren">(</span><em>wf</em><span class="sig-paren">)</span><a class="headerlink" href="#noodles.run" title="Permalink to this definition">¶</a></dt>
-<dd><p>Returns the result of evaluting the workflow</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>workflow</strong> (<code class="xref py py-class docutils literal"><span class="pre">Workflow</span></code> or <code class="xref py py-class docutils literal"><span class="pre">PromisedObject</span></code>) &#8211; Workflow to compute</td>
-</tr>
-</tbody>
-</table>
-</dd></dl>
-
-<dl class="function">
-<dt id="noodles.run_parallel">
-<code class="descclassname">noodles.</code><code class="descname">run_parallel</code><span class="sig-paren">(</span><em>wf</em>, <em>n_threads</em><span class="sig-paren">)</span><a class="headerlink" href="#noodles.run_parallel" title="Permalink to this definition">¶</a></dt>
-<dd><p>Returns the result of evaluating the workflow; runs in several threads.</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
-<li><strong>workflow</strong> (<code class="xref py py-class docutils literal"><span class="pre">Workflow</span></code> or <code class="xref py py-class docutils literal"><span class="pre">PromisedObject</span></code>) &#8211; Workflow to compute</li>
-<li><strong>n_threads</strong> (<em>int</em>) &#8211; Number of threads to use</li>
-</ul>
-</td>
-</tr>
-</tbody>
-</table>
-</dd></dl>
-
-<dl class="function">
-<dt id="noodles.gather">
-<code class="descclassname">noodles.</code><code class="descname">gather</code><span class="sig-paren">(</span><em>*a</em><span class="sig-paren">)</span><a class="headerlink" href="#noodles.gather" title="Permalink to this definition">¶</a></dt>
-<dd><p>Converts a list of workflows (i.e. <code class="xref py py-class docutils literal"><span class="pre">PromisedObject</span></code>) to
-a workflow representing the promised list of values.</p>
-<p>Currently the <code class="xref py py-func docutils literal"><span class="pre">from_call()</span></code> function detects workflows
-only by their top type (using <cite>isinstance</cite>). If we have some
-deeper structure containing <code class="xref py py-class docutils literal"><span class="pre">PromisedObject</span></code>, these are not
-recognised as workflow input and taken as literal values.</p>
-<p>This behaviour may change in the future, making this function
-<cite>gather</cite> obsolete.</p>
-</dd></dl>
-
-<div class="section" id="module-noodles.datamodel">
-<span id="internal-specs"></span><h2>Internal Specs<a class="headerlink" href="#module-noodles.datamodel" title="Permalink to this headline">¶</a></h2>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">author:</th><td class="field-body">Johan Hidding</td>
-</tr>
-<tr class="field-even field"><th class="field-name">description:</th><td class="field-body">Data model 2.0</td>
-</tr>
-</tbody>
-</table>
-<p>The data model works on a basis of delayed execution. The user calls
-decorated functions, building a workflow incrementally. Every node in the
-workflow can be thought of as a <em>promise</em> of a value.</p>
-<dl class="function">
-<dt id="noodles.datamodel.from_call">
-<code class="descclassname">noodles.datamodel.</code><code class="descname">from_call</code><span class="sig-paren">(</span><em>foo</em>, <em>args</em>, <em>kwargs</em>, <em>hints</em><span class="sig-paren">)</span><a class="headerlink" href="#noodles.datamodel.from_call" title="Permalink to this definition">¶</a></dt>
-<dd><p>Takes a function and a set of arguments it needs to run on. Returns a newly
-constructed workflow representing the promised value from the evaluation of
-the function with said arguments.</p>
-<p>These arguments are stored in a BoundArguments object matching to the
-signature of the given function <cite>f</cite>. That is, bound_args was constructed
-by doing:</p>
-<div class="highlight-python"><div class="highlight"><pre><span class="n">inspect</span><span class="o">.</span><span class="n">signature</span><span class="p">(</span><span class="n">foo</span><span class="p">)</span><span class="o">.</span><span class="n">bind</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
-</pre></div>
+  <div class="section" id="development-documentation">
+<h1>Development documentation<a class="headerlink" href="#development-documentation" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="internal-specs">
+<h2>Internal Specs<a class="headerlink" href="#internal-specs" title="Permalink to this headline">¶</a></h2>
 </div>
-<p>The arguments stored in the <cite>bound_args</cite> object are filtered on being
-either &#8216;plain&#8217;, or &#8216;promised&#8217;. If an argument is promised, the value
-it represents is not actually available and needs to be computed by
-evaluating a workflow.</p>
-<p>If an argument is a promised value, the workflow representing the value
-is added to the new workflow. First all the nodes in the original workflow,
-if not already present in the new workflow from an earlier argument,
-are copied to the new workflow, and a new entry is made into the link
-dictionary. Then the links in the old workflow are also added to the
-link dictionary. Since the link dictionary points from nodes to a <cite>set</cite>
-of <a href="#id1"><span class="problematic" id="id2">`</span></a>ArgumentAddress`es, no links are duplicated.</p>
-<p>In the <cite>bound_args</cite> object the promised value is replaced by the <cite>Empty</cite>
-object, so that we can see which arguments still have to be evaluated.</p>
-<p>Doing this for all promised value arguments in the bound_args object,
-results in a new workflow with all the correct dependencies represented
-as links in the graph.</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
-<li><strong>bound_args</strong> (<em>BoundArguments</em>) &#8211; Object containing the argument bindings for the function that is
-being called.</li>
-<li><strong>f</strong> (<em>Callable</em>) &#8211; Function being called.</li>
-</ul>
-</td>
-</tr>
-<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">New workflow.</p>
-</td>
-</tr>
-<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last"><a class="reference internal" href="#noodles.datamodel.Workflow" title="noodles.datamodel.Workflow">Workflow</a></p>
-</td>
-</tr>
-</tbody>
-</table>
-</dd></dl>
-
-<dl class="class">
-<dt id="noodles.datamodel.Node">
-<em class="property">class </em><code class="descclassname">noodles.datamodel.</code><code class="descname">Node</code><span class="sig-paren">(</span><em>module</em>, <em>name</em>, <em>arguments</em>, <em>hints</em><span class="sig-paren">)</span><a class="headerlink" href="#noodles.datamodel.Node" title="Permalink to this definition">¶</a></dt>
-<dd><dl class="attribute">
-<dt id="noodles.datamodel.Node.arguments">
-<code class="descname">arguments</code><a class="headerlink" href="#noodles.datamodel.Node.arguments" title="Permalink to this definition">¶</a></dt>
-<dd><p>Alias for field number 2</p>
-</dd></dl>
-
-<dl class="attribute">
-<dt id="noodles.datamodel.Node.hints">
-<code class="descname">hints</code><a class="headerlink" href="#noodles.datamodel.Node.hints" title="Permalink to this definition">¶</a></dt>
-<dd><p>Alias for field number 3</p>
-</dd></dl>
-
-<dl class="attribute">
-<dt id="noodles.datamodel.Node.module">
-<code class="descname">module</code><a class="headerlink" href="#noodles.datamodel.Node.module" title="Permalink to this definition">¶</a></dt>
-<dd><p>Alias for field number 0</p>
-</dd></dl>
-
-<dl class="attribute">
-<dt id="noodles.datamodel.Node.name">
-<code class="descname">name</code><a class="headerlink" href="#noodles.datamodel.Node.name" title="Permalink to this definition">¶</a></dt>
-<dd><p>Alias for field number 1</p>
-</dd></dl>
-
-</dd></dl>
-
-<dl class="class">
-<dt id="noodles.datamodel.FunctionNode">
-<em class="property">class </em><code class="descclassname">noodles.datamodel.</code><code class="descname">FunctionNode</code><span class="sig-paren">(</span><em>foo</em>, <em>bound_args</em>, <em>hints</em>, <em>node=None</em><span class="sig-paren">)</span><a class="headerlink" href="#noodles.datamodel.FunctionNode" title="Permalink to this definition">¶</a></dt>
-<dd><p>Captures a function call as a combination of function and arguments.
-Some of these arguments may be set to <code class="xref py py-obj docutils literal"><span class="pre">Empty</span></code>, these need to be
-filled in by the workflow before the function can be applied.</p>
-<dl class="attribute">
-<dt id="noodles.datamodel.FunctionNode.foo">
-<code class="descname">foo</code><a class="headerlink" href="#noodles.datamodel.FunctionNode.foo" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<p>The function (or object) that is being called.</p>
-<dl class="attribute">
-<dt id="noodles.datamodel.FunctionNode.bound_args">
-<code class="descname">bound_args</code><a class="headerlink" href="#noodles.datamodel.FunctionNode.bound_args" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<p>A <code class="xref py py-class docutils literal"><span class="pre">BoundArguments</span></code> object storing the arguments to
-the function.</p>
-<dl class="method">
-<dt id="noodles.datamodel.FunctionNode.node">
-<code class="descname">node</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#noodles.datamodel.FunctionNode.node" title="Permalink to this definition">¶</a></dt>
-<dd><p>Convert to a <a class="reference internal" href="#noodles.datamodel.Node" title="noodles.datamodel.Node"><code class="xref py py-class docutils literal"><span class="pre">Node</span></code></a> for subsequent serialisation.</p>
-</dd></dl>
-
-</dd></dl>
-
-<dl class="class">
-<dt id="noodles.datamodel.Workflow">
-<em class="property">class </em><code class="descclassname">noodles.datamodel.</code><code class="descname">Workflow</code><a class="headerlink" href="#noodles.datamodel.Workflow" title="Permalink to this definition">¶</a></dt>
-<dd><p>The workflow data container.</p>
-<dl class="attribute">
-<dt id="noodles.datamodel.Workflow.root">
-<code class="descname">root</code><a class="headerlink" href="#noodles.datamodel.Workflow.root" title="Permalink to this definition">¶</a></dt>
-<dd><p>A reference to the root node in the graph.</p>
-</dd></dl>
-
-<dl class="attribute">
-<dt id="noodles.datamodel.Workflow.nodes">
-<code class="descname">nodes</code><a class="headerlink" href="#noodles.datamodel.Workflow.nodes" title="Permalink to this definition">¶</a></dt>
-<dd><p>A <cite>dict</cite> listing the nodes in the graph. We use a <cite>dict</cite> only to have
-a persistent object reference.</p>
-</dd></dl>
-
-<dl class="attribute">
-<dt id="noodles.datamodel.Workflow.links">
-<code class="descname">links</code><a class="headerlink" href="#noodles.datamodel.Workflow.links" title="Permalink to this definition">¶</a></dt>
-<dd><p>A <cite>dict</cite> giving a <cite>set</cite> of links from each node.</p>
-</dd></dl>
-
-</dd></dl>
-
+<div class="section" id="promised-object">
+<h2>Promised object<a class="headerlink" href="#promised-object" title="Permalink to this headline">¶</a></h2>
 </div>
-<div class="section" id="module-noodles.decorator">
-<span id="promised-object"></span><h2>Promised object<a class="headerlink" href="#module-noodles.decorator" title="Permalink to this headline">¶</a></h2>
-<dl class="class">
-<dt id="noodles.decorator.PromisedObject">
-<em class="property">class </em><code class="descclassname">noodles.decorator.</code><code class="descname">PromisedObject</code><span class="sig-paren">(</span><em>workflow</em><span class="sig-paren">)</span><a class="headerlink" href="#noodles.decorator.PromisedObject" title="Permalink to this definition">¶</a></dt>
-<dd><p>Wraps a <code class="xref py py-class docutils literal"><span class="pre">Workflow</span></code>. The workflow represents the future promise
-of a Python object. By wrapping the workflow, we can mock the behaviour of
-this future object and schedule methods that were called by the user
-as if nothing weird is going on.</p>
-</dd></dl>
-
+<div class="section" id="runners">
+<h2>Runners<a class="headerlink" href="#runners" title="Permalink to this headline">¶</a></h2>
 </div>
-<div class="section" id="module-noodles.coroutines">
-<span id="runners"></span><h2>Runners<a class="headerlink" href="#module-noodles.coroutines" title="Permalink to this headline">¶</a></h2>
-<p>We use coroutines to handle the communication between the scheduler and
-the different workers. Some of the functionality here may be reinventing
-some batteries. If so, submit an issue and teach me the idiomatic way!</p>
-<dl class="class">
-<dt id="noodles.coroutines.IOQueue">
-<em class="property">class </em><code class="descclassname">noodles.coroutines.</code><code class="descname">IOQueue</code><span class="sig-paren">(</span><em>blocking=True</em><span class="sig-paren">)</span><a class="headerlink" href="#noodles.coroutines.IOQueue" title="Permalink to this definition">¶</a></dt>
-<dd><p>We mock a server/client situation by creating a pipe object that
-recieves items in a sink, stores them in a synchronised queue
-object, and sends them out again in source. Any number of threads
-or objects may create a sink or source. All pool to the same Queue.</p>
-<p>This implementation serves as an example and to glue the local threaded
-runner together. On one side there is a worker pool, taking jobs from one
-of these queues. On the other side there is the controller taking results
-from a second pipe, the snake biting its tail.</p>
-</dd></dl>
-
-<dl class="class">
-<dt id="noodles.coroutines.Connection">
-<em class="property">class </em><code class="descclassname">noodles.coroutines.</code><code class="descname">Connection</code><span class="sig-paren">(</span><em>source</em>, <em>sink</em><span class="sig-paren">)</span><a class="headerlink" href="#noodles.coroutines.Connection" title="Permalink to this definition">¶</a></dt>
-<dd><p>Combine a source and a sink. These should represent the IO of
-some object, probably a worker.</p>
-</dd></dl>
-
-<dl class="class">
-<dt id="noodles.coroutines.QueueConnection">
-<em class="property">class </em><code class="descclassname">noodles.coroutines.</code><code class="descname">QueueConnection</code><span class="sig-paren">(</span><em>d_in</em>, <em>d_out</em><span class="sig-paren">)</span><a class="headerlink" href="#noodles.coroutines.QueueConnection" title="Permalink to this definition">¶</a></dt>
-<dd><p>Takes an input and output queue, and conceptually links them,
-returning a pair containing a source from the input queue
-and a sink to the output queue.</p>
-</dd></dl>
-
-<dl class="function">
-<dt id="noodles.coroutines.patch">
-<code class="descclassname">noodles.coroutines.</code><code class="descname">patch</code><span class="sig-paren">(</span><em>source</em>, <em>sink</em><span class="sig-paren">)</span><a class="headerlink" href="#noodles.coroutines.patch" title="Permalink to this definition">¶</a></dt>
-<dd><p>Create a direct link between a source and a sink.</p>
-</dd></dl>
-
-<span class="target" id="module-noodles.run_common"></span><dl class="class">
-<dt id="noodles.run_common.Scheduler">
-<em class="property">class </em><code class="descclassname">noodles.run_common.</code><code class="descname">Scheduler</code><span class="sig-paren">(</span><em>verbose=False</em><span class="sig-paren">)</span><a class="headerlink" href="#noodles.run_common.Scheduler" title="Permalink to this definition">¶</a></dt>
-<dd><p>Schedules jobs, recieves results, then schedules more jobs as they
-become ready to compute. This class communicates with a pool of workers
-by means of coroutines.</p>
-<dl class="method">
-<dt id="noodles.run_common.Scheduler.run">
-<code class="descname">run</code><span class="sig-paren">(</span><em>connection</em>, <em>master</em><span class="sig-paren">)</span><a class="headerlink" href="#noodles.run_common.Scheduler.run" title="Permalink to this definition">¶</a></dt>
-<dd><p>Run a workflow.</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
-<li><strong>connection</strong> (<a class="reference internal" href="#noodles.coroutines.Connection" title="noodles.coroutines.Connection"><em>Connection</em></a>) &#8211; A connection giving a sink to the job-queue and a source yielding
-results.</li>
-<li><strong>master</strong> (<a class="reference internal" href="#noodles.datamodel.Workflow" title="noodles.datamodel.Workflow"><em>Workflow</em></a>) &#8211; The workflow.</li>
-</ul>
-</td>
-</tr>
-</tbody>
-</table>
-</dd></dl>
-
-</dd></dl>
-
-<span class="target" id="module-noodles.run_hybrid"></span><dl class="function">
-<dt id="noodles.run_hybrid.hybrid_threaded_worker">
-<code class="descclassname">noodles.run_hybrid.</code><code class="descname">hybrid_threaded_worker</code><span class="sig-paren">(</span><em>selector</em>, <em>workers</em><span class="sig-paren">)</span><a class="headerlink" href="#noodles.run_hybrid.hybrid_threaded_worker" title="Permalink to this definition">¶</a></dt>
-<dd><p>Runs a set of workers, each in a separate thread.</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
-<li><strong>selector</strong> &#8211; A function that takes a hints-tuple and returns a key
-indexing a worker in the <cite>workers</cite> dictionary.</li>
-<li><strong>workers</strong> &#8211; A dictionary of workers.</li>
-</ul>
-</td>
-</tr>
-<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">A connection for the scheduler.</p>
-</td>
-</tr>
-<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last"><a class="reference internal" href="#noodles.coroutines.Connection" title="noodles.coroutines.Connection">Connection</a></p>
-</td>
-</tr>
-</tbody>
-</table>
-<p>The hybrid worker dispatches jobs to the different workers
-based on the information contained in the hints. If no hints
-were given, the job is run in the main thread.</p>
-<p>Dispatching is done in the main thread. Retrieving results is
-done in a separate thread for each worker. In this design it is
-assumed that dispatching a job takes little time, while waiting for
-one to return a result may take a long time.</p>
-</dd></dl>
-
-<dl class="function">
-<dt id="noodles.run_hybrid.run_hybrid">
-<code class="descclassname">noodles.run_hybrid.</code><code class="descname">run_hybrid</code><span class="sig-paren">(</span><em>wf</em>, <em>selector</em>, <em>workers</em><span class="sig-paren">)</span><a class="headerlink" href="#noodles.run_hybrid.run_hybrid" title="Permalink to this definition">¶</a></dt>
-<dd><p>Returns the result of evaluating the workflow; runs through several
-supplied workers in as many threads.</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
-<li><strong>workflow</strong> (<code class="xref py py-class docutils literal"><span class="pre">Workflow</span></code> or <code class="xref py py-class docutils literal"><span class="pre">PromisedObject</span></code>) &#8211; Workflow to compute</li>
-<li><strong>selector</strong> &#8211; A function selecting the worker that should be run, given a hint.</li>
-<li><strong>workers</strong> &#8211; A dictionary of workers</li>
-</ul>
-</td>
-</tr>
-<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">result of running the workflow</p>
-</td>
-</tr>
-</tbody>
-</table>
-</dd></dl>
-
+<div class="section" id="serialisation">
+<h2>Serialisation<a class="headerlink" href="#serialisation" title="Permalink to this headline">¶</a></h2>
 </div>
-<div class="section" id="module-noodles.worker">
-<span id="worker-executable"></span><h2>Worker executable<a class="headerlink" href="#module-noodles.worker" title="Permalink to this headline">¶</a></h2>
-<p>This is the Noodles executable worker module. This is usually run by the
-scheduler to dispatch jobs remotely, using</p>
-<div class="highlight-bash"><div class="highlight"><pre>&gt; python3.5 -m noodles.worker &lt;args&gt;...
-</pre></div>
-</div>
-<p>There are several modes in which the worker generates results. For all
-of these modes, the rule is <strong>one object per line</strong>.</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">batch-mode:</th><td class="field-body"><p class="first">Give a single job as a JSON string on the command line. The
-result is printed to stdout, again as a JSON object.</p>
-<div class="highlight-bash"><div class="highlight"><pre>&gt; python3.5 -m noodles.worker -batch <span class="s2">&quot;{&#39;job&#39;: ...}&quot;</span>
-</pre></div>
-</div>
-</td>
-</tr>
-<tr class="field-even field"><th class="field-name">online-mode:</th><td class="field-body"><p class="first">Recieve worker commands as JSON objects through stdin and
-send out results to stdout.</p>
-<div class="last highlight-bash"><div class="highlight"><pre>&gt; python3.5 -m noodles.worker -online <span class="o">[</span>-use &lt;worker&gt;<span class="o">]</span>
-</pre></div>
-</div>
-</td>
-</tr>
-</tbody>
-</table>
+<div class="section" id="worker-executable">
+<h2>Worker executable<a class="headerlink" href="#worker-executable" title="Permalink to this headline">¶</a></h2>
 </div>
 </div>
 
@@ -519,7 +174,7 @@ send out results to stdout.</p>
         <a href="scheduler.html" class="btn btn-neutral float-right" title="The Noodles Scheduler" accesskey="n">Next <span class="fa fa-arrow-circle-right"></span></a>
       
       
-        <a href="cooking.html" class="btn btn-neutral" title="Cooking of Noodles (library docs)" accesskey="p"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+        <a href="boil_source.html" class="btn btn-neutral" title="Boil: the source" accesskey="p"><span class="fa fa-arrow-circle-left"></span> Previous</a>
       
     </div>
   
@@ -528,7 +183,7 @@ send out results to stdout.</p>
 
   <div role="contentinfo">
     <p>
-        &copy; Copyright 2015, Johan Hidding, Felipe Zapata.
+        &copy; Copyright 2015-2016, Johan Hidding, Felipe Zapata, Berend Weel.
 
     </p>
   </div>
@@ -550,7 +205,7 @@ send out results to stdout.</p>
     <script type="text/javascript">
         var DOCUMENTATION_OPTIONS = {
             URL_ROOT:'./',
-            VERSION:'0.1.0',
+            VERSION:'0.2.0',
             COLLAPSE_INDEX:false,
             FILE_SUFFIX:'.html',
             HAS_SOURCE:  true

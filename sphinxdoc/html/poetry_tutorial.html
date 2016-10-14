@@ -1,0 +1,539 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>Real World Tutorial 1: Translating Poetry &mdash; Noodles 0.2.0 documentation</title>
+  
+
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  
+  
+    <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  
+
+  
+
+  
+    <link rel="top" title="Noodles 0.2.0 documentation" href="index.html"/>
+        <link rel="next" title="Real World Tutorial 2: Boil, a make tool." href="boil_tutorial.html"/>
+        <link rel="prev" title="First Steps" href="first_steps.html"/> 
+
+  
+  <script src="_static/js/modernizr.min.js"></script>
+
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search">
+          
+
+          
+            <a href="index.html" class="icon icon-home"> Noodles
+          
+
+          
+            
+            <img src="_static/nlesc-logo-white.svg" class="logo" />
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                0.2
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+                <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="index.html">Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="eating.html">Eating of Noodles (user docs)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="cooking.html">Cooking of Noodles (library docs)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="first_steps.html">First Steps</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Real World Tutorial 1: Translating Poetry</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#first-example">First example</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#making-loops">Making loops</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#noodlify">Noodlify!</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#dealing-with-repetition">Dealing with repetition</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="boil_tutorial.html">Real World Tutorial 2: Boil, a make tool.</a></li>
+<li class="toctree-l1"><a class="reference internal" href="development.html">Development documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="scheduler.html">The Noodles Scheduler</a></li>
+<li class="toctree-l1"><a class="reference internal" href="brokers.html">Co-routine brokers</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+        <a href="index.html">Noodles</a>
+      </nav>
+
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          
+
+ 
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="index.html">Docs</a> &raquo;</li>
+      
+    <li>Real World Tutorial 1: Translating Poetry</li>
+      <li class="wy-breadcrumbs-aside">
+        
+          
+            <a href="_sources/poetry_tutorial.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="real-world-tutorial-1-translating-poetry">
+<h1>Real World Tutorial 1: Translating Poetry<a class="headerlink" href="#real-world-tutorial-1-translating-poetry" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="first-example">
+<h2>First example<a class="headerlink" href="#first-example" title="Permalink to this headline">¶</a></h2>
+<p>We build workflows by calling functions. The simplest example of this
+is the &#8220;diamond workflow&#8221;:</p>
+<div class="code python highlight-python"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">noodles</span> <span class="kn">import</span> <span class="n">run_single</span>
+<span class="kn">from</span> <span class="nn">noodles.tutorial</span> <span class="kn">import</span> <span class="p">(</span><span class="n">add</span><span class="p">,</span> <span class="n">sub</span><span class="p">,</span> <span class="n">mul</span><span class="p">)</span>
+
+<span class="n">u</span> <span class="o">=</span> <span class="n">add</span><span class="p">(</span><span class="mi">5</span><span class="p">,</span> <span class="mi">4</span><span class="p">)</span>
+<span class="n">v</span> <span class="o">=</span> <span class="n">sub</span><span class="p">(</span><span class="n">u</span><span class="p">,</span> <span class="mi">3</span><span class="p">)</span>
+<span class="n">w</span> <span class="o">=</span> <span class="n">sub</span><span class="p">(</span><span class="n">u</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
+<span class="n">x</span> <span class="o">=</span> <span class="n">mul</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="n">w</span><span class="p">)</span>
+
+<span class="n">answer</span> <span class="o">=</span> <span class="n">run_single</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+
+<span class="k">print</span><span class="p">(</span><span class="s2">&quot;The answer is {0}.&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">answer</span><span class="p">))</span>
+</pre></div>
+</div>
+<p>That looks like any other Python code! But this example is a bit silly.
+How do we leverage Noodles to earn an honest living? Here&#8217;s a slightly less
+silly example (but only just!). We will build a small translation engine
+that translates sentences by submitting each word to an online dictionary
+over a Rest API. To do this we make loops (&#8220;For thou shalt make loops of
+blue&#8221;). First we build the program as you would do in Python, then we
+sprinkle some Noodles magic and make it work parallel! Furthermore, we&#8217;ll
+see how to:</p>
+<blockquote>
+<div><ul class="simple">
+<li>make more loops</li>
+<li>cache results for reuse</li>
+</ul>
+</div></blockquote>
+</div>
+<div class="section" id="making-loops">
+<h2>Making loops<a class="headerlink" href="#making-loops" title="Permalink to this headline">¶</a></h2>
+<p>How do we make a parallel loop? Let&#8217;s look at a
+<code class="docutils literal"><span class="pre">map</span></code> operation; in Python there are several ways to perform a
+function on all elements in an array. For this example, we will
+translate some words using the Glosbe service, which has a nice REST
+interface. We first build some functionality to use this interface.</p>
+<div class="code python highlight-python"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">urllib.request</span>
+<span class="kn">import</span> <span class="nn">json</span>
+<span class="kn">import</span> <span class="nn">re</span>
+
+
+<span class="k">class</span> <span class="nc">Translate</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;Translate words and sentences in the worst possible way. The Glosbe</span>
+<span class="sd">    dictionary has a nice REST interface that we query for a phrase. We</span>
+<span class="sd">    then take the first result.  To translate a sentence, we cut it in</span>
+<span class="sd">    pieces, translate it and paste it back into a Frankenstein monster.&quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">src_lang</span><span class="o">=</span><span class="s1">&#39;en&#39;</span><span class="p">,</span> <span class="n">tgt_lang</span><span class="o">=</span><span class="s1">&#39;fy&#39;</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">src</span> <span class="o">=</span> <span class="n">src_lang</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">tgt</span> <span class="o">=</span> <span class="n">tgt_lang</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">url</span> <span class="o">=</span> <span class="s1">&#39;https://glosbe.com/gapi/translate?&#39;</span> \
+                   <span class="s1">&#39;from={src}&amp;dest={tgt}&amp;&#39;</span> \
+                   <span class="s1">&#39;phrase={{phrase}}&amp;format=json&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+                        <span class="n">src</span><span class="o">=</span><span class="n">src_lang</span><span class="p">,</span> <span class="n">tgt</span><span class="o">=</span><span class="n">tgt_lang</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">query_phrase</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">phrase</span><span class="p">):</span>
+        <span class="n">url</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">url</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">phrase</span><span class="o">=</span><span class="n">phrase</span><span class="o">.</span><span class="n">lower</span><span class="p">())</span>
+        <span class="k">with</span> <span class="n">urllib</span><span class="o">.</span><span class="n">request</span><span class="o">.</span><span class="n">urlopen</span><span class="p">(</span><span class="n">url</span><span class="p">)</span> <span class="k">as</span> <span class="n">response</span><span class="p">:</span>
+            <span class="n">translation</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">response</span><span class="o">.</span><span class="n">read</span><span class="p">()</span><span class="o">.</span><span class="n">decode</span><span class="p">())</span>
+        <span class="k">return</span> <span class="n">translation</span>
+
+    <span class="k">def</span> <span class="nf">word</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">phrase</span><span class="p">):</span>
+        <span class="n">translation</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">query_phrase</span><span class="p">(</span><span class="n">phrase</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">translation</span><span class="p">[</span><span class="s1">&#39;tuc&#39;</span><span class="p">])</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="ow">and</span> <span class="s1">&#39;phrase&#39;</span> <span class="ow">in</span> <span class="n">translation</span><span class="p">[</span><span class="s1">&#39;tuc&#39;</span><span class="p">][</span><span class="mi">0</span><span class="p">]:</span>
+            <span class="n">result</span> <span class="o">=</span> <span class="n">translation</span><span class="p">[</span><span class="s1">&#39;tuc&#39;</span><span class="p">][</span><span class="mi">0</span><span class="p">][</span><span class="s1">&#39;phrase&#39;</span><span class="p">][</span><span class="s1">&#39;text&#39;</span><span class="p">]</span>
+            <span class="k">if</span> <span class="n">phrase</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">isupper</span><span class="p">():</span>
+                <span class="k">return</span> <span class="n">result</span><span class="o">.</span><span class="n">title</span><span class="p">()</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">return</span> <span class="n">result</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="s2">&quot;&lt;&quot;</span> <span class="o">+</span> <span class="n">phrase</span> <span class="o">+</span> <span class="s2">&quot;&gt;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">sentence</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">phrase</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Split a sentence into a list of words and a format string,</span>
+<span class="sd">        replacing each occurance of a word with &#39;{}&#39;. Map the words through</span>
+<span class="sd">        the translation engine and join them using the format string.&quot;&quot;&quot;</span>
+        <span class="n">words</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">sub</span><span class="p">(</span><span class="s2">&quot;[^\w]&quot;</span><span class="p">,</span> <span class="s2">&quot; &quot;</span><span class="p">,</span> <span class="n">phrase</span><span class="p">)</span><span class="o">.</span><span class="n">split</span><span class="p">()</span>
+        <span class="n">space</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">sub</span><span class="p">(</span><span class="s2">&quot;[\w]+&quot;</span><span class="p">,</span> <span class="s2">&quot;{}&quot;</span><span class="p">,</span> <span class="n">phrase</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">space</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="o">*</span><span class="nb">map</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">word</span><span class="p">,</span> <span class="n">words</span><span class="p">))</span>
+</pre></div>
+</div>
+<p>We start with a list of strings that desparately need translation. And add a little
+routine to print it in a gracious manner.</p>
+<div class="code python highlight-python"><div class="highlight"><pre><span></span><span class="n">shakespeare</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="s2">&quot;If music be the food of love, play on,&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;Give me excess of it; that surfeiting,&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;The appetite may sicken, and so die.&quot;</span><span class="p">]</span>
+
+<span class="k">def</span> <span class="nf">print_poem</span><span class="p">(</span><span class="n">intro</span><span class="p">,</span> <span class="n">poem</span><span class="p">):</span>
+    <span class="k">print</span><span class="p">(</span><span class="n">intro</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">line</span> <span class="ow">in</span> <span class="n">poem</span><span class="p">:</span>
+        <span class="k">print</span><span class="p">(</span><span class="s2">&quot;     &quot;</span><span class="p">,</span> <span class="n">line</span><span class="p">)</span>
+    <span class="k">print</span><span class="p">()</span>
+
+<span class="n">print_poem</span><span class="p">(</span><span class="s2">&quot;Original:&quot;</span><span class="p">,</span> <span class="n">shakespeare</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="highlight-python"><div class="highlight"><pre><span></span><span class="n">Original</span><span class="p">:</span>
+      <span class="n">If</span> <span class="n">music</span> <span class="n">be</span> <span class="n">the</span> <span class="n">food</span> <span class="n">of</span> <span class="n">love</span><span class="p">,</span> <span class="n">play</span> <span class="n">on</span><span class="p">,</span>
+      <span class="n">Give</span> <span class="n">me</span> <span class="n">excess</span> <span class="n">of</span> <span class="n">it</span><span class="p">;</span> <span class="n">that</span> <span class="n">surfeiting</span><span class="p">,</span>
+      <span class="n">The</span> <span class="n">appetite</span> <span class="n">may</span> <span class="n">sicken</span><span class="p">,</span> <span class="ow">and</span> <span class="n">so</span> <span class="n">die</span><span class="o">.</span>
+</pre></div>
+</div>
+<p>Beginning Python programmers like to append things; this is <em>not</em> how you
+are supposed to program in Python; if you do, please go and read Jeff
+Knupp&#8217;s <em>Writing Idiomatic Python</em>.</p>
+<div class="code python highlight-python"><div class="highlight"><pre><span></span><span class="n">shakespeare_auf_deutsch</span> <span class="o">=</span> <span class="p">[]</span>
+<span class="k">for</span> <span class="n">line</span> <span class="ow">in</span> <span class="n">shakespeare</span><span class="p">:</span>
+    <span class="n">shakespeare_auf_deutsch</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+        <span class="n">Translate</span><span class="p">(</span><span class="s1">&#39;en&#39;</span><span class="p">,</span> <span class="s1">&#39;de&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">sentence</span><span class="p">(</span><span class="n">line</span><span class="p">))</span>
+<span class="n">print_poem</span><span class="p">(</span><span class="s2">&quot;Auf Deutsch:&quot;</span><span class="p">,</span> <span class="n">shakespeare_auf_deutsch</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="highlight-python"><div class="highlight"><pre><span></span>Auf Deutsch:
+      Wenn Musik sein der Essen von Minne, spielen an,
+      Geben ich Übermaß von es; das übersättigend,
+      Der Appetit dürfen ekeln, und so sterben.
+</pre></div>
+</div>
+<p>Rather use a comprehension like so:</p>
+<div class="code python highlight-python"><div class="highlight"><pre><span></span><span class="n">shakespeare_ynt_frysk</span> <span class="o">=</span> \
+    <span class="p">(</span><span class="n">Translate</span><span class="p">(</span><span class="s1">&#39;en&#39;</span><span class="p">,</span> <span class="s1">&#39;fy&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">sentence</span><span class="p">(</span><span class="n">line</span><span class="p">)</span> <span class="k">for</span> <span class="n">line</span> <span class="ow">in</span> <span class="n">shakespeare</span><span class="p">)</span>
+<span class="n">print_poem</span><span class="p">(</span><span class="s2">&quot;Yn it Frysk:&quot;</span><span class="p">,</span> <span class="n">shakespeare_ynt_frysk</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="highlight-python"><div class="highlight"><pre><span></span>Yn it Frysk:
+    At muzyk wêze de fiedsel fan leafde, boartsje oan,
+    Jaan &lt;me&gt; by fersin fan it; dat &lt;surfeiting&gt;,
+    De &lt;appetite&gt; maaie &lt;sicken&gt;, en dus deagean.
+</pre></div>
+</div>
+<p>Or use <code class="docutils literal"><span class="pre">map</span></code>:</p>
+<div class="code python highlight-python"><div class="highlight"><pre><span></span><span class="n">shakespeare_pa_dansk</span> <span class="o">=</span> \
+    <span class="nb">map</span><span class="p">(</span><span class="n">Translate</span><span class="p">(</span><span class="s1">&#39;en&#39;</span><span class="p">,</span> <span class="s1">&#39;da&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">sentence</span><span class="p">,</span> <span class="n">shakespeare</span><span class="p">)</span>
+<span class="n">print_poem</span><span class="p">(</span><span class="s2">&quot;På Dansk:&quot;</span><span class="p">,</span> <span class="n">shakespeare_pa_dansk</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="highlight-python"><div class="highlight"><pre><span></span>På Dansk:
+    Hvis musik være de mad af kærlighed, spil på,
+    Give mig udskejelser af det; som &lt;surfeiting&gt;,
+    De appetit må &lt;sicken&gt;, og så dø.
+</pre></div>
+</div>
+</div>
+<div class="section" id="noodlify">
+<h2>Noodlify!<a class="headerlink" href="#noodlify" title="Permalink to this headline">¶</a></h2>
+<p>If your connection is a bit slow, you may find that the translations
+take a while to process. Wouldn&#8217;t it be nice to do it in parallel? How
+much code would we have to change to get there in Noodles? Let&#8217;s take
+the slow part of the program and add a <code class="docutils literal"><span class="pre">&#64;schedule</span></code> decorator, and run!
+Sadly, it is not that simple. We can add <code class="docutils literal"><span class="pre">&#64;schedule</span></code> to the <code class="docutils literal"><span class="pre">word</span></code>
+method. This means that it will return a promise.</p>
+<ul class="simple">
+<li>Rule: <em>Functions that take promises need to be scheduled functions,
+or refer to a scheduled function at some level.</em></li>
+</ul>
+<p>We could write</p>
+<div class="highlight-python"><div class="highlight"><pre><span></span><span class="k">return</span> <span class="n">schedule</span><span class="p">(</span><span class="n">space</span><span class="o">.</span><span class="n">format</span><span class="p">)(</span><span class="o">*</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">word</span><span class="p">(</span><span class="n">w</span><span class="p">)</span> <span class="k">for</span> <span class="n">w</span> <span class="ow">in</span> <span class="n">words</span><span class="p">))</span>
+</pre></div>
+</div>
+<p>in the last line of the <code class="docutils literal"><span class="pre">sentence</span></code> method, but the string format
+method doesn&#8217;t support wrapping. We rely on getting the signature of a
+function by calling <code class="docutils literal"><span class="pre">inspect.signature</span></code>. In some cases of build-in
+function this raises an exception. Note that this is a design flaw in Python,
+not Noodles! We may find a work around for these cases in future versions of
+Noodles. For the moment we&#8217;ll have to define a little wrapper function.</p>
+<div class="code python highlight-python"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">noodles</span> <span class="kn">import</span> <span class="n">schedule</span>
+
+
+<span class="nd">@schedule</span>
+<span class="k">def</span> <span class="nf">format_string</span><span class="p">(</span><span class="n">s</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">s</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+
+<span class="kn">import</span> <span class="nn">urllib.request</span>
+<span class="kn">import</span> <span class="nn">json</span>
+<span class="kn">import</span> <span class="nn">re</span>
+
+
+<span class="k">class</span> <span class="nc">Translate</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;Translate words and sentences in the worst possible way. The Glosbe</span>
+<span class="sd">    dictionary has a nice REST interface that we query for a phrase. We</span>
+<span class="sd">    then take the first result.  To translate a sentence, we cut it in</span>
+<span class="sd">    pieces, translate it and paste it back into a Frankenstein monster.&quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">src_lang</span><span class="o">=</span><span class="s1">&#39;en&#39;</span><span class="p">,</span> <span class="n">tgt_lang</span><span class="o">=</span><span class="s1">&#39;fy&#39;</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">src</span> <span class="o">=</span> <span class="n">src_lang</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">tgt</span> <span class="o">=</span> <span class="n">tgt_lang</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">url</span> <span class="o">=</span> <span class="s1">&#39;https://glosbe.com/gapi/translate?&#39;</span> \
+                   <span class="s1">&#39;from={src}&amp;dest={tgt}&amp;&#39;</span> \
+                   <span class="s1">&#39;phrase={{phrase}}&amp;format=json&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+                        <span class="n">src</span><span class="o">=</span><span class="n">src_lang</span><span class="p">,</span> <span class="n">tgt</span><span class="o">=</span><span class="n">tgt_lang</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">query_phrase</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">phrase</span><span class="p">):</span>
+        <span class="n">url</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">url</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">phrase</span><span class="o">=</span><span class="n">phrase</span><span class="o">.</span><span class="n">lower</span><span class="p">())</span>
+        <span class="k">with</span> <span class="n">urllib</span><span class="o">.</span><span class="n">request</span><span class="o">.</span><span class="n">urlopen</span><span class="p">(</span><span class="n">url</span><span class="p">)</span> <span class="k">as</span> <span class="n">response</span><span class="p">:</span>
+            <span class="n">translation</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">response</span><span class="o">.</span><span class="n">read</span><span class="p">()</span><span class="o">.</span><span class="n">decode</span><span class="p">())</span>
+        <span class="k">return</span> <span class="n">translation</span>
+
+    <span class="nd">@schedule</span>
+    <span class="k">def</span> <span class="nf">word</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">phrase</span><span class="p">):</span>
+        <span class="n">translation</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">query_phrase</span><span class="p">(</span><span class="n">phrase</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">translation</span><span class="p">[</span><span class="s1">&#39;tuc&#39;</span><span class="p">])</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="ow">and</span> <span class="s1">&#39;phrase&#39;</span> <span class="ow">in</span> <span class="n">translation</span><span class="p">[</span><span class="s1">&#39;tuc&#39;</span><span class="p">][</span><span class="mi">0</span><span class="p">]:</span>
+            <span class="n">result</span> <span class="o">=</span> <span class="n">translation</span><span class="p">[</span><span class="s1">&#39;tuc&#39;</span><span class="p">][</span><span class="mi">0</span><span class="p">][</span><span class="s1">&#39;phrase&#39;</span><span class="p">][</span><span class="s1">&#39;text&#39;</span><span class="p">]</span>
+            <span class="k">if</span> <span class="n">phrase</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">isupper</span><span class="p">():</span>
+                <span class="k">return</span> <span class="n">result</span><span class="o">.</span><span class="n">title</span><span class="p">()</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">return</span> <span class="n">result</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="s2">&quot;&lt;&quot;</span> <span class="o">+</span> <span class="n">phrase</span> <span class="o">+</span> <span class="s2">&quot;&gt;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">sentence</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">phrase</span><span class="p">):</span>
+        <span class="n">words</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">sub</span><span class="p">(</span><span class="s2">&quot;[^\w]&quot;</span><span class="p">,</span> <span class="s2">&quot; &quot;</span><span class="p">,</span> <span class="n">phrase</span><span class="p">)</span><span class="o">.</span><span class="n">split</span><span class="p">()</span>
+        <span class="n">space</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">sub</span><span class="p">(</span><span class="s2">&quot;[\w]+&quot;</span><span class="p">,</span> <span class="s2">&quot;{}&quot;</span><span class="p">,</span> <span class="n">phrase</span><span class="p">)</span>
+
+        <span class="c1"># translated_words now is a sequence of promises!</span>
+        <span class="n">translated_words</span> <span class="o">=</span> <span class="nb">map</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">word</span><span class="p">,</span> <span class="n">words</span><span class="p">)</span>
+
+        <span class="c1"># we may only pass them to another `schedule` function</span>
+        <span class="c1"># since `string.format` has no knowledge about promises.</span>
+        <span class="k">return</span> <span class="n">format_string</span><span class="p">(</span><span class="n">space</span><span class="p">,</span> <span class="o">*</span><span class="nb">map</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">word</span><span class="p">,</span> <span class="n">words</span><span class="p">))</span>
+
+    <span class="k">def</span> <span class="nf">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="s2">&quot;[{} -&gt; {}]&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">src</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">tgt</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">__serialize__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">pack</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">pack</span><span class="p">({</span><span class="s1">&#39;src_lang&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">src</span><span class="p">,</span>
+                     <span class="s1">&#39;tgt_lang&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">tgt</span><span class="p">})</span>
+
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">__construct__</span><span class="p">(</span><span class="n">cls</span><span class="p">,</span> <span class="n">msg</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">cls</span><span class="p">(</span><span class="o">**</span><span class="n">msg</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Let&#8217;s take stock of the mutations to the original. We&#8217;ve added a
+<code class="docutils literal"><span class="pre">&#64;schedule</span></code> decorator to <code class="docutils literal"><span class="pre">word</span></code>, and changed a function call in
+<code class="docutils literal"><span class="pre">sentence</span></code>. Also we added the <code class="docutils literal"><span class="pre">__str__</span></code> method; this is only needed
+to plot the workflow graph. Let&#8217;s run the new script.</p>
+<div class="code python highlight-python"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">noodles</span> <span class="kn">import</span> <span class="n">gather</span>
+
+<span class="n">shakespeare_en_esperanto</span> <span class="o">=</span> \
+    <span class="nb">map</span><span class="p">(</span><span class="n">Translate</span><span class="p">(</span><span class="s1">&#39;en&#39;</span><span class="p">,</span> <span class="s1">&#39;eo&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">sentence</span><span class="p">,</span> <span class="n">shakespeare</span><span class="p">)</span>
+
+<span class="n">wf</span> <span class="o">=</span> <span class="n">gather</span><span class="p">(</span><span class="o">*</span><span class="n">shakespeare_en_esperanto</span><span class="p">)</span>
+<span class="n">draw_workflow</span><span class="p">(</span><span class="s1">&#39;poetry.png&#39;</span><span class="p">,</span> <span class="n">wf</span><span class="o">.</span><span class="n">_workflow</span><span class="p">)</span>
+<span class="n">result</span> <span class="o">=</span> <span class="n">run_parallel</span><span class="p">(</span><span class="n">wf</span><span class="p">,</span> <span class="n">n_threads</span><span class="o">=</span><span class="mi">8</span><span class="p">)</span>
+<span class="n">print_poem</span><span class="p">(</span><span class="s2">&quot;Shakespeare en Esperanto:&quot;</span><span class="p">,</span> <span class="n">result</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="highlight-python"><div class="highlight"><pre><span></span>Shakespeare en Esperanto:
+    Se muziko esti la manĝaĵo de ami, ludi sur,
+    Doni mi eksceso de ĝi; tio &lt;surfeiting&gt;,
+    La apetito povi naŭzi, kaj tiel morti.
+</pre></div>
+</div>
+<p>The last peculiar thing that you may notice, is the <code class="docutils literal"><span class="pre">gather</span></code> function.
+It collects the promises that <code class="docutils literal"><span class="pre">map</span></code> generates and creates a single new
+promise. The definition of <code class="docutils literal"><span class="pre">gather</span></code> is very simple:</p>
+<div class="highlight-python"><div class="highlight"><pre><span></span><span class="nd">@schedule</span>
+<span class="k">def</span> <span class="nf">gather</span><span class="p">(</span><span class="o">*</span><span class="n">lst</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">lst</span>
+</pre></div>
+</div>
+<p>The workflow graph of the Esperanto translator script looks like this:</p>
+<div class="figure align-center" style="width: 100%">
+<img alt="a poetic workflow" src="_images/poetry.png" />
+</div>
+</div>
+<div class="section" id="dealing-with-repetition">
+<h2>Dealing with repetition<a class="headerlink" href="#dealing-with-repetition" title="Permalink to this headline">¶</a></h2>
+<p>In the following example we have a line with some repetition. It would
+be a shame to look up the repeated words twice, wouldn&#8217;t it?</p>
+<div class="code python highlight-python"><div class="highlight"><pre><span></span><span class="n">line</span> <span class="o">=</span> <span class="s2">&quot;Mein Gott, mein Gott, warum hast Du mich verlassen?&quot;</span>
+<span class="n">run_parallel</span><span class="p">(</span><span class="n">Translate</span><span class="p">(</span><span class="s1">&#39;de&#39;</span><span class="p">,</span> <span class="s1">&#39;fr&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">sentence</span><span class="p">(</span><span class="n">line</span><span class="p">),</span> <span class="n">n_threads</span><span class="o">=</span><span class="mi">4</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="highlight-python"><div class="highlight"><pre><span></span><span class="s1">&#39;Mon Dieu, mon Dieu, pourquoi as Tu me quitter?&#39;</span>
+</pre></div>
+</div>
+<p>To see how this program is being run, we monitor the job submission,
+retrieval and result storage in a <code class="docutils literal"><span class="pre">JobKeeper</span></code> instance.</p>
+<div class="code python highlight-python"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">noodles.run.job_keeper</span> <span class="kn">import</span> <span class="n">JobKeeper</span>
+<span class="kn">from</span> <span class="nn">noodles.run.run_with_prov</span> <span class="kn">import</span> <span class="n">run_parallel</span>
+<span class="kn">from</span> <span class="nn">noodles</span> <span class="kn">import</span> <span class="n">serial</span>
+
+<span class="n">J</span> <span class="o">=</span> <span class="n">JobKeeper</span><span class="p">(</span><span class="n">keep</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+<span class="n">wf</span> <span class="o">=</span> <span class="n">Translate</span><span class="p">(</span><span class="s1">&#39;de&#39;</span><span class="p">,</span> <span class="s1">&#39;fr&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">sentence</span><span class="p">(</span><span class="n">line</span><span class="p">)</span>
+<span class="n">run_parallel</span><span class="p">(</span><span class="n">wf</span><span class="p">,</span>
+             <span class="n">n_threads</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span> <span class="n">registry</span><span class="o">=</span><span class="n">serial</span><span class="o">.</span><span class="n">base</span><span class="p">,</span>
+             <span class="n">jobdb_file</span><span class="o">=</span><span class="s1">&#39;matthew.json&#39;</span><span class="p">,</span> <span class="n">job_keeper</span><span class="o">=</span><span class="n">J</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="highlight-python"><div class="highlight"><pre><span></span><span class="s1">&#39;Mon Dieu, mon Dieu, pourquoi as Tu me quitter?&#39;</span>
+</pre></div>
+</div>
+<p>Now we can see how the results were obtained by inspecting the
+<code class="docutils literal"><span class="pre">JobKeeper</span></code> object. Running the first time, you may see that
+some jobs <em>attached</em> themselves to other jobs as they are identical.</p>
+<p>Then try running above cell again. All the results should be cached
+in the <code class="xref py py-obj docutils literal"><span class="pre">matthew.json</span></code> file, and no queries are send to Glosbe, saving
+us from certain doom of IP black listing.</p>
+<div class="code python highlight-python"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">itertools</span> <span class="kn">import</span> <span class="n">starmap</span>
+<span class="kn">import</span> <span class="nn">time</span>
+
+<span class="k">def</span> <span class="nf">format_log_entry</span><span class="p">(</span><span class="n">tm</span><span class="p">,</span> <span class="n">what</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="n">msg</span><span class="p">):</span>
+    <span class="k">return</span> <span class="s2">&quot;{}: {:16} - {}&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+        <span class="n">time</span><span class="o">.</span><span class="n">strftime</span><span class="p">(</span><span class="s1">&#39;%Y-%m-</span><span class="si">%d</span><span class="s1">T%H:%M:%SZ&#39;</span><span class="p">,</span> <span class="n">time</span><span class="o">.</span><span class="n">gmtime</span><span class="p">(</span><span class="n">tm</span><span class="p">)),</span>
+        <span class="s1">&#39;[&#39;</span> <span class="o">+</span> <span class="n">what</span> <span class="o">+</span> <span class="s1">&#39;]&#39;</span><span class="p">,</span>
+        <span class="n">data</span><span class="p">)</span>
+
+<span class="k">for</span> <span class="n">k</span><span class="p">,</span><span class="n">j</span> <span class="ow">in</span> <span class="n">J</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+    <span class="k">print</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\n</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">starmap</span><span class="p">(</span><span class="n">format_log_entry</span><span class="p">,</span> <span class="n">j</span><span class="o">.</span><span class="n">log</span><span class="p">)))</span>
+    <span class="k">print</span><span class="p">(</span><span class="s2">&quot;-------------------------------------&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+</div>
+
+
+           </div>
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="boil_tutorial.html" class="btn btn-neutral float-right" title="Real World Tutorial 2: Boil, a make tool." accesskey="n">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="first_steps.html" class="btn btn-neutral" title="First Steps" accesskey="p"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2015-2016, Johan Hidding, Felipe Zapata, Berend Weel.
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'./',
+            VERSION:'0.2.0',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true
+        };
+    </script>
+      <script type="text/javascript" src="_static/jquery.js"></script>
+      <script type="text/javascript" src="_static/underscore.js"></script>
+      <script type="text/javascript" src="_static/doctools.js"></script>
+      <script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+
+  
+
+  
+  
+    <script type="text/javascript" src="_static/js/theme.js"></script>
+  
+
+  
+  
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.StickyNav.enable();
+      });
+  </script>
+   
+
+</body>
+</html>

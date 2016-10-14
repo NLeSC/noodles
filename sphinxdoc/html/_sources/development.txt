@@ -1,28 +1,33 @@
 Development documentation
 =========================
 .. automodule:: noodles
-    :members: schedule, run, run_parallel, gather
+    :members: schedule, run_single, run_parallel, run_process, gather
 
 Internal Specs
 --------------
-.. automodule:: noodles.datamodel
-    :members: from_call, Node, FunctionNode, Workflow
+.. automodule:: noodles.workflow
+    :members: from_call, NodeData, FunctionNode, Workflow
 
 Promised object
 ---------------
-.. automodule:: noodles.decorator
+.. automodule:: noodles.interface
     :members: PromisedObject
 
 Runners
 -------
-.. automodule:: noodles.coroutines
-    :members: IOQueue, Connection, QueueConnection, patch
+.. automodule:: noodles.run.scheduler
+    :members: Scheduler
 
-.. automodule:: noodles.run_common
-    :members: run_job, Scheduler
-
-.. automodule:: noodles.run_hybrid
+.. automodule:: noodles.run.hybrid
     :members: hybrid_threaded_worker, run_hybrid
+
+Serialisation
+-------------
+.. automodule:: noodles.serial
+    :members: base, pickle, numpy
+
+.. automodule:: noodles.serial.registry
+    :members: Registry, Serialiser, RefObject
 
 Worker executable
 -----------------

@@ -8,7 +8,7 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
-  <title>The Noodles Scheduler &mdash; Noodles 0.1.0 documentation</title>
+  <title>The Noodles Scheduler &mdash; Noodles 0.2.0 documentation</title>
   
 
   
@@ -30,7 +30,8 @@
   
 
   
-    <link rel="top" title="Noodles 0.1.0 documentation" href="index.html"/>
+    <link rel="top" title="Noodles 0.2.0 documentation" href="index.html"/>
+        <link rel="next" title="Co-routine brokers" href="brokers.html"/>
         <link rel="prev" title="Development documentation" href="development.html"/> 
 
   
@@ -62,7 +63,7 @@
             
             
               <div class="version">
-                0.1.0
+                0.2
               </div>
             
           
@@ -87,8 +88,11 @@
 <li class="toctree-l1"><a class="reference internal" href="index.html">Introduction</a></li>
 <li class="toctree-l1"><a class="reference internal" href="eating.html">Eating of Noodles (user docs)</a></li>
 <li class="toctree-l1"><a class="reference internal" href="cooking.html">Cooking of Noodles (library docs)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="first_steps.html">First Steps</a></li>
+<li class="toctree-l1"><a class="reference internal" href="poetry_tutorial.html">Real World Tutorial 1: Translating Poetry</a></li>
+<li class="toctree-l1"><a class="reference internal" href="boil_tutorial.html">Real World Tutorial 2: Boil, a make tool.</a></li>
 <li class="toctree-l1"><a class="reference internal" href="development.html">Development documentation</a></li>
-<li class="toctree-l1 current"><a class="current reference internal" href="">The Noodles Scheduler</a><ul>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">The Noodles Scheduler</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="#local-workers">Local workers</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="#the-single-worker">The single worker</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#the-threaded-worker">The Threaded worker</a></li>
@@ -102,6 +106,7 @@
 </li>
 </ul>
 </li>
+<li class="toctree-l1"><a class="reference internal" href="brokers.html">Co-routine brokers</a></li>
 </ul>
 
             
@@ -124,7 +129,7 @@
         <div class="rst-content">
           
 
-
+ 
 
 
 
@@ -150,7 +155,7 @@
 <span id="noodles-scheduler"></span><h1>The Noodles Scheduler<a class="headerlink" href="#the-noodles-scheduler" title="Permalink to this headline">¶</a></h1>
 <p>The Noodles scheduler is completely separated from the worker infrastructure. The scheduler accepts a single worker as an argument. This worker provides the scheduler with two coroutines. One acts as a generator of results, the other as a sink for jobs (the scheduler calls the <code class="docutils literal"><span class="pre">send()</span></code> method on it).</p>
 <p>Both jobs and results are accompanied by a unique key to identify the associated job. The scheduler loops over the results as follows (more or less):</p>
-<div class="highlight-python"><div class="highlight"><pre><span class="k">for</span> <span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">result</span><span class="p">)</span> <span class="ow">in</span> <span class="n">source</span><span class="p">:</span>
+<div class="highlight-python"><div class="highlight"><pre><span></span><span class="k">for</span> <span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">result</span><span class="p">)</span> <span class="ow">in</span> <span class="n">source</span><span class="p">:</span>
     <span class="sd">&quot;&quot;&quot;process result&quot;&quot;&quot;</span>
     <span class="o">...</span>
 
@@ -181,7 +186,7 @@
 11
 12
 13
-14</pre></div></td><td class="code"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">noodles.coroutines</span> <span class="kn">import</span> <span class="p">(</span><span class="n">IOQueue</span><span class="p">,</span> <span class="n">Connection</span><span class="p">)</span>
+14</pre></div></td><td class="code"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">noodles.coroutines</span> <span class="kn">import</span> <span class="p">(</span><span class="n">IOQueue</span><span class="p">,</span> <span class="n">Connection</span><span class="p">)</span>
 <span class="kn">from</span> <span class="nn">noodles.run_common</span> <span class="kn">import</span> <span class="n">run_job</span>
 
 <span class="k">def</span> <span class="nf">single_worker</span><span class="p">():</span>
@@ -229,7 +234,7 @@ The <code class="docutils literal"><span class="pre">Connection</span></code> cl
 18
 19
 20
-21</pre></div></td><td class="code"><div class="highlight"><pre><span class="k">def</span> <span class="nf">threaded_worker</span><span class="p">(</span><span class="n">n_threads</span><span class="p">):</span>
+21</pre></div></td><td class="code"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">threaded_worker</span><span class="p">(</span><span class="n">n_threads</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;Sets up a number of threads, each polling for jobs.&quot;&quot;&quot;</span>
     <span class="n">job_q</span> <span class="o">=</span> <span class="n">IOQueue</span><span class="p">()</span>
     <span class="n">result_q</span> <span class="o">=</span> <span class="n">IOQueue</span><span class="p">()</span>
@@ -278,6 +283,8 @@ The <code class="docutils literal"><span class="pre">Connection</span></code> cl
   
     <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
       
+        <a href="brokers.html" class="btn btn-neutral float-right" title="Co-routine brokers" accesskey="n">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
       
         <a href="development.html" class="btn btn-neutral" title="Development documentation" accesskey="p"><span class="fa fa-arrow-circle-left"></span> Previous</a>
       
@@ -288,7 +295,7 @@ The <code class="docutils literal"><span class="pre">Connection</span></code> cl
 
   <div role="contentinfo">
     <p>
-        &copy; Copyright 2015, Johan Hidding, Felipe Zapata.
+        &copy; Copyright 2015-2016, Johan Hidding, Felipe Zapata, Berend Weel.
 
     </p>
   </div>
@@ -310,7 +317,7 @@ The <code class="docutils literal"><span class="pre">Connection</span></code> cl
     <script type="text/javascript">
         var DOCUMENTATION_OPTIONS = {
             URL_ROOT:'./',
-            VERSION:'0.1.0',
+            VERSION:'0.2.0',
             COLLAPSE_INDEX:false,
             FILE_SUFFIX:'.html',
             HAS_SOURCE:  true

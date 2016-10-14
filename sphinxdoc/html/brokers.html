@@ -1,0 +1,366 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>Co-routine brokers &mdash; Noodles 0.2.0 documentation</title>
+  
+
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  
+  
+    <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  
+
+  
+
+  
+    <link rel="top" title="Noodles 0.2.0 documentation" href="index.html"/>
+        <link rel="prev" title="The Noodles Scheduler" href="scheduler.html"/> 
+
+  
+  <script src="_static/js/modernizr.min.js"></script>
+
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search">
+          
+
+          
+            <a href="index.html" class="icon icon-home"> Noodles
+          
+
+          
+            
+            <img src="_static/nlesc-logo-white.svg" class="logo" />
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                0.2
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+                <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="index.html">Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="eating.html">Eating of Noodles (user docs)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="cooking.html">Cooking of Noodles (library docs)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="first_steps.html">First Steps</a></li>
+<li class="toctree-l1"><a class="reference internal" href="poetry_tutorial.html">Real World Tutorial 1: Translating Poetry</a></li>
+<li class="toctree-l1"><a class="reference internal" href="boil_tutorial.html">Real World Tutorial 2: Boil, a make tool.</a></li>
+<li class="toctree-l1"><a class="reference internal" href="development.html">Development documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="scheduler.html">The Noodles Scheduler</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Co-routine brokers</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#queues">Queues</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#scheduler">Scheduler</a></li>
+</ul>
+</li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+        <a href="index.html">Noodles</a>
+      </nav>
+
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          
+
+ 
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="index.html">Docs</a> &raquo;</li>
+      
+    <li>Co-routine brokers</li>
+      <li class="wy-breadcrumbs-aside">
+        
+          
+            <a href="_sources/brokers.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="co-routine-brokers">
+<h1>Co-routine brokers<a class="headerlink" href="#co-routine-brokers" title="Permalink to this headline">¶</a></h1>
+<p>We use co-routines to communicate messages between different components
+in the Noodles runtime. Co-routines can have input or output in two ways
+<em>passive</em> and <em>active</em>. An example:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">f_pulls</span><span class="p">(</span><span class="n">coroutine</span><span class="p">):</span>
+    <span class="k">for</span> <span class="n">msg</span> <span class="ow">in</span> <span class="n">coroutine</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
+
+<span class="k">def</span> <span class="nf">g_produces</span><span class="p">(</span><span class="n">lines</span><span class="p">):</span>
+    <span class="k">for</span> <span class="n">l</span> <span class="ow">in</span> <span class="n">lines</span><span class="p">:</span>
+        <span class="k">yield</span> <span class="n">lines</span>
+
+<span class="n">lines</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;aap&#39;</span><span class="p">,</span> <span class="s1">&#39;noot&#39;</span><span class="p">,</span> <span class="s1">&#39;mies&#39;</span><span class="p">]</span>
+
+<span class="n">f_pulls</span><span class="p">(</span><span class="n">g_produces</span><span class="p">(</span><span class="n">lines</span><span class="p">))</span>
+</pre></div>
+</div>
+<p>This prints the words &#8216;aap&#8217;, &#8216;noot&#8217; and &#8216;mies&#8217;. This same program could be
+written where the co-routine is the one recieving messages:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">f_recieves</span><span class="p">():</span>
+    <span class="k">while</span> <span class="kc">True</span><span class="p">:</span>
+        <span class="n">msg</span> <span class="o">=</span> <span class="k">yield</span>
+        <span class="nb">print</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
+
+<span class="k">def</span> <span class="nf">g_pushes</span><span class="p">(</span><span class="n">coroutine</span><span class="p">,</span> <span class="n">lines</span><span class="p">):</span>
+    <span class="k">for</span> <span class="n">l</span> <span class="ow">in</span> <span class="n">lines</span><span class="p">:</span>
+        <span class="n">coroutine</span><span class="o">.</span><span class="n">send</span><span class="p">(</span><span class="n">l</span><span class="p">)</span>
+
+<span class="n">sink</span> <span class="o">=</span> <span class="n">f_recieves</span><span class="p">()</span>
+<span class="n">sink</span><span class="o">.</span><span class="n">send</span><span class="p">(</span><span class="kc">None</span><span class="p">)</span>  <span class="c1"># the co-routine needs to be initialised</span>
+                 <span class="c1"># alternatively, .next() does the same as .send(None)</span>
+<span class="n">g_pushes</span><span class="p">(</span><span class="n">sink</span><span class="p">,</span> <span class="n">lines</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>The action of creating a co-routine and setting it to the first <code class="xref py py-obj docutils literal"><span class="pre">yield</span></code> statement
+can be performed by a little decorator:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">functools</span> <span class="k">import</span> <span class="n">wraps</span>
+
+<span class="k">def</span> <span class="nf">coroutine</span><span class="p">(</span><span class="n">f</span><span class="p">):</span>
+    <span class="nd">@wraps</span><span class="p">(</span><span class="n">f</span><span class="p">)</span>
+    <span class="k">def</span> <span class="nf">g</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="n">sink</span> <span class="o">=</span> <span class="n">f</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="n">sink</span><span class="o">.</span><span class="n">send</span><span class="p">(</span><span class="kc">None</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">sink</span>
+
+    <span class="k">return</span> <span class="n">g</span>
+</pre></div>
+</div>
+<p>So far so good. Now we add multi-threading to the mix.</p>
+<div class="section" id="queues">
+<h2>Queues<a class="headerlink" href="#queues" title="Permalink to this headline">¶</a></h2>
+<p>Queues in python are thread-safe objects. We can define a new <code class="xref py py-obj docutils literal"><span class="pre">IOQueue</span></code> object
+that uses the python <code class="xref py py-obj docutils literal"><span class="pre">Queue</span></code> to buffer and distribute messages over several threads:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">queue</span> <span class="k">import</span> <span class="n">Queue</span>
+
+<span class="k">class</span> <span class="nc">IOQueue</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_q</span> <span class="o">=</span> <span class="n">Queue</span><span class="p">()</span>
+
+    <span class="k">def</span> <span class="nf">source</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">while</span> <span class="kc">True</span><span class="p">:</span>
+            <span class="n">msg</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_q</span><span class="o">.</span><span class="n">get</span><span class="p">()</span>
+            <span class="k">yield</span> <span class="n">msg</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_q</span><span class="o">.</span><span class="n">task_done</span><span class="p">()</span>
+
+    <span class="nd">@coroutine</span>
+    <span class="k">def</span> <span class="nf">sink</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">while</span> <span class="kc">True</span><span class="p">:</span>
+            <span class="n">msg</span> <span class="o">=</span> <span class="k">yield</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_q</span><span class="o">.</span><span class="n">put</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">wait</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">Q</span><span class="o">.</span><span class="n">join</span><span class="p">()</span>
+</pre></div>
+</div>
+<p>Note, that both ends of the queue are, as we call it, passive. We could make an active
+source (it would become a normal function), taking a call-back as an argument. However,
+we&#8217;re designing the Noodles runtime so that it easy to interleave functionality. Moreover,
+the <code class="xref py py-obj docutils literal"><span class="pre">IOQueue</span></code> object is only concerned with the state of its own queue. The outside universe
+is only represented by the <code class="xref py py-obj docutils literal"><span class="pre">yield</span></code> statements, thus preserving the principle of encapsulation.</p>
+</div>
+<div class="section" id="scheduler">
+<h2>Scheduler<a class="headerlink" href="#scheduler" title="Permalink to this headline">¶</a></h2>
+<p>The last constraint to the Noodles broker system is the layout of the <code class="xref py py-obj docutils literal"><span class="pre">Scheduler</span></code> function,
+arguably the most important function in Noodles, since it controls the execution of all
+user code. The loop structure is as follows:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="k">class</span> <span class="nc">Scheduler</span><span class="p">:</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">worker</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">job_sink</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">result_source</span> <span class="o">=</span> <span class="n">worker</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">jobs</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">links</span> <span class="o">=</span> <span class="p">{}</span>
+
+    <span class="k">def</span> <span class="nf">initialise</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">workflow</span><span class="p">,</span> <span class="n">target</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">links</span><span class="p">[</span><span class="nb">id</span><span class="p">(</span><span class="n">workflow</span><span class="p">)]</span> <span class="o">=</span> <span class="n">target</span>
+
+        <span class="k">for</span> <span class="n">node</span> <span class="ow">in</span> <span class="n">workflow</span><span class="o">.</span><span class="n">nodes</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">node</span><span class="o">.</span><span class="n">is_ready</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">schedule</span><span class="p">(</span><span class="n">Job</span><span class="p">(</span><span class="n">workflow</span><span class="p">,</span> <span class="n">node</span><span class="p">))</span>
+
+    <span class="k">def</span> <span class="nf">schedule</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">job</span><span class="p">):</span>
+        <span class="n">key</span> <span class="o">=</span> <span class="n">uuid</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">jobs</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">job</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">job_sink</span><span class="o">.</span><span class="n">send</span><span class="p">((</span><span class="n">key</span><span class="p">,</span> <span class="n">job</span><span class="o">.</span><span class="n">function</span><span class="p">,</span> <span class="n">job</span><span class="o">.</span><span class="n">args</span><span class="p">))</span>
+
+    <span class="k">def</span> <span class="nf">run</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">master</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">initialise</span><span class="p">(</span><span class="n">master</span><span class="p">)</span>
+
+        <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">result</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">result_source</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">is_workflow</span><span class="p">(</span><span class="n">result</span><span class="p">):</span>
+                <span class="n">initialise</span><span class="p">(</span><span class="n">result</span><span class="p">,</span> <span class="n">target</span><span class="o">=</span><span class="n">key</span><span class="p">)</span>
+                <span class="k">continue</span>
+
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">jobs</span><span class="p">[</span><span class="n">key</span><span class="p">]</span><span class="o">.</span><span class="n">is_root</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">job</span><span class="o">.</span><span class="n">workflow</span> <span class="o">==</span> <span class="n">master</span><span class="p">:</span>
+                    <span class="k">return</span> <span class="n">result</span>
+
+                <span class="n">key</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">links</span><span class="p">[</span><span class="nb">id</span><span class="p">(</span><span class="n">job</span><span class="o">.</span><span class="n">workflow</span><span class="p">)]</span>
+
+            <span class="n">job</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">jobs</span><span class="p">[</span><span class="n">key</span><span class="p">]</span>
+
+            <span class="k">for</span> <span class="n">node</span><span class="p">,</span> <span class="n">arg</span> <span class="ow">in</span> <span class="n">job</span><span class="o">.</span><span class="n">targets</span><span class="p">:</span>
+                <span class="n">node</span><span class="o">.</span><span class="n">set_argument</span><span class="p">(</span><span class="n">arg</span><span class="p">,</span> <span class="n">result</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">node</span><span class="o">.</span><span class="n">is_ready</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">schedule</span><span class="p">(</span><span class="n">Job</span><span class="p">(</span><span class="n">job</span><span class="o">.</span><span class="n">workflow</span><span class="p">,</span> <span class="n">node</span><span class="p">))</span>
+
+            <span class="k">del</span> <span class="bp">self</span><span class="o">.</span><span class="n">jobs</span><span class="p">[</span><span class="n">key</span><span class="p">]</span>
+</pre></div>
+</div>
+<p>What the scheduler doesn&#8217;t know about, is <em>how</em> or <em>where</em> the jobs are
+being executed. A simple worker that works with this scheduler is:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">single_worker</span><span class="p">():</span>
+    <span class="n">jobs</span> <span class="o">=</span> <span class="n">IOQueue</span><span class="p">()</span>
+
+    <span class="k">def</span> <span class="nf">get_result</span><span class="p">(</span><span class="n">source</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">function</span><span class="p">,</span> <span class="n">args</span> <span class="ow">in</span> <span class="n">source</span><span class="p">:</span>
+            <span class="k">yield</span> <span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">function</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">))</span>
+
+    <span class="k">return</span> <span class="n">jobs</span><span class="o">.</span><span class="n">sink</span><span class="p">(),</span> <span class="n">get_result</span><span class="p">(</span><span class="n">jobs</span><span class="o">.</span><span class="n">source</span><span class="p">())</span>
+</pre></div>
+</div>
+<p>Here we have the combination of an <em>active</em> scheduler and a <em>passive</em> worker.
+Suppose we have an active worker implementation:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">active_worker</span><span class="p">(</span><span class="n">job_source</span><span class="p">,</span> <span class="n">result_sink</span><span class="p">):</span>
+    <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">function</span><span class="p">,</span> <span class="n">args</span> <span class="ow">in</span> <span class="n">job_source</span><span class="p">:</span>
+        <span class="n">result_sink</span><span class="o">.</span><span class="n">send</span><span class="p">((</span><span class="n">key</span><span class="p">,</span> <span class="n">function</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">)))</span>
+</pre></div>
+</div>
+<p>Then we need passive glue to connect the worker with the scheduler. Moreover, to prevent deadlock the
+scheduler and worker need to work in different threads. The glue is queue. The big question is: can we
+come up with a semantic to connect the different parts and take care of threading active components
+automatically?</p>
+</div>
+</div>
+
+
+           </div>
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+      
+        <a href="scheduler.html" class="btn btn-neutral" title="The Noodles Scheduler" accesskey="p"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2015-2016, Johan Hidding, Felipe Zapata, Berend Weel.
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'./',
+            VERSION:'0.2.0',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true
+        };
+    </script>
+      <script type="text/javascript" src="_static/jquery.js"></script>
+      <script type="text/javascript" src="_static/underscore.js"></script>
+      <script type="text/javascript" src="_static/doctools.js"></script>
+      <script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+
+  
+
+  
+  
+    <script type="text/javascript" src="_static/js/theme.js"></script>
+  
+
+  
+  
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.StickyNav.enable();
+      });
+  </script>
+   
+
+</body>
+</html>

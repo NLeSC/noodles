@@ -8,7 +8,7 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
-  <title>Cooking of Noodles (library docs) &mdash; Noodles 0.1.0 documentation</title>
+  <title>Cooking of Noodles (library docs) &mdash; Noodles 0.2.0 documentation</title>
   
 
   
@@ -30,8 +30,8 @@
   
 
   
-    <link rel="top" title="Noodles 0.1.0 documentation" href="index.html"/>
-        <link rel="next" title="Development documentation" href="development.html"/>
+    <link rel="top" title="Noodles 0.2.0 documentation" href="index.html"/>
+        <link rel="next" title="First Steps" href="first_steps.html"/>
         <link rel="prev" title="Eating of Noodles (user docs)" href="eating.html"/> 
 
   
@@ -63,7 +63,7 @@
             
             
               <div class="version">
-                0.1.0
+                0.2
               </div>
             
           
@@ -87,8 +87,23 @@
                 <ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="index.html">Introduction</a></li>
 <li class="toctree-l1"><a class="reference internal" href="eating.html">Eating of Noodles (user docs)</a></li>
-<li class="toctree-l1 current"><a class="current reference internal" href="">Cooking of Noodles (library docs)</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Cooking of Noodles (library docs)</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#call-by-value">Call by value</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#monads-sort-of">Monads (sort of)</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#member-assignment">Member assignment</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#other-magic-methods">Other magic methods</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#storable">Storable</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#serialisation">Serialisation</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="first_steps.html">First Steps</a></li>
+<li class="toctree-l1"><a class="reference internal" href="poetry_tutorial.html">Real World Tutorial 1: Translating Poetry</a></li>
+<li class="toctree-l1"><a class="reference internal" href="boil_tutorial.html">Real World Tutorial 2: Boil, a make tool.</a></li>
 <li class="toctree-l1"><a class="reference internal" href="development.html">Development documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="scheduler.html">The Noodles Scheduler</a></li>
+<li class="toctree-l1"><a class="reference internal" href="brokers.html">Co-routine brokers</a></li>
 </ul>
 
             
@@ -111,7 +126,7 @@
         <div class="rst-content">
           
 
-
+ 
 
 
 
@@ -135,6 +150,66 @@
             
   <div class="section" id="cooking-of-noodles-library-docs">
 <h1>Cooking of Noodles (library docs)<a class="headerlink" href="#cooking-of-noodles-library-docs" title="Permalink to this headline">¶</a></h1>
+<p>The cooking of good Noodles can be tricky. We try to make it as easy as possible, but to write good Noodles you need to settle in a <em>functional style</em> of programming. The functions you design cannot write to some global state, or modify its arguments and expect these modifications to persist throughout the program. This is not a restriction of Noodles itself, this is a fundamental principle that applies to all possible frameworks for parallel and distributed programming. So get used to it!</p>
+<p>Every function call in Noodles (that is, calls to scheduled function) can be visualised as a node in a call graph. You should be able to draw this graph conceptually when designing the program. Luckily there is (almost) always a way to write down non-functional code in a functional way.</p>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">Golden Rule: if you modify something, return it.</p>
+</div>
+<div class="section" id="call-by-value">
+<h2>Call by value<a class="headerlink" href="#call-by-value" title="Permalink to this headline">¶</a></h2>
+<p>Suppose we have the following program</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">noodles</span> <span class="k">import</span> <span class="p">(</span><span class="n">schedule</span><span class="p">,</span> <span class="n">run_single</span><span class="p">)</span>
+
+<span class="nd">@schedule</span>
+<span class="k">def</span> <span class="nf">double</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">x</span><span class="p">[</span><span class="s1">&#39;value&#39;</span><span class="p">]</span> <span class="o">*</span> <span class="mi">2</span>
+
+<span class="nd">@schedule</span>
+<span class="k">def</span> <span class="nf">add</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">x</span> <span class="o">+</span> <span class="n">y</span>
+
+<span class="n">a</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;value&#39;</span><span class="p">:</span> <span class="mi">4</span><span class="p">}</span>
+<span class="n">b</span> <span class="o">=</span> <span class="n">double</span><span class="p">(</span><span class="n">a</span><span class="p">)</span>
+<span class="n">a</span><span class="p">[</span><span class="s1">&#39;value&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="mi">5</span>
+<span class="n">c</span> <span class="o">=</span> <span class="n">double</span><span class="p">(</span><span class="n">a</span><span class="p">)</span>
+<span class="n">d</span> <span class="o">=</span> <span class="n">add</span><span class="p">(</span><span class="n">b</span><span class="p">,</span> <span class="n">c</span><span class="p">)</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="n">run_single</span><span class="p">(</span><span class="n">d</span><span class="p">))</span>
+</pre></div>
+</div>
+<p>If this were undecorated Python, the answer would be 18. However, the computation of this answer depends on the time-dependency of the Python interpreter. In Python, dictionaries are passed by reference. The promised object <code class="xref py py-obj docutils literal"><span class="pre">b</span></code> then contains a reference to the dictionary in <code class="xref py py-obj docutils literal"><span class="pre">a</span></code>. If we then change the value in this dictionary, the call producing the value of <code class="xref py py-obj docutils literal"><span class="pre">b</span></code> is retroactively changed to double the value 5 instead of 4.</p>
+<p>If Noodles is to evaluate this program correctly it needs to <code class="xref py py-func docutils literal"><span class="pre">deepcopy()</span></code> every argument to a scheduled function. There is another way to have the same semantics produce a correct result. This is by making <code class="xref py py-obj docutils literal"><span class="pre">a</span></code> a promised object in the first place. The third solution is to teach your user <em>functional programming</em>.
+Deep copying function arguments can result in a significant performance penalty on the side of the job scheduler. In most applications that we target this is not the bottle neck.</p>
+<p>Since we aim for the maximum ease of use for the end-user, we chose to enable call-by-value by default.</p>
+</div>
+<div class="section" id="monads-sort-of">
+<h2>Monads (sort of)<a class="headerlink" href="#monads-sort-of" title="Permalink to this headline">¶</a></h2>
+<p>We still have ways to do object oriented programming and assignments. The <code class="xref py py-class docutils literal"><span class="pre">PromisedObject</span></code> class has several magic methods overloaded to translate to functional equivalents.</p>
+<div class="section" id="member-assignment">
+<h3>Member assignment<a class="headerlink" href="#member-assignment" title="Permalink to this headline">¶</a></h3>
+<p>Especially member assignment is treated in a particular way. Suppose <code class="docutils literal"><span class="pre">a</span></code> is a <code class="xref py py-class docutils literal"><span class="pre">PromisedObject</span></code>, then the statement</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">a</span><span class="o">.</span><span class="n">b</span> <span class="o">=</span> <span class="mi">3</span>
+</pre></div>
+</div>
+<p>is (conceptually) transformed into</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">a</span> <span class="o">=</span> <span class="n">_setattr</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="s1">&#39;b&#39;</span><span class="p">,</span> <span class="mi">3</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>where <code class="xref py py-func docutils literal"><span class="pre">_setattr()</span></code> is a scheduled function. The <code class="xref py py-class docutils literal"><span class="pre">PromisedObject</span></code> contains a representation of the complete workflow representing the computation to get to the value of <code class="xref py py-obj docutils literal"><span class="pre">a</span></code>. In member assignment, this workflow is replaced with the new workflow containing this last instruction.</p>
+<p>This is not a recommended way of programming. Every assignment results in a nested function call. The <code class="xref py py-obj docutils literal"><span class="pre">statefulness</span></code> of the program is then implemented in the composition of functions, similar to how other functional languages do it using <code class="xref py py-obj docutils literal"><span class="pre">monads</span></code>. It results in sequential code that will not parallelise so well.</p>
+</div>
+<div class="section" id="other-magic-methods">
+<h3>Other magic methods<a class="headerlink" href="#other-magic-methods" title="Permalink to this headline">¶</a></h3>
+<p>Next to member assignment, we also (obviously) support member reference, method function call and object function call (with <code class="xref py py-obj docutils literal"><span class="pre">__call__</span></code>).</p>
+</div>
+</div>
+<div class="section" id="storable">
+<h2>Storable<a class="headerlink" href="#storable" title="Permalink to this headline">¶</a></h2>
+</div>
+<div class="section" id="serialisation">
+<h2>Serialisation<a class="headerlink" href="#serialisation" title="Permalink to this headline">¶</a></h2>
+</div>
 </div>
 
 
@@ -144,7 +219,7 @@
   
     <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
       
-        <a href="development.html" class="btn btn-neutral float-right" title="Development documentation" accesskey="n">Next <span class="fa fa-arrow-circle-right"></span></a>
+        <a href="first_steps.html" class="btn btn-neutral float-right" title="First Steps" accesskey="n">Next <span class="fa fa-arrow-circle-right"></span></a>
       
       
         <a href="eating.html" class="btn btn-neutral" title="Eating of Noodles (user docs)" accesskey="p"><span class="fa fa-arrow-circle-left"></span> Previous</a>
@@ -156,7 +231,7 @@
 
   <div role="contentinfo">
     <p>
-        &copy; Copyright 2015, Johan Hidding, Felipe Zapata.
+        &copy; Copyright 2015-2016, Johan Hidding, Felipe Zapata, Berend Weel.
 
     </p>
   </div>
@@ -178,7 +253,7 @@
     <script type="text/javascript">
         var DOCUMENTATION_OPTIONS = {
             URL_ROOT:'./',
-            VERSION:'0.1.0',
+            VERSION:'0.2.0',
             COLLAPSE_INDEX:false,
             FILE_SUFFIX:'.html',
             HAS_SOURCE:  true
