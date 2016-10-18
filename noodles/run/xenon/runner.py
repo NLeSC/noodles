@@ -16,7 +16,8 @@ except ImportError:
     pass
 else:
     def run_xenon_prov(wf, Xe, jobdb_file, n_processes, xenon_config,
-                       job_config, *, deref=False, job_keeper=None, display=None):
+                       job_config, *, deref=False, job_keeper=None,
+                       display=None):
         """Run the workflow using a number of online Xenon workers.
 
         :param Xe:

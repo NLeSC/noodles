@@ -93,17 +93,21 @@ class XenonInteractiveWorker(Connection):
     def init_worker(self):
         """Sends the `init` and `finish` jobs to the worker if this is needed.
         This part will be called first, after a remote worker goes online."""
-        if self.job_config.init is not None:
-            self.sink().send(
-                ("init", self.job_config.init()._workflow.root_node))
-            key, status, result, err_msg = next(self.source())
-            if key != "init" or not result:
-                raise RuntimeError(
-                    "The initializer function did not succeed on worker.")
-
-        if self.job_config.finish is not None:
-            self.sink().send(
-                ("finish", self.job_config.finish()._workflow.root_node))
+        pass
+        # print("Initializing worker: ", end='', flush=True)
+        # if self.job_config.init is not None:
+        #     print("[init] ", end='', flush=True)
+        #     self.sink().send(
+        #         ("init", self.job_config.init()._workflow.root_node))
+        #     key, status, result, err_msg = next(self.source())
+        #     if key != "init" or not result:
+        #         raise RuntimeError(
+        #             "The initializer function did not succeed on worker.")
+        #
+        # if self.job_config.finish is not None:
+        #     self.sink().send(
+        #         ("finish", self.job_config.finish()._workflow.root_node))
+        # print("[done]", flush=True)
 
     def wait_until_running(self, callback=None):
         """Waits until the remote worker is running, then calls the callback.

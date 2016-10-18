@@ -130,10 +130,12 @@ class RemoteJobConfig(object):
                '-registry', object_name(self.registry)]
 
         if self.init:
-            cmd.append("-init")
+            cmd.extend(["-init", object_name(self.init)])
+            # cmd.append("-init")
 
         if self.finish:
-            cmd.append("-finish")
+            cmd.extend(["-finish", object_name(self.finish)])
+            # cmd.append("-finish")
 
         if self.verbose:
             cmd.append("-verbose")

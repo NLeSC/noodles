@@ -87,28 +87,11 @@ def run_online_mode(args):
 
         # run the init function if it is given
         if args.init:
-            # line = sys.stdin.readline()
-            key, job = get_job(next(messages))
-            if key != 'init':
-                raise RuntimeError("Expected init function.")
-
             with redirect_stdout(sys.stderr):
-                result = run_job(key, job)
-
-            if args.msgpack:
-                sys.stdout.buffer.write(put_result_msgpack(
-                    registry, args.name, *result))
-                sys.stdout.flush()
-            else:
-                print(put_result_json(registry, args.name, *result),
-                      flush=True)
+                look_up(args.init)()
 
         if args.finish:
-            # line = sys.stdin.readline()
-            key, job = get_job(next(messages))
-            if key != 'finish':
-                raise RuntimeError("Expected finish function.")
-            finish = job
+            finish = look_up(args.finish)
 
         for msg in messages:
             key, job = get_job(msg)
@@ -148,7 +131,7 @@ def run_online_mode(args):
                       flush=True)
 
         if finish:
-            run_job(0, finish)
+            finish()
 
 
 if __name__ == "__main__":
@@ -201,11 +184,13 @@ if __name__ == "__main__":
         help="worker identity",
         default="worker-" + str(uuid.uuid4()))
     online_parser.add_argument(
-        "-init", help="an init function will be send before other jobs",
-        default=False, action='store_true')
+        "-init", type=str,
+        help="an init function will be send before other jobs",
+        default=None)
     online_parser.add_argument(
-        "-finish", help="a finish function will be send before other jobs",
-        default=False, action='store_true')
+        "-finish", type=str,
+        help="a finish function will be send before other jobs",
+        default=None)
 
     online_parser.set_defaults(func=run_online_mode)
 
