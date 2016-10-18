@@ -62,10 +62,8 @@ def registry():
 
 
 def test_class_decorator_process():
-    from noodles.draw_workflow import draw_workflow
     a = make_object(A, 5).multiply(10)
     a.second = 7
-    draw_workflow('wf.svg', a._workflow)
     result = run_process(
         a, n_processes=1, registry=registry)
     assert result.value == 50
