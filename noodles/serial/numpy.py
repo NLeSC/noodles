@@ -41,7 +41,7 @@ class SerNumpyArrayToFile(Serialiser):
 def array_sha256(a):
     dtype = msgpack.dumps(str(a.dtype))
     shape = msgpack.dumps(a.shape)
-    bdata = a.view(numpy.uint8)
+    bdata = a.flatten().view(numpy.uint8)
     sha = hashlib.sha256()
     sha.update(dtype)
     sha.update(shape)
@@ -52,17 +52,23 @@ def array_sha256(a):
 class SerNumpyArrayToHDF5(Serialiser):
     def __init__(self, filename, lockfile):
         super(SerNumpyArrayToHDF5, self).__init__(numpy.ndarray)
-        self.f = h5py.File(filename)
         self.filename = filename
         self.lock = filelock.FileLock(lockfile)
 
     def encode(self, obj, make_rec):
-        path = array_sha256(obj)
+        key = array_sha256(obj)
         with self.lock:
-            if path not in self.f:
-                dataset = self.f.create_dataset(
+            f = h5py.File(self.filename)
+            path = next(
+                (ds for ds in f if f[ds].attrs.get('hash') == key),
+                False)
+            if not path:
+                path = base64.b64encode(uuid.uuid4().bytes).decode()
+                dataset = f.create_dataset(
                     path, shape=obj.shape, dtype=obj.dtype)
                 dataset[...] = obj
+                dataset.attrs['hash'] = key
+                f.close()
 
         return make_rec({
                 "filename": self.filename,
@@ -71,7 +77,9 @@ class SerNumpyArrayToHDF5(Serialiser):
 
     def decode(self, cls, data):
         with self.lock:
-            obj = cls(self.f[data["path"]])
+            f = h5py.File(self.filename)
+            obj = f[data["path"]].value
+            f.close()
 
         return obj
 
@@ -119,6 +127,7 @@ def arrays_to_string(file_prefix=None):
         },
         hook_fn=_numpy_hook
     )
+
 
 def arrays_to_hdf5(filename="cache.hdf5"):
     return Registry(

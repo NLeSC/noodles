@@ -4,22 +4,27 @@ try:
     import numpy as np
     from numpy import (random, fft, exp)
 
-    from noodles.serial.numpy import arrays_to_file
+    from noodles.serial.numpy import arrays_to_hdf5
+    from noodles.run.xenon import (XenonConfig, RemoteJobConfig, XenonKeeper)
 
 except ImportError:
-    raise SkipTest("No NumPy installed.")
+    raise SkipTest("No NumPy or Xenon installed.")
 
+else:
+    try:
+        from noodles.run.xenon import run_xenon_prov as run_xenon
+    except ImportError:
+        from noodles.run.xenon import run_xenon
 
-from noodles import schedule, run_process, serial
-import os
-from shutil import (rmtree)
+from noodles.display import (NCDisplay)
+from noodles import schedule, serial, schedule_hint
 
 
 def registry():
-    return serial.base() + arrays_to_file(file_prefix='test-numpy/')
+    return serial.base() + arrays_to_hdf5()
 
 
-@schedule
+@schedule_hint(display="fft", confirm=True, store=True)
 def do_fft(a):
     return fft.fft(a)
 
@@ -29,7 +34,7 @@ def make_kernel(n, sigma):
     return exp(-fft.fftfreq(n)**2 * sigma**2)
 
 
-@schedule
+@schedule_hint(display="ifft", confirm=True, store=True)
 def do_ifft(a):
     return fft.ifft(a).real
 
@@ -39,32 +44,35 @@ def apply_filter(a, b):
     return a * b
 
 
-@schedule
-def make_noise(n):
+@schedule_hint(display="make noise {seed}", confirm=True, store=True)
+def make_noise(n, seed=0):
+    random.seed(seed)
     return random.normal(0, 1, n)
 
 
-def test_pickle():
+def run(wf):
+    xenon_config = XenonConfig(
+        jobs_scheme='local'
+    )
+
+    job_config = RemoteJobConfig(
+        registry=registry,
+        time_out=1000
+    )
+
+    with XenonKeeper() as Xe, NCDisplay() as display:
+        result = run_xenon(
+            wf, Xe, "cache.json", 2, xenon_config, job_config,
+            display=display, deref=True)
+
+    return result
+
+
+def test_hdf5():
     x = make_noise(256)
     k = make_kernel(256, 10)
     x_smooth = do_ifft(apply_filter(do_fft(x), k))
-
-    if os.path.exists("./test-numpy"):
-        rmtree("./test-numpy")
-
-    os.mkdir("./test-numpy")
-
-    result = run_process(x_smooth, 1, registry, deref=True)
+    result = run(x_smooth)
 
     assert isinstance(result, np.ndarray)
     assert result.size == 256
-
-    # above workflow has five steps
-    lst = os.listdir("./test-numpy")
-    assert len(lst) == 5
-
-    # remove the .npy files
-    for f in lst:
-        os.remove("./test-numpy/" + f)
-
-    os.rmdir("./test-numpy")
