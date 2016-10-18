@@ -125,19 +125,6 @@ class SerStorable(Serialiser):
         return cls.from_dict(**data['dict'])
 
 
-class SerAutoStorable(Serialiser):
-    def __init__(self, cls):
-        super(SerAutoStorable, self).__init__(cls)
-
-    def encode(self, obj, make_rec):
-        return make_rec({'type': object_name(type(obj)),
-                         'dict': obj.as_dict()})
-
-    def decode(self, _, data):
-        cls = look_up(data['type'])
-        return cls.from_dict(**data['dict'])
-
-
 class SerNode(Serialiser):
     def __init__(self):
         super(SerNode, self).__init__(FunctionNode)
@@ -149,36 +136,18 @@ class SerNode(Serialiser):
         return FunctionNode.from_node_data(NodeData(**data))
 
 
-class SerMagic(Serialiser):
-    def __init__(self):
-        super(SerMagic, self).__init__('<magic>')
-
-    def encode(self, obj, make_rec):
-        return make_rec({'type': object_name(type(obj)),
-                         'data': obj.__getstate__()})
-
-    def decode(self, _, data):
-        cls = look_up(data['type'])
-        obj = cls.__new__(cls)
-        obj.__setstate__(data['data'])
-        return obj
-
-
 def _noodles_hook(obj):
     if '__member_of__' in dir(obj) and obj.__member_of__:
         return '<method>'
 
-    # if hasattr(obj, 'as_dict') and hasattr(type(obj), 'from_dict'):
-    #    return '<auto-storable>'
-
     if importable(obj):
+        return '<importable>'
+
+    if isinstance(obj, type):
         return '<importable>'
 
     if isfunction(obj):
         return '<importable>'
-
-    if hasattr(obj, '__setstate__') and hasattr(obj, '__getstate__'):
-        return '<magic>'
 
     return None
 
@@ -198,8 +167,6 @@ def registry():
         hooks={
             '<method>': SerMethod(),
             '<importable>': SerImportable(),
-            '<magic>': SerMagic(),
-            # '<auto-storable>': SerAutoStorable()
         },
         hook_fn=_noodles_hook,
         default=Serialiser(object),
