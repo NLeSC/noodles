@@ -36,6 +36,7 @@ setup(
     extras_require={
         'prov': ['tinydb'],
         'xenon': ['pyxenon'],
+        'numpy': ['numpy', 'h5py', 'msgpack-python', 'filelock'],
         'test': ['nose', 'coverage', 'pyflakes', 'pep8', 'docker-py']
     },
 )
