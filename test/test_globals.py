@@ -1,14 +1,14 @@
 from noodles import schedule, run_process, serial
 
 
-@schedule
+# @schedule
 def init():
     global s
     s = "This global variable needs to be here!"
     return True
 
 
-@schedule
+# @schedule
 def finish():
     return "Finish functino was run!"
 
@@ -23,4 +23,3 @@ def test_globals():
     result = run_process(a, n_processes=1, registry=serial.base,
                          init=init, finish=finish)
     assert result
-

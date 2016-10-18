@@ -6,7 +6,7 @@ from ..workflow import (Workflow, NodeData, FunctionNode, ArgumentAddress,
 from ..storable import (Storable)
 # from .as_dict import (AsDict)
 # from enum import Enum
-from inspect import isfunction
+from inspect import isfunction, ismethod
 # from collections import namedtuple
 from itertools import count
 # import json
@@ -100,6 +100,19 @@ class SerMethod(Serialiser):
         return getattr(cls, data['method'])
 
 
+class SerBoundMethod(Serialiser):
+    def __init__(self):
+        super(SerBoundMethod, self).__init__('<boundmethod>')
+
+    def encode(self, obj, make_rec):
+        return make_rec({
+            'self': obj.__self__,
+            'name': obj.__name__})
+
+    def decode(self, _, data):
+        return getattr(data['self'], data['name'])
+
+
 class SerImportable(Serialiser):
     def __init__(self):
         super(SerImportable, self).__init__('<importable>')
@@ -143,8 +156,8 @@ def _noodles_hook(obj):
     if importable(obj):
         return '<importable>'
 
-    if isinstance(obj, type):
-        return '<importable>'
+    if ismethod(obj):
+        return '<boundmethod>'
 
     if isfunction(obj):
         return '<importable>'
@@ -166,6 +179,7 @@ def registry():
         },
         hooks={
             '<method>': SerMethod(),
+            '<boundmethod>': SerBoundMethod(),
             '<importable>': SerImportable(),
         },
         hook_fn=_noodles_hook,
