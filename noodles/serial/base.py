@@ -149,6 +149,19 @@ class SerNode(Serialiser):
         return FunctionNode.from_node_data(NodeData(**data))
 
 
+class SerMagic(Serialiser):
+    def __init__(self):
+        super(SerMagic, self).__init__()
+
+    def encode(self, obj, make_rec):
+        return make_rec(obj.__getstate__())
+
+    def decode(self, cls, data):
+        obj = cls.__new__(cls)
+        obj.__setstate__(data)
+        return obj
+
+
 def _noodles_hook(obj):
     if '__member_of__' in dir(obj) and obj.__member_of__:
         return '<method>'
@@ -161,6 +174,9 @@ def _noodles_hook(obj):
 
     if isfunction(obj):
         return '<importable>'
+
+    if hasattr(obj, '__setstate__') and hasattr(obj, '__getstate__'):
+        return '<magic>'
 
     return None
 
@@ -179,7 +195,8 @@ def registry():
         },
         hooks={
             '<method>': SerMethod(),
-            '<importable>': SerImportable()
+            '<importable>': SerImportable(),
+            '<magic>': SerMagic(),
             # '<auto-storable>': SerAutoStorable()
         },
         hook_fn=_noodles_hook,
