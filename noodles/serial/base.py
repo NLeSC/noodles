@@ -112,8 +112,8 @@ class SerImportable(Serialiser):
 
 
 class SerStorable(Serialiser):
-    def __init__(self):
-        super(SerStorable, self).__init__(Storable)
+    def __init__(self, cls):
+        super(SerStorable, self).__init__(cls)
 
     def encode(self, obj, make_reca):
         return make_reca(
@@ -161,7 +161,7 @@ def registry():
             FunctionNode: SerNode(),
             ArgumentAddress: SerNamedTuple(ArgumentAddress),
             Workflow: SerWorkflow(),
-            Storable: SerStorable(),
+            Storable: SerStorable(Storable),
             PromisedObject: SerPromisedObject()
         },
         hooks={

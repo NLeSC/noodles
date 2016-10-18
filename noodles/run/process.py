@@ -73,9 +73,9 @@ def process_worker(registry,
     if not status:
         cmd.append("-nostatus")
     if init:
-        cmd.append("-init")
+        cmd.extend(["-init", object_name(init)])
     if finish:
-        cmd.append("-finish")
+        cmd.extend(["-finish", object_name(finish)])
 
     p = Popen(
         cmd,
@@ -113,15 +113,15 @@ def process_worker(registry,
             result = get_result_tuple(msg)
             yield result
 
-    if init is not None:
-        send_job().send(("init", init()._workflow.root_node))
-        key, status, result, err_msg = next(get_result())
-        if key != "init" or not result:
-            raise RuntimeError(
-                "The initializer function did not succeed on worker.")
-
-    if finish is not None:
-        send_job().send(("finish", finish()._workflow.root_node))
+    # if init is not None:
+    #     send_job().send(("init", init()._workflow.root_node))
+    #     key, status, result, err_msg = next(get_result())
+    #     if key != "init" or not result:
+    #         raise RuntimeError(
+    #             "The initializer function did not succeed on worker.")
+    #
+    # if finish is not None:
+    #     send_job().send(("finish", finish()._workflow.root_node))
 
     return Connection(get_result, send_job, aux=read_stderr)
 

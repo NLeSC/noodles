@@ -4,6 +4,10 @@ import numpy
 import uuid
 import io
 import base64
+import filelock
+import h5py
+import msgpack
+import hashlib
 
 
 class SerNumpyArray(Serialiser):
@@ -32,6 +36,44 @@ class SerNumpyArrayToFile(Serialiser):
 
     def decode(self, cls, filename):
         return numpy.load(filename)
+
+
+def array_sha256(a):
+    dtype = msgpack.dumps(str(a.dtype))
+    shape = msgpack.dumps(a.shape)
+    bdata = a.view(numpy.uint8)
+    sha = hashlib.sha256()
+    sha.update(dtype)
+    sha.update(shape)
+    sha.update(bdata)
+    return sha.hexdigest()
+
+
+class SerNumpyArrayToHDF5(Serialiser):
+    def __init__(self, filename, lockfile):
+        super(SerNumpyArrayToHDF5, self).__init__(numpy.ndarray)
+        self.f = h5py.File(filename)
+        self.filename = filename
+        self.lock = filelock.FileLock(lockfile)
+
+    def encode(self, obj, make_rec):
+        path = array_sha256(obj)
+        with self.lock:
+            if path not in self.f:
+                dataset = self.f.create_dataset(
+                    path, shape=obj.shape, dtype=obj.dtype)
+                dataset[...] = obj
+
+        return make_rec({
+                "filename": self.filename,
+                "path": path
+            }, files=[self.filename], ref=True)
+
+    def decode(self, cls, data):
+        with self.lock:
+            obj = cls(self.f[data["path"]])
+
+        return obj
 
 
 class SerUFunc(Serialiser):
@@ -78,5 +120,15 @@ def arrays_to_string(file_prefix=None):
         hook_fn=_numpy_hook
     )
 
-registry = arrays_to_string
+def arrays_to_hdf5(filename="cache.hdf5"):
+    return Registry(
+        types={
+            numpy.ndarray: SerNumpyArrayToHDF5(filename, "cache.lock")
+        },
+        hooks={
+            '<ufunc>': SerUFunc()
+        },
+        hook_fn=_numpy_hook
+    )
 
+registry = arrays_to_string

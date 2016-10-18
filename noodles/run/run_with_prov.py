@@ -254,7 +254,7 @@ def prov_wrap_connection(
 
 
 def run_parallel_opt(wf, n_threads, registry, jobdb_file,
-                     job_keeper=None, display=None):
+                     job_keeper=None, display=None, cache_all=False):
     """Run a workflow in `n_threads` parallel threads. Now we replaced the
     single worker with a thread-pool of workers.
 
@@ -288,8 +288,12 @@ def run_parallel_opt(wf, n_threads, registry, jobdb_file,
 
     results = Queue()
 
-    def pred(job):
-        return job.hints and 'store' in job.hints
+    if cache_all:
+        def pred(job):
+            return True
+    else:
+        def pred(job):
+            return job.hints and 'store' in job.hints
 
     LogQ = Queue()
     if display:
