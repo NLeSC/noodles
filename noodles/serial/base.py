@@ -154,11 +154,13 @@ class SerMagic(Serialiser):
         super(SerMagic, self).__init__('<magic>')
 
     def encode(self, obj, make_rec):
-        return make_rec(obj.__getstate__())
+        return make_rec({'type': object_name(type(obj)),
+                         'data': obj.__getstate__()})
 
-    def decode(self, cls, data):
+    def decode(self, _, data):
+        cls = look_up(data['type'])
         obj = cls.__new__(cls)
-        obj.__setstate__(data)
+        obj.__setstate__(data['data'])
         return obj
 
 
