@@ -151,7 +151,7 @@ class SerNode(Serialiser):
 
 class SerMagic(Serialiser):
     def __init__(self):
-        super(SerMagic, self).__init__()
+        super(SerMagic, self).__init__('<magic>')
 
     def encode(self, obj, make_rec):
         return make_rec(obj.__getstate__())
