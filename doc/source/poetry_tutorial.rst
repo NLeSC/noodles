@@ -3,10 +3,42 @@
 Real World Tutorial 1: Translating Poetry
 =========================================
 
+First example
+-------------
+
+We build workflows by calling functions. The simplest example of this
+is the "diamond workflow":
+
+.. code:: python
+
+    from noodles import run_single
+    from noodles.tutorial import (add, sub, mul)
+
+    u = add(5, 4)
+    v = sub(u, 3)
+    w = sub(u, 2)
+    x = mul(v, w)
+
+    answer = run_single(x)
+
+    print("The answer is {0}.".format(answer))
+    
+That looks like any other Python code! But this example is a bit silly.
+How do we leverage Noodles to earn an honest living? Here's a slightly less
+silly example (but only just!). We will build a small translation engine
+that translates sentences by submitting each word to an online dictionary
+over a Rest API. To do this we make loops ("For thou shalt make loops of 
+blue"). First we build the program as you would do in Python, then we
+sprinkle some Noodles magic and make it work parallel! Furthermore, we'll
+see how to:
+
+    * make more loops
+    * cache results for reuse
+
 Making loops
 ------------
 
-Thats all swell, but how do we make a parallel loop? Let's look at a
+How do we make a parallel loop? Let's look at a
 ``map`` operation; in Python there are several ways to perform a
 function on all elements in an array. For this example, we will
 translate some words using the Glosbe service, which has a nice REST
@@ -20,10 +52,10 @@ interface. We first build some functionality to use this interface.
     
     
     class Translate:
-        """Translate words and sentences in the worst possible way. The Glosbe dictionary
-        has a nice REST interface that we query for a phrase. We then take the first result.
-        To translate a sentence, we cut it in pieces, translate it and paste it back into
-        a Frankenstein monster."""
+        """Translate words and sentences in the worst possible way. The Glosbe
+        dictionary has a nice REST interface that we query for a phrase. We
+        then take the first result.  To translate a sentence, we cut it in
+        pieces, translate it and paste it back into a Frankenstein monster."""
         def __init__(self, src_lang='en', tgt_lang='fy'):
             self.src = src_lang
             self.tgt = tgt_lang
@@ -33,13 +65,14 @@ interface. We first build some functionality to use this interface.
                             src=src_lang, tgt=tgt_lang)
         
         def query_phrase(self, phrase):
-            with urllib.request.urlopen(self.url.format(phrase=phrase.lower())) as response:
+            url = self.url.format(phrase=phrase.lower())
+            with urllib.request.urlopen(url) as response:
                 translation = json.loads(response.read().decode())
             return translation
     
         def word(self, phrase):
-            #translation = self.query_phrase(phrase)
-            translation = {'tuc': [{'phrase': {'text': phrase.lower()[::-1]}}]}
+            translation = self.query_phrase(phrase)
+
             if len(translation['tuc']) > 0 and 'phrase' in translation['tuc'][0]:
                 result = translation['tuc'][0]['phrase']['text']
                 if phrase[0].isupper():
@@ -50,11 +83,15 @@ interface. We first build some functionality to use this interface.
                 return "<" + phrase + ">"
         
         def sentence(self, phrase):
+            """Split a sentence into a list of words and a format string,
+            replacing each occurance of a word with '{}'. Map the words through
+            the translation engine and join them using the format string."""
             words = re.sub("[^\w]", " ", phrase).split()
             space = re.sub("[\w]+", "{}", phrase)
             return space.format(*map(self.word, words))
 
-We start with a list of strings that desparately need translation.
+We start with a list of strings that desparately need translation. And add a little
+routine to print it in a gracious manner.
 
 .. code:: python
 
@@ -81,7 +118,7 @@ We start with a list of strings that desparately need translation.
     
 
 
-Beginning Python programmers like to append things; this is not how you
+Beginning Python programmers like to append things; this is *not* how you
 are supposed to program in Python; if you do, please go and read Jeff
 Knupp's *Writing Idiomatic Python*.
 
@@ -97,11 +134,10 @@ Knupp's *Writing Idiomatic Python*.
 .. parsed-literal::
 
     Auf Deutsch:
-          Fi cisum eb eht doof fo evol, yalp no,
-          Evig em ssecxe fo ti; taht gnitiefrus,
-          Eht etiteppa yam nekcis, dna os eid.
+          Wenn Musik sein der Essen von Minne, spielen an,
+          Geben ich Übermaß von es; das übersättigend,
+          Der Appetit dürfen ekeln, und so sterben.
     
-
 
 Rather use a comprehension like so:
 
@@ -115,9 +151,9 @@ Rather use a comprehension like so:
 .. parsed-literal::
 
     Yn it Frysk:
-          Fi cisum eb eht doof fo evol, yalp no,
-          Evig em ssecxe fo ti; taht gnitiefrus,
-          Eht etiteppa yam nekcis, dna os eid.
+        At muzyk wêze de fiedsel fan leafde, boartsje oan,
+        Jaan <me> by fersin fan it; dat <surfeiting>,
+        De <appetite> maaie <sicken>, en dus deagean.
     
 
 
@@ -133,11 +169,10 @@ Or use ``map``:
 .. parsed-literal::
 
     På Dansk:
-          Fi cisum eb eht doof fo evol, yalp no,
-          Evig em ssecxe fo ti; taht gnitiefrus,
-          Eht etiteppa yam nekcis, dna os eid.
+        Hvis musik være de mad af kærlighed, spil på,
+        Give mig udskejelser af det; som <surfeiting>,
+        De appetit må <sicken>, og så dø.      
     
-
 
 Noodlify!
 ---------
@@ -161,9 +196,9 @@ We could write
 in the last line of the ``sentence`` method, but the string format
 method doesn't support wrapping. We rely on getting the signature of a
 function by calling ``inspect.signature``. In some cases of build-in
-function this raises an exception. We may find a work around for these
-cases in future versions of Noodles. For the moment we'll have to define
-a little wrapper function.
+function this raises an exception. Note that this is a design flaw in Python,
+not Noodles! We may find a work around for these cases in future versions of 
+Noodles. For the moment we'll have to define a little wrapper function.
 
 .. code:: python
 
@@ -181,10 +216,10 @@ a little wrapper function.
     
     
     class Translate:
-        """Translate words and sentences in the worst possible way. The Glosbe dictionary
-        has a nice REST interface that we query for a phrase. We then take the first result.
-        To translate a sentence, we cut it in pieces, translate it and paste it back into
-        a Frankenstein monster."""
+        """Translate words and sentences in the worst possible way. The Glosbe
+        dictionary has a nice REST interface that we query for a phrase. We
+        then take the first result.  To translate a sentence, we cut it in
+        pieces, translate it and paste it back into a Frankenstein monster."""
         def __init__(self, src_lang='en', tgt_lang='fy'):
             self.src = src_lang
             self.tgt = tgt_lang
@@ -194,14 +229,14 @@ a little wrapper function.
                             src=src_lang, tgt=tgt_lang)
         
         def query_phrase(self, phrase):
-            with urllib.request.urlopen(self.url.format(phrase=phrase.lower())) as response:
+            url = self.url.format(phrase=phrase.lower())
+            with urllib.request.urlopen(url) as response:
                 translation = json.loads(response.read().decode())
             return translation
         
         @schedule
         def word(self, phrase):
-            translation = {'tuc': [{'phrase': {'text': phrase.lower()[::-1]}}]}
-            #translation = self.query_phrase(phrase)
+            translation = self.query_phrase(phrase)
             
             if len(translation['tuc']) > 0 and 'phrase' in translation['tuc'][0]:
                 result = translation['tuc'][0]['phrase']['text']
@@ -215,6 +250,12 @@ a little wrapper function.
         def sentence(self, phrase):
             words = re.sub("[^\w]", " ", phrase).split()
             space = re.sub("[\w]+", "{}", phrase)
+
+            # translated_words now is a sequence of promises!
+            translated_words = map(self.word, words)
+
+            # we may only pass them to another `schedule` function
+            # since `string.format` has no knowledge about promises.
             return format_string(space, *map(self.word, words))
         
         def __str__(self):
@@ -249,11 +290,9 @@ to plot the workflow graph. Let's run the new script.
 .. parsed-literal::
 
     Shakespeare en Esperanto:
-          Fi cisum eb eht doof fo evol, yalp no,
-          Evig em ssecxe fo ti; taht gnitiefrus,
-          Eht etiteppa yam nekcis, dna os eid.
-    
-
+        Se muziko esti la manĝaĵo de ami, ludi sur,
+        Doni mi eksceso de ĝi; tio <surfeiting>,
+        La apetito povi naŭzi, kaj tiel morti. 
 
 The last peculiar thing that you may notice, is the ``gather`` function.
 It collects the promises that ``map`` generates and creates a single new
@@ -276,8 +315,7 @@ Dealing with repetition
 -----------------------
 
 In the following example we have a line with some repetition. It would
-be a shame to look up the repeated words twice, wouldn't it? Let's build
-a little counter routine to check if everything is working.
+be a shame to look up the repeated words twice, wouldn't it? 
 
 .. code:: python
 
@@ -285,11 +323,9 @@ a little counter routine to check if everything is working.
     run_parallel(Translate('de', 'fr').sentence(line), n_threads=4)
 
 
-
-
 .. parsed-literal::
 
-    'Niem Ttog, niem Ttog, muraw tsah Ud hcim nessalrev?'
+    'Mon Dieu, mon Dieu, pourquoi as Tu me quitter?'
 
 
 
@@ -313,9 +349,15 @@ retrieval and result storage in a ``JobKeeper`` instance.
 
 .. parsed-literal::
 
-    'Niem Ttog, niem Ttog, muraw tsah Ud hcim nessalrev?'
+    'Mon Dieu, mon Dieu, pourquoi as Tu me quitter?'
 
+Now we can see how the results were obtained by inspecting the
+``JobKeeper`` object. Running the first time, you may see that
+some jobs *attached* themselves to other jobs as they are identical.
 
+Then try running above cell again. All the results should be cached
+in the `matthew.json` file, and no queries are send to Glosbe, saving
+us from certain doom of IP black listing.
 
 .. code:: python
 

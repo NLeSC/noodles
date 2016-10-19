@@ -208,7 +208,8 @@ class Registry(object):
         if '_noodles' not in rec:
             return rec
 
-        if rec.get('ref', False) and not deref:
+        # if rec.get('ref', False) and not deref:
+        if not deref:
             return RefObject(rec)
 
         typename = rec['type']

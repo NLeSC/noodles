@@ -12,7 +12,7 @@ with open(path.join(here, 'README.rst'), encoding='utf-8') as f:
 
 setup(
     name='Noodles',
-    version='0.2.1',
+    version='0.2.2',
     description='Workflow Engine',
     author='Johan Hidding',
     url='https://github.com/NLeSC/noodles',
@@ -23,8 +23,7 @@ setup(
         'noodles.prov'],
 
     classifiers=[
-        'License :: OSI Approved :: '
-        'GNU Lesser General Public License v3 or later (LGPLv3+)',
+        'License :: OSI Approved :: Apache Software License',
         'Intended Audience :: Developers',
         'Intended Audience :: Science/Research',
         'Environment :: Console',

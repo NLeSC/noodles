@@ -103,7 +103,7 @@ def schedule_job(results, registry, db,
                     if status == 'retrieved':
                         result_sink.send(
                             (key, 'retrieved',
-                             registry.deep_decode(result), None))
+                             registry.deep_decode(result, deref=True), None))
                         continue
                     elif status == 'attached':
                         continue
