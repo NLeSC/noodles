@@ -33,7 +33,7 @@ setup(
 
     install_requires=[],
     extras_require={
-        'prov': ['tinydb'],
+        'prov': ['tinydb', 'ujson'],
         'xenon': ['pyxenon'],
         'numpy': ['numpy', 'h5py', 'msgpack-python', 'filelock'],
         'test': ['nose', 'coverage', 'pyflakes', 'pep8', 'docker-py']
