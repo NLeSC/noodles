@@ -1,8 +1,6 @@
-################################################################################
-# Drawing routines                                                             |
-#------------------------------------------------------------------------------+
 from pygraphviz import AGraph
 from inspect import Parameter
+
 
 def _format_arg_list(a, v):
     if len(a) == 0:
@@ -18,13 +16,14 @@ def _format_arg_list(a, v):
     if v:
         return s.format("\u2026", "")
 
-    return s.format(str(a[-1])  if a[-1] != Parameter.empty else "\u2014", "")
+    return s.format(str(a[-1]) if a[-1] != Parameter.empty else "\u2014", "")
+
 
 def draw_workflow(filename, workflow):
-    dot = AGraph(directed=True) #(comment="Computing scheme")
-    for i,n in workflow.nodes.items():
-        dot.add_node(i, label="{0} \n {1}".format(n.foo.__name__,
-            _format_arg_list(n.bound_args.args, None)))
+    dot = AGraph(directed=True)  # (comment="Computing scheme")
+    for i, n in workflow.nodes.items():
+        dot.add_node(i, label="{0} \n {1}".format(
+            n.foo.__name__, _format_arg_list(n.bound_args.args, None)))
 
     for i in workflow.links:
         for j in workflow.links[i]:

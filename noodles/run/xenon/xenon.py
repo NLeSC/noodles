@@ -17,7 +17,7 @@ class XenonConfig:
     These jobs may be run locally, over ssh ar against a queue manager like
     SLURM.
 
-    [Documentation to Xenon can be found online](http://nlesc.github.io/xenon)
+    [Documentation to Xenon can be found online](http://nlesc.github.io/Xenon)
 
     :param name:
         The quasi human readable name to give to this Xenon instance.
