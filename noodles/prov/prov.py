@@ -1,11 +1,15 @@
 from tinydb import (TinyDB, Query)
 import hashlib
-import json
 from threading import Lock
 # from ..utility import on
 import time
 import uuid
 import sys
+
+try:
+    import ujson as json
+except ImportError:
+    import json
 
 
 def update_object_hash(m, obj):
@@ -14,7 +18,7 @@ def update_object_hash(m, obj):
     return m
 
 
-def prov_key(job_msg):
+def prov_key(job_msg, extra=None):
     """Retrieves a MD5 sum from a function call. This takes into account the
     name of the function, the arguments and possibly a version number of the
     function, if that is given in the hints.
@@ -28,6 +32,9 @@ def prov_key(job_msg):
 
     if 'version' in job_msg['data']['hints']:
         update_object_hash(m, job_msg['data']['hints']['version'])
+
+    if extra is not None:
+        update_object_hash(m, extra)
 
     return m.hexdigest()
 

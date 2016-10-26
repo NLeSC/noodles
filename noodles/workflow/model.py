@@ -33,6 +33,7 @@ class FunctionNode:
         self.bound_args = bound_args
         self.hints = hints
         self.result = result
+        self.prov = None
 
     def apply(self):
         return self.foo(*self.bound_args.args, **self.bound_args.kwargs)
@@ -41,8 +42,7 @@ class FunctionNode:
     def data(self):
         """Convert to a :py:class:`NodeData` for subsequent serial."""
         return NodeData(
-            self.foo, get_arguments(self.bound_args),
-            self.hints)
+            self.foo, get_arguments(self.bound_args), self.hints)
 
     def __str__(self):
         s = self.foo.__name__ + '(' + \
@@ -81,13 +81,25 @@ class Workflow:
     def root_node(self):
         return self.nodes[self.root]
 
+    @property
+    def prov(self):
+        return self.root_node.prov
+
+    @property
+    def inverse_links(self):
+        try:
+            return self._inverse_links
+        except AttributeError:
+            self.create_inverse_links()
+            return self._inverse_links
+
     def create_inverse_links(self):
-        self.inverse_links = {}
+        self._inverse_links = {}
         for k, v in self.links.items():
             for target, _ in v:
                 if target not in self.inverse_links:
-                    self.inverse_links[target] = set()
-                self.inverse_links[target].add(k)
+                    self._inverse_links[target] = set()
+                self._inverse_links[target].add(k)
 
 
 def is_workflow(x):
