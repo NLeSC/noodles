@@ -48,18 +48,19 @@ def set_global_provenance(wf: Workflow, registry: Registry):
         if n.prov:
             continue
 
-        if is_node_ready(wf):
+        if is_node_ready(n):
             job_msg = registry.deep_encode(n)
             n.prov = prov_key(job_msg)
             continue
 
         deps = wf.inverse_links[i]
-        todo = [j for j in deps if not wf.node[j].prov]
+        todo = [j for j in deps if not wf.nodes[j].prov]
 
         if not todo:
             link_dict = dict(links(wf, i, deps))
             link_prov = registry.deep_encode(
                 [link_dict[arg] for arg in empty_args(n)])
+            job_msg = registry.deep_encode(n)
             n.prov = prov_key(job_msg, link_prov)
             continue
 
