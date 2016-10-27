@@ -5,6 +5,7 @@ import sys
 
 from threading import Lock
 from .haploid import (coroutine)
+from .messages import (JobMessage)
 
 
 class JobKeeper(dict):
@@ -21,7 +22,7 @@ class JobKeeper(dict):
             job.log.append((time.time(), 'register', None, None))
             self[key] = job
 
-        return key, job.node
+        return JobMessage(key, job.node)
 
     def __delitem__(self, key):
         if not self.keep:
@@ -69,7 +70,7 @@ class JobTimer(dict):
         key = str(uuid.uuid4())
         job.sched_time = time.time()
         self[key] = job
-        return key, job.node
+        return JobMessage(key, job.node)
 
     def __delitem__(self, key):
         pass

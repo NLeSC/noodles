@@ -80,6 +80,8 @@ def run_online_mode(args):
         for msg in input_stream:
             if isinstance(msg, JobMessage):
                 key, job = msg
+            elif isinstance(msg, tuple):
+                key, job = msg
             else:
                 continue
 

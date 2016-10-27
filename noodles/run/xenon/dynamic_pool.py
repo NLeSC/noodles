@@ -50,13 +50,12 @@ def xenon_interactive_worker(XeS: XenonScheduler, job_config):
     @push
     def send_job():
         output_stream = xenon.conversions.OutputStream(J.streams.getStdin())
-        yield from JSONObjectWriter(reg, output_stream, host="scheduler")
+        yield from JSONObjectWriter(registry, output_stream, host="scheduler")
 
-    @pull
+    # @pull
     def get_result():
-        reg = registry()
-        input_stream = xenon.conversions.InputStream(J.streams.getStdout()):
-        yield from JSONObjectReader(reg, input_stream)
+        input_stream = xenon.conversions.InputStream(J.streams.getStdout())
+        yield from JSONObjectReader(registry, input_stream)
             
     return Connection(get_result, send_job, aux=J)
 
@@ -188,7 +187,7 @@ class DynamicPool(Connection):
                 # lock end ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
             for key in w.jobs:
-                sink.send(Result(key, 'aborted', None,
+                sink.send(ResultMessage(key, 'aborted', None,
                                  'connection to remote worker lost.'))
 
         # Start the `activate` function when the worker goes online.

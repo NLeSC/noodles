@@ -1,6 +1,6 @@
 from .connection import (Connection)
 from .job_keeper import (JobKeeper)
-from .messages import (ResultMessage as Result)
+from .messages import (JobMessage)
 
 from ..workflow import (
     is_workflow, get_workflow, insert_result,

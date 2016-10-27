@@ -1,6 +1,7 @@
 import sys
 import uuid
 from subprocess import Popen, PIPE
+import threading
 
 import os
 import random
@@ -50,11 +51,11 @@ def process_worker(registry, verbose=False, jobdirs=False,
 
     def read_stderr():
         for line in p.stderr:
-            log.worker_stderr(name, line)
+            print(name + ": " + line.strip(), file=sys.stderr, flush=True)
 
-    # t = threading.Thread(target=read_stderr)
-    # t.daemon = True
-    # t.start()
+    t = threading.Thread(target=read_stderr)
+    t.daemon = True
+    t.start()
 
     @push
     def send_job():

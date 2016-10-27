@@ -1,6 +1,7 @@
 from .connection import (Connection)
 from .queue import (Queue)
-from .scheduler import (Scheduler, Result)
+from .scheduler import (Scheduler)
+from .messages import (ResultMessage)
 from .haploid import (
     pull, push, push_map, sink_map,
     branch, patch, broadcast)
@@ -26,7 +27,7 @@ def run_single(wf, registry, jobdb_file, display=None):
     db = JobDB(jobdb_file)
 
     def decode_result(key, obj):
-        return Result(key, 'retrieved', registry.deep_decode(obj), None)
+        return ResultMessage(key, 'retrieved', registry.deep_decode(obj), None)
 
     @pull
     def pass_job(source):
@@ -132,7 +133,7 @@ def store_result_deep(registry, db, job_keeper=None, pred=lambda job: True):
         attached = db.store_result(key, result_msg)
         if attached:
             for akey in attached:
-                yield (akey, 'attached', result, msg)
+                yield ResultMessage(akey, 'attached', result, msg)
 
     @pull
     def f(source):
@@ -157,7 +158,7 @@ def store_result_deep(registry, db, job_keeper=None, pred=lambda job: True):
                     for k in linked_jobs:
                         yield from store_result(k, result, msg)
 
-            yield (key, status, result, msg)
+            yield ResultMessage(key, status, result, msg)
 
     return f
 

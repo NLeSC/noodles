@@ -1,4 +1,5 @@
 from functools import wraps
+from .messages import (ResultMessage)
 from .haploid import (push_map, pull_map)
 import threading
 
@@ -59,7 +60,7 @@ class CatchExceptions(object):
             except Exception as exc:
                 with self.lock:
                     for key in self.jobs:
-                        sink.send((key, 'aborted', None, exc))
+                        sink.send(ResultMessage(key, 'aborted', None, exc))
 
                 raise exc
 
