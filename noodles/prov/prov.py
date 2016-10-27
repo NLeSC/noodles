@@ -3,7 +3,6 @@ import hashlib
 from threading import Lock
 # from ..utility import on
 import time
-import uuid
 import sys
 
 try:
@@ -71,14 +70,14 @@ class JobDB:
             rec = self.db.get(job.prov == prov)
 
             if 'result' in rec:
-                return 'retrieved', uuid.UUID(rec['key']), rec['result']
+                return 'retrieved', rec['key'], rec['result']
 
-            job_running = uuid.UUID(rec['key']) in running
+            job_running = rec['key'] in running
             wf_running = rec['link'] in running.workflows
 
             if job_running or wf_running:
-                self.db.update(attach_job(key.hex), job.prov == prov)
-                return 'attached', uuid.UUID(rec['key']), None
+                self.db.update(attach_job(key), job.prov == prov)
+                return 'attached', rec['key'], None
 
             print("WARNING: unfinished job in database. Removing it and "
                   " rerunning.", file=sys.stderr)
@@ -93,21 +92,21 @@ class JobDB:
     def store_result(self, key, result):
         job = Query()
         with self.lock:
-            if not self.db.contains(job.key == key.hex):
+            if not self.db.contains(job.key == key):
                 return
 
         self.add_time_stamp(key, 'done')
         with self.lock:
             self.db.update(
                     {'result': result, 'link': None},
-                    job.key == key.hex)
-            rec = self.db.get(job.key == key.hex)
-            return map(uuid.UUID, rec['attached'])
+                    job.key == key)
+            rec = self.db.get(job.key == key)
+            return rec['attached']
 
     def new_job(self, key, prov, job_msg):
         with self.lock:
             self.db.insert({
-                'key': key.hex,
+                'key': key,
                 'attached': [],
                 'prov': prov,
                 'link': None,
@@ -122,13 +121,13 @@ class JobDB:
     def add_link(self, key, ppn):
         job = Query()
         with self.lock:
-            self.db.update({'link': ppn}, job.key == key.hex)
+            self.db.update({'link': ppn}, job.key == key)
 
     def get_linked_jobs(self, ppn):
         job = Query()
         with self.lock:
             rec = self.db.search(job.link == ppn)
-            return [uuid.UUID(r['key']) for r in rec]
+            return [r['key'] for r in rec]
 
     def add_time_stamp(self, key, name):
         def update(r):
@@ -138,4 +137,4 @@ class JobDB:
         with self.lock:
             self.db.update(
                 update,
-                job.key == key.hex)
+                job.key == key)

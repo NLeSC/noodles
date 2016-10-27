@@ -30,7 +30,6 @@ import uuid
 from contextlib import redirect_stdout
 
 import os
-from noodles.run.worker import run_job
 from .utility import (look_up)
 
 try:
@@ -39,33 +38,16 @@ try:
 except ImportError:
     has_msgpack = False
 
+from .run.worker import (
+    run_job)
 
-def get_job(msg):
-    return msg['key'], msg['node']
-
-
-def get_job_json(registry, s):
-    obj = registry.from_json(s, deref=True)
-    return obj['key'], obj['node']
-
-
-def put_result_msgpack(registry, host, key, status, result, err_msg):
-    return registry.to_msgpack({
-        'key': key,
-        'status': status,
-        'result': result,
-        'err_msg': err_msg
-    }, host=host)
-
-
-def put_result_json(registry, host, key, status, result, err_msg):
-    return registry.to_json({
-        'key': key,
-        'status': status,
-        'result': result,
-        'err_msg': err_msg
-    }, host=host)
-
+from .run.messages import (
+    JobMessage, ResultMessage)
+    
+from .run.remote.io import (
+    MsgPackObjectReader, MsgPackObjectWriter,
+    JSONObjectReader, JSONObjectWriter)
+    
 
 def run_batch_mode(args):
     print("Batch mode is not yet implemented")
@@ -77,13 +59,15 @@ def run_online_mode(args):
         finish = None
 
         if args.msgpack:
-            messages = msgpack.Unpacker(sys.stdin.buffer)
+            input_stream = MsgPackObjectReader(
+                registry, sys.stdin.buffer, deref=True)
+            output_stream = MsgPackObjectWriter(
+                registry, sys.stdout.buffer, host=args.name)
         else:
-            def msg_stream():
-                for line in sys.stdin:
-                    yield registry.from_json(line, deref=True)
-
-            messages = msg_stream()
+            input_stream = JSONObjectReader(
+                registry, sys.stdin, deref=True)
+            output_stream = JSONObjectWriter(
+                registry, sys.stdout, host=args.name)
 
         # run the init function if it is given
         if args.init:
@@ -93,8 +77,11 @@ def run_online_mode(args):
         if args.finish:
             finish = look_up(args.finish)
 
-        for msg in messages:
-            key, job = get_job(msg)
+        for msg in input_stream:
+            if isinstance(msg, JobMessage):
+                key, job = msg
+            else:
+                continue
 
             if args.jobdirs:
                 # make a directory
@@ -122,13 +109,7 @@ def run_online_mode(args):
                 # parent directory
                 os.chdir("..")
 
-            if args.msgpack:
-                sys.stdout.buffer.write(put_result_msgpack(
-                    registry, args.name, *result))
-                sys.stdout.flush()
-            else:
-                print(put_result_json(registry, args.name, *result),
-                      flush=True)
+            output_stream.send(result)
 
         if finish:
             finish()

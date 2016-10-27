@@ -10,7 +10,6 @@ import sys
 
 
 class Job:
-    """A Job message."""
     def __init__(self, workflow, node_id):
         self.workflow = workflow
         self.node_id = node_id

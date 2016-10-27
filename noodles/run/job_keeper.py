@@ -16,7 +16,7 @@ class JobKeeper(dict):
 
     def register(self, job):
         with self.lock:
-            key = uuid.uuid1()
+            key = str(uuid.uuid4())
             job.log = []
             job.log.append((time.time(), 'register', None, None))
             self[key] = job
@@ -66,7 +66,7 @@ class JobTimer(dict):
             self.owner = False
 
     def register(self, job):
-        key = uuid.uuid1()
+        key = str(uuid.uuid4())
         job.sched_time = time.time()
         self[key] = job
         return key, job.node

@@ -22,6 +22,7 @@ def MsgPackObjectWriter(registry, fo, host=None):
     while True:
         obj = yield
         fo.write(registry.to_msgpack(obj, host=host))
+        fo.flush()
 
 
 def JSONObjectReader(registry, fi, deref=False):

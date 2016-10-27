@@ -1,5 +1,5 @@
 from .haploid import (pull_map)
-from .scheduler import (Result)
+from .messages import (ResultMessage)
 from ..interface import (AnnotatedValue, JobException)
 from ..utility import (object_name)
 import sys
@@ -22,7 +22,7 @@ def run_job(key, job):
             result = job.apply()
             if isinstance(result, tuple) and len(result) == 2:
                 value, msg = result
-                return Result(key, 'done', value, msg)
+                return ResultMessage(key, 'done', value, msg)
             else:
                 raise TypeError("You promised annotation in call "
                                 "to function {} but return value "
@@ -33,10 +33,10 @@ def run_job(key, job):
             result = job.apply()
             if isinstance(result, AnnotatedValue):
                 value, message = result
-                return Result(key, 'done', value, message)
+                return ResultMesage(key, 'done', value, message)
 
-            return Result(key, 'done', result, None)
+            return ResultMessage(key, 'done', result, None)
 
     except Exception as error:
         exc_info = sys.exc_info()
-        return Result(key, 'error', None, JobException(*exc_info))
+        return ResultMessage(key, 'error', None, JobException(*exc_info))

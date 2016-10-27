@@ -13,6 +13,10 @@ from .scheduler import Scheduler
 from .hybrid import hybrid_threaded_worker
 from .haploid import (pull, push)
 
+from .remote.io import (
+    MsgPackObjectReader, MsgPackObjectWriter,
+    JSONObjectReader, JSONObjectWriter)
+
 try:
     import msgpack
     has_msgpack = True
@@ -20,51 +24,14 @@ except ImportError:
     has_msgpack = False
 
 
-def get_result_tuple(msg):
-    key = msg['key']
-    status = msg['status']
-
-    try:
-        key = uuid.UUID(key)
-    except ValueError:
-        pass
-
-    return key, status, msg['result'], msg['err_msg']
-
-
-def read_result_json(registry, s):
-    obj = registry.from_json(s)
-    key = obj['key']
-    status = obj['status']
-
-    try:
-        key = uuid.UUID(key)
-    except ValueError:
-        pass
-
-    return key, status, obj['result'], obj['err_msg']
-
-
-def job_msg(registry, host, key, job):
-    obj = {'key': key if isinstance(key, str) else key.hex,
-           'node': job}
-    return registry.to_msgpack(obj, host=host)
-
-
-def put_job(registry, host, key, job):
-    obj = {'key': key if isinstance(key, str) else key.hex,
-           'node': job}
-    return registry.to_json(obj, host=host)
-
-
-def process_worker(registry,
-                   verbose=False, jobdirs=False,
+def process_worker(registry, verbose=False, jobdirs=False,
                    init=None, finish=None, status=True, use_msgpack=False):
     name = "process-" + str(uuid.uuid4())
 
     cmd = ["/bin/bash", os.getcwd() + "/worker.sh", sys.prefix, "online",
            "-name", name, "-registry", object_name(registry)]
     if use_msgpack:
+        assert has_msgpack
         cmd.append("-msgpack")
     if verbose:
         cmd.append("-verbose")
@@ -92,36 +59,18 @@ def process_worker(registry,
     @push
     def send_job():
         reg = registry()
-        while True:
-            key, job = yield
-            if use_msgpack:
-                p.stdin.buffer.write(job_msg(reg, name, key, job))
-                p.stdin.flush()
-            else:
-                print(put_job(reg, name, key, job), file=p.stdin, flush=True)
+        if use_msgpack:
+            yield from MsgPackObjectWriter(reg, p.stdin.buffer)
+        else:
+            yield from JSONObjectWriter(reg, p.stdin)
 
     @pull
     def get_result():
         reg = registry()
         if use_msgpack:
-            messages = msgpack.Unpacker(
-                p.stdout.buffer, object_hook=reg.decode)
+            yield from MsgPackObjectReader(reg, p.stdout.buffer)
         else:
-            messages = (reg.from_json(line) for line in p.stdout)
-
-        for msg in messages:
-            result = get_result_tuple(msg)
-            yield result
-
-    # if init is not None:
-    #     send_job().send(("init", init()._workflow.root_node))
-    #     key, status, result, err_msg = next(get_result())
-    #     if key != "init" or not result:
-    #         raise RuntimeError(
-    #             "The initializer function did not succeed on worker.")
-    #
-    # if finish is not None:
-    #     send_job().send(("finish", finish()._workflow.root_node))
+            yield from JSONObjectReader(reg, p.stdout)
 
     return Connection(get_result, send_job, aux=read_stderr)
 

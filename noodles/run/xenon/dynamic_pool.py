@@ -2,7 +2,12 @@ from ..queue import Queue
 from ..connection import Connection
 from ..coroutine import coroutine
 from ..haploid import (push)
-from ..scheduler import Result
+
+from ..messages import (
+    ResultMessage, JobMessage)
+
+from ..remote.io import (
+    JSONObjectWriter, JSONObjectReader)
 
 import xenon
 import jpype
@@ -13,24 +18,6 @@ import uuid
 from collections import namedtuple
 
 from .xenon import (XenonKeeper, XenonConfig, XenonScheduler)
-
-
-def read_result(registry, s):
-    obj = registry.from_json(s)
-    status = obj['status']
-    key = obj['key']
-    try:
-        key = uuid.UUID(key)
-    except ValueError:
-        pass
-
-    return Result(key, status, obj['result'], obj['err_msg'])
-
-
-def put_job(registry, host, key, job):
-    obj = {'key': key if isinstance(key, str) else key.hex,
-           'node': job}
-    return registry.to_json(obj, host=host)
 
 
 def xenon_interactive_worker(XeS: XenonScheduler, job_config):
@@ -60,20 +47,17 @@ def xenon_interactive_worker(XeS: XenonScheduler, job_config):
 
     registry = job_config.registry()
 
-    @coroutine
+    @push
     def send_job():
-        out = xenon.conversions.OutputStream(J.streams.getStdin())
+        output_stream = xenon.conversions.OutputStream(J.streams.getStdin())
+        yield from JSONObjectWriter(reg, output_stream, host="scheduler")
 
-        while True:
-            key, ujob = yield
-            print(put_job(registry, 'scheduler', key, ujob),
-                  file=out, flush=True)
-
+    @pull
     def get_result():
-        """ Returns a result tuple: key, status, result, err_msg """
-        for line in xenon.conversions.read_lines(J.streams.getStdout()):
-            yield read_result(registry, line)
-
+        reg = registry()
+        input_stream = xenon.conversions.InputStream(J.streams.getStdout()):
+        yield from JSONObjectReader(reg, input_stream)
+            
     return Connection(get_result, send_job, aux=J)
 
 
