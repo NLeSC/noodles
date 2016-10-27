@@ -160,7 +160,7 @@ class Registry(object):
         if obj is None:
             return None
 
-        if type(obj) in [dict, list, str, int, float, bool, tuple]:
+        if type(obj) in [dict, list, str, int, float, bool]:
             return obj
 
         if isinstance(obj, RefObject):

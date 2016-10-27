@@ -1,5 +1,7 @@
 from .connection import (Connection)
 from .job_keeper import (JobKeeper)
+from .messages import (ResultMessage as Result)
+
 from ..workflow import (
     is_workflow, get_workflow, insert_result,
     is_node_ready, Workflow)
@@ -8,6 +10,7 @@ import sys
 
 
 class Job:
+    """A Job message."""
     def __init__(self, workflow, node_id):
         self.workflow = workflow
         self.node_id = node_id
@@ -18,17 +21,6 @@ class Job:
     @property
     def node(self):
         return self.workflow.nodes[self.node_id]
-
-
-class Result:
-    def __init__(self, key, status, value, msg):
-        self.key = key
-        self.status = status
-        self.value = value
-        self.msg = msg
-
-    def __iter__(self):
-        return iter((self.key, self.status, self.value, self.msg))
 
 
 class DynamicLink:
