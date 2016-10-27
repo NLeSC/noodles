@@ -69,7 +69,8 @@ def process_worker(registry, verbose=False, jobdirs=False,
     def get_result():
         reg = registry()
         if use_msgpack:
-            yield from MsgPackObjectReader(reg, p.stdout.buffer)
+            newin = os.fdopen(p.stdout.fileno(), 'rb', buffering=0)
+            yield from MsgPackObjectReader(reg, newin)
         else:
             yield from JSONObjectReader(reg, p.stdout)
 
@@ -78,7 +79,7 @@ def process_worker(registry, verbose=False, jobdirs=False,
 
 def run_process(wf, n_processes, registry,
                 verbose=False, jobdirs=False,
-                init=None, finish=None, deref=False):
+                init=None, finish=None, deref=False, use_msgpack=False):
     """Run the workflow using a number of new python processes. Use this
     runner to test the workflow in a situation where data serial
     is needed.
@@ -117,7 +118,7 @@ def run_process(wf, n_processes, registry,
     """
     workers = {}
     for i in range(n_processes):
-        new_worker = process_worker(registry, verbose, jobdirs, init, finish)
+        new_worker = process_worker(registry, verbose, jobdirs, init, finish, use_msgpack=use_msgpack)
         workers['worker {0:2}'.format(i)] = new_worker
 
     worker_names = list(workers.keys())

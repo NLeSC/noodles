@@ -25,7 +25,7 @@ def test_worker():
     b = ssum(gather(*a))
 
     result = Scheduler().run(
-        process_worker(registry),
+        process_worker(registry, use_msgpack=True),
         get_workflow(b))
     assert result == 100
 

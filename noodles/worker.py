@@ -59,8 +59,9 @@ def run_online_mode(args):
         finish = None
 
         if args.msgpack:
+            newin = os.fdopen(sys.stdin.fileno(), 'rb', buffering=0)
             input_stream = MsgPackObjectReader(
-                registry, sys.stdin.buffer, deref=True)
+                registry, newin, deref=True)
             output_stream = MsgPackObjectWriter(
                 registry, sys.stdout.buffer, host=args.name)
         else:
