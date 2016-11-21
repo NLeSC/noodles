@@ -1,5 +1,6 @@
 from .decorator import (schedule, PromisedObject)
 # from copy import deepcopy
+from ..serial.reasonable import Reasonable
 
 
 @schedule
@@ -59,6 +60,23 @@ def make_list(*args):
 @schedule
 def make_set(*args):
     return set(args)
+
+
+class Quote(Reasonable):
+    def __init__(self, promise):
+        self.workflow = promise._workflow
+
+    @property
+    def promise(self):
+        return PromisedObject(self.workflow)
+
+
+def quote(promise):
+    return Quote(promise)
+
+
+def unquote(quoted):
+    return quoted.promise
 
 
 def lift(obj, memo=None):
