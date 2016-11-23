@@ -64,4 +64,4 @@ class CatchExceptions(object):
 
                 raise exc
 
-        return fn
+        return protected_fn

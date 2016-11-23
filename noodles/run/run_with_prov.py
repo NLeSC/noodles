@@ -210,10 +210,6 @@ def create_prov_worker(
 
     jobs = Queue()
 
-    @push_map
-    def log_job_start(key, job):
-        return (key, 'start', job, None)
-
     r_src = jobs.source \
         >> start_job(db) \
         >> worker \

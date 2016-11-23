@@ -32,10 +32,9 @@ def JSONObjectReader(registry, fi, deref=False):
 
 @coroutine
 def JSONObjectWriter(registry, fo, host=None):
-    import sys
+    # import sys
     while True:
         obj = yield
-        #obj_msg = registry.to_json(obj, host=host)
-        #print(obj_msg, file=sys.stderr)
+        # obj_msg = registry.to_json(obj, host=host)
+        # print(obj_msg, file=sys.stderr)
         print(registry.to_json(obj, host=host), file=fo, flush=True)
-

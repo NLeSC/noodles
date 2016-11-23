@@ -33,10 +33,10 @@ def run_job(key, job):
             result = job.apply()
             if isinstance(result, AnnotatedValue):
                 value, message = result
-                return ResultMesage(key, 'done', value, message)
+                return ResultMessage(key, 'done', value, message)
 
             return ResultMessage(key, 'done', result, None)
 
-    except Exception as error:
+    except Exception:
         exc_info = sys.exc_info()
         return ResultMessage(key, 'error', None, JobException(*exc_info))

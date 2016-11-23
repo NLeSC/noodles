@@ -42,12 +42,12 @@ from .run.worker import (
     run_job)
 
 from .run.messages import (
-    JobMessage, ResultMessage)
-    
+    JobMessage)
+
 from .run.remote.io import (
     MsgPackObjectReader, MsgPackObjectWriter,
     JSONObjectReader, JSONObjectWriter)
-    
+
 
 def run_batch_mode(args):
     print("Batch mode is not yet implemented")
@@ -104,9 +104,6 @@ def run_online_mode(args):
 
             if args.verbose:
                 print("result: ", result, file=sys.stderr, flush=True)
-                print("json: ", put_result_json(
-                    registry, args.name, key,
-                    'success', result, None), file=sys.stderr, flush=True)
 
             if args.jobdirs:
                 # parent directory
