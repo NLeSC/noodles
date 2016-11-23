@@ -1,4 +1,5 @@
-from noodles.run.xenon import (XenonJob, XenonScheduler, XenonKeeper, XenonConfig)
+from noodles.run.xenon import (
+    XenonScheduler, XenonKeeper, XenonConfig)
 
 import docker
 import uuid
