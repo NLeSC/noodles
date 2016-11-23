@@ -331,7 +331,8 @@ class Serialiser(object):
 
         raise NotImplementedError(msg)
 
-    def decode(self, cls, data):
+    @staticmethod
+    def decode(cls, data):
         """Should decode the data to an object of type 'cls'.
 
         :param cls:

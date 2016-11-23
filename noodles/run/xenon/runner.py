@@ -35,8 +35,8 @@ else:
             Xenon.
 
         :param job_config:
-            The :py:class:`RemoteJobConfig` object that specifies the command to
-            run remotely for each worker.
+            The :py:class:`RemoteJobConfig` object that specifies the command
+            to run remotely for each worker.
 
         :param deref:
             Set this to True to pass the result through one more encoding and
@@ -83,7 +83,7 @@ else:
 
 
 def run_xenon(wf, Xe, jobdb_file, n_processes, xenon_config,
-              job_config, *, deref=False, job_keeper=None, display=None):
+              job_config, *, deref=False, job_keeper=None):
     """Run the workflow using a number of online Xenon workers.
 
     :param Xe:
