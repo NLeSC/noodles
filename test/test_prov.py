@@ -105,7 +105,7 @@ def test_prov_05():
     result = run_parallel(wf, 4, serial.base, db_file)
     end = time.time()
 
-    assert (end - start) < 1.0
+    assert (end - start) < 5.0  # weak test
     assert result == 10946
 
     os.unlink(db_file)

@@ -1,6 +1,8 @@
-from .decorator import (PromisedObject, schedule, schedule_hint,
-                        has_scheduled_methods, unwrap, update_hints)
-from .functions import (delay, gather, lift, unpack, quote, unquote, find_first)
+from .decorator import (
+    PromisedObject, schedule, schedule_hint, has_scheduled_methods,
+    unwrap, update_hints)
+from .functions import (
+    delay, gather, lift, unpack, quote, unquote, find_first)
 from .annotated_value import (AnnotatedValue)
 from .exceptions import (JobException)
 

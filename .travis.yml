@@ -1,8 +1,16 @@
 language: python
+sudo: false
 python:
   - "3.5"
-install: pip install .[prov,numpy,test]
-script: nosetests test
+install:
+  - pip install -U codacy-coverage
+  - pip install -U .[prov,numpy,test]
+script:
+  - nosetests test --with-coverage --cover-xml --cover-package=noodles
+after-script:
+  - coverage report
+  - coverage xml
+  - python-codacy-coverage -r coverage.xml
 
 branches:
   only:
