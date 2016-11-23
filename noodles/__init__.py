@@ -8,7 +8,7 @@ from .run.process import run_process
 from .run.scheduler import Scheduler
 from .storable import Storable
 
-__version__ = "0.2.0"
+__version__ = "0.2.3"
 
 __all__ = ['schedule', 'schedule_hint', 'run_single', 'run_process',
            'run_logging', 'run_parallel', 'run_hybrid', 'unwrap',
