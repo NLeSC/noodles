@@ -1,7 +1,7 @@
 from noodles import (
         schedule, run_single, quote, unquote, run_process,
-        schedule_hint, run_logging)
-from noodles.tutorial import (add, sub, mul, accumulate)
+        schedule_hint, run_logging, find_first)
+from noodles.tutorial import (add, sub, mul)
 from noodles.serial import base
 from noodles.display import NCDisplay
 
@@ -16,23 +16,6 @@ def s_cond(truth, when_true, when_false):
         return unquote(when_true)
     else:
         return unquote(when_false)
-
-
-def find_first(pred, lst):
-    if lst:
-        return s_find_first(pred, lst[0], [quote(l) for l in lst[1:]])
-    else:
-        return None
-
-
-@schedule
-def s_find_first(pred, first, lst):
-    if pred(first):
-        return first
-    elif lst:
-        return s_find_first(pred, unquote(lst[0]), lst[1:])
-    else:
-        return None
 
 
 @schedule

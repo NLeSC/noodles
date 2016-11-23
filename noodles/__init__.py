@@ -1,6 +1,7 @@
 from noodles.interface import (
     delay, gather, lift, schedule, schedule_hint, unwrap,
-    has_scheduled_methods, update_hints, unpack, quote, unquote)
+    has_scheduled_methods, update_hints, unpack, quote, unquote,
+    find_first)
 from .eval_data import Lambda
 from .run.runners import run_parallel_with_display as run_logging
 from .run.runners import (run_single, run_parallel)
@@ -14,4 +15,4 @@ __all__ = ['schedule', 'schedule_hint', 'run_single', 'run_process',
            'run_logging', 'run_parallel', 'run_hybrid', 'unwrap',
            'Scheduler', 'Storable', 'has_scheduled_methods', 'Lambda',
            'gather', 'lift', 'unpack', 'delay', 'update_hints',
-           'quote', 'unquote']
+           'quote', 'unquote', 'find_first']
