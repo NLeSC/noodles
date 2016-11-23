@@ -1,10 +1,9 @@
 from ..queue import Queue
 from ..connection import Connection
-from ..coroutine import coroutine
 from ..haploid import (push)
 
 from ..messages import (
-    ResultMessage, JobMessage)
+    ResultMessage)
 
 from ..remote.io import (
     JSONObjectWriter, JSONObjectReader)
@@ -14,7 +13,6 @@ import jpype
 
 import threading
 import sys
-import uuid
 from collections import namedtuple
 
 from .xenon import (XenonKeeper, XenonConfig, XenonScheduler)
@@ -56,7 +54,7 @@ def xenon_interactive_worker(XeS: XenonScheduler, job_config):
     def get_result():
         input_stream = xenon.conversions.InputStream(J.streams.getStdout())
         yield from JSONObjectReader(registry, input_stream)
-            
+
     return Connection(get_result, send_job, aux=J)
 
 
@@ -187,8 +185,8 @@ class DynamicPool(Connection):
                 # lock end ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
             for key in w.jobs:
-                sink.send(ResultMessage(key, 'aborted', None,
-                                 'connection to remote worker lost.'))
+                sink.send(ResultMessage(
+                    key, 'aborted', None, 'connection to remote worker lost.'))
 
         # Start the `activate` function when the worker goes online.
         threading.Thread(
