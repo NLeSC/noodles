@@ -1,5 +1,5 @@
-from noodles import schedule, run
-from prototype import draw_workflow
+from noodles import schedule, run_single
+from noodles.draw_workflow import draw_workflow
 
 
 @schedule
@@ -42,6 +42,7 @@ class A:
 class B:
     pass
 
+
 a = A(5).multiply(10)
 a.second = 7
 a.attr = 1.0
@@ -51,7 +52,7 @@ b.x = a.x
 b.second = a.second
 b.attr = a.attr
 
-draw_workflow("oop-wf.svg", b)
-result = run(b)
+draw_workflow("oop-wf.svg", b._workflow)
+result = run_single(b)
 
 print(result.x, result.second, result.attr)
