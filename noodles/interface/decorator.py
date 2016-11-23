@@ -49,7 +49,7 @@ def schedule(f):
 
 
 def has_scheduled_methods(cls):
-    for name, member in cls.__dict__.items():
+    for member in cls.__dict__.values():
         if hasattr(member, '__wrapped__'):
             member.__wrapped__.__member_of__ = cls
 
