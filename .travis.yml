@@ -3,3 +3,9 @@ python:
   - "3.5"
 install: pip install .[prov,numpy,test]
 script: nosetests test
+
+branches:
+  only:
+    - master
+    - devel
+
