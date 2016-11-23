@@ -79,8 +79,7 @@ def concatenate(lst):
 
 
 def dmap(f, lst):
-    return gather(*[gather(*[
-        f(x) for x in row]) for row in lst])
+    return gather(*[gather(*[f(x) for x in row]) for row in lst])
 
 
 # def test_worker_with_storable():

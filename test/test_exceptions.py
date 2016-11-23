@@ -10,6 +10,7 @@ class MyException(Exception):
 @schedule
 def raises_my_exception():
     raise MyException("Error!")
+    return None
 
 
 @raises(MyException)

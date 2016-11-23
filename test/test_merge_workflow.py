@@ -74,7 +74,7 @@ def test_binder():
 
 @schedule
 def takes_keywords(s, **kwargs):
-    pass
+    return s
 
 
 def test_with_keywords():
