@@ -6,7 +6,7 @@ import threading
 import os
 import random
 from ..workflow import get_workflow
-from ..logger import log
+# from ..logger import log
 from .connection import Connection
 from ..utility import object_name
 from .scheduler import Scheduler
@@ -19,7 +19,7 @@ from .remote.io import (
     JSONObjectReader, JSONObjectWriter)
 
 try:
-    import msgpack
+    import msgpack  # noqa
     has_msgpack = True
 except ImportError:
     has_msgpack = False
@@ -118,7 +118,8 @@ def run_process(wf, n_processes, registry,
     """
     workers = {}
     for i in range(n_processes):
-        new_worker = process_worker(registry, verbose, jobdirs, init, finish, use_msgpack=use_msgpack)
+        new_worker = process_worker(registry, verbose, jobdirs, init, finish,
+                                    use_msgpack=use_msgpack)
         workers['worker {0:2}'.format(i)] = new_worker
 
     worker_names = list(workers.keys())
