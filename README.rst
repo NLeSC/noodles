@@ -1,3 +1,6 @@
+.. image:: https://travis-ci.org/NLeSC/noodles.svg?branch=master
+   :alt: Travis
+
 Noodles - workflow engine
 =========================
 

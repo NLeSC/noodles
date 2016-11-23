@@ -38,6 +38,9 @@ def scheduled_function(f, hints=None):
             f, args, kwargs, deepcopy(hints),
             call_by_value=config['call_by_value']))
 
+    if hasattr(wrapped, '__doc__') and wrapped.__doc__ is not None:
+        wrapped.__doc__ = "*(scheduled)* " + wrapped.__doc__
+
     return wrapped
 
 
