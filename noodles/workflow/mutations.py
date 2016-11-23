@@ -2,7 +2,7 @@ from .arguments import set_argument, Empty
 
 
 def reset_workflow(workflow):
-    for src, tgt in workflow.links.items():
+    for tgt in workflow.links.values():
         for m, a in tgt:
             set_argument(workflow.nodes[m].bound_args, a, Empty)
 

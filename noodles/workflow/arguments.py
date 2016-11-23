@@ -44,12 +44,12 @@ def serialize_arguments(bound_args):
     """
     for p in bound_args.signature.parameters.values():
         if p.kind == Parameter.VAR_POSITIONAL:
-            for i, v in enumerate(bound_args.arguments[p.name]):
+            for i, _ in enumerate(bound_args.arguments[p.name]):
                 yield ArgumentAddress(ArgumentKind.variadic, p.name, i)
             continue
 
         if p.kind == Parameter.VAR_KEYWORD:
-            for k, v in bound_args.arguments[p.name].items():
+            for k in bound_args.arguments[p.name].keys():
                 yield ArgumentAddress(ArgumentKind.keyword, p.name, k)
             continue
 

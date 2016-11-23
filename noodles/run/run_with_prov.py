@@ -36,7 +36,7 @@ def run_single(wf, registry, jobdb_file, display=None):
             prov = prov_key(job_msg)
 
             if db.job_exists(prov):
-                status, other_key, result = db.get_result_or_attach(
+                status, _, result = db.get_result_or_attach(
                     key, prov, {})
                 if status == 'retrieved':
                     yield decode_result(key, result)
@@ -231,10 +231,6 @@ def prov_wrap_connection(
         pred=lambda x: True, log_q=None):
     registry = registry()
     db = JobDB(jobdb_file)
-
-    @push_map
-    def log_job_start(key, job):
-        return (key, 'start', job, None)
 
     r_src = worker.source \
         >> store_result_deep(registry, db, job_keeper, pred)
