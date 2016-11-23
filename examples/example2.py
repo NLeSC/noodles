@@ -18,7 +18,7 @@ def mul(a, b):
 
 
 @schedule
-def sum(a, buildin_sum=sum):
+def my_sum(a, buildin_sum=sum):
     return buildin_sum(a)
 
 
@@ -34,7 +34,7 @@ def foo(a, b, c):
 
 multiples = [foo(i, r2, r1) for i in range(6)]
 
-r5 = sum(gather(*multiples))
+r5 = my_sum(gather(*multiples))
 
 draw_workflow("graph-example2.svg", r5)
 answer = run_parallel(r5, 4)
