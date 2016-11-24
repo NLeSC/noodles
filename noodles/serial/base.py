@@ -1,6 +1,6 @@
 from .registry import (Registry, Serialiser)
 from .reasonable import (Reasonable, SerReasonableObject)
-from ..interface import (PromisedObject)    
+from ..interface import (PromisedObject)
 from ..utility import (object_name, look_up, importable)
 from ..workflow import (Workflow, NodeData, FunctionNode, ArgumentAddress,
                         ArgumentKind, reset_workflow, get_workflow)
@@ -30,13 +30,13 @@ class SerTuple(Serialiser):
     We want to get tuples back, so make this explicit."""
     def __init__(self):
         super(SerTuple, self).__init__(tuple)
-    
+
     def encode(self, obj, make_rec):
         return make_rec(list(obj))
-        
+
     def decode(self, cls, data):
         return cls(data)
-        
+
 
 class SerEnum(Serialiser):
     def __init__(self, cls):
