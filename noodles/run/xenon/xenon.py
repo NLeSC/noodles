@@ -184,9 +184,9 @@ class XenonJob:
 class XenonKeeper:
     is_initialized = False
 
-    def __init__(self):
+    def __init__(self, log_level='ERROR'):
         if not XenonKeeper.is_initialized:
-            xenon.init(log_level='ERROR')  # noqa
+            xenon.init(log_level=log_level)  # noqa
             XenonKeeper.is_initialized = True
 
         self._x = xenon.Xenon()
