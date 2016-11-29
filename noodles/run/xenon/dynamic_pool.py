@@ -32,7 +32,8 @@ def xenon_interactive_worker(XeS: XenonScheduler, job_config):
         Job configuration. Specifies the command to be run remotely.
     """
     cmd = job_config.command_line()
-    J = XeS.submit(cmd, interactive=True)
+    queue = job_config.queue
+    J = XeS.submit(cmd, interactive=True, queue=queue)
 
     def read_stderr():
         jpype.attachThreadToJVM()
