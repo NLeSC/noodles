@@ -1,3 +1,7 @@
+"""
+.. default-domain:: py
+"""
+
 from functools import wraps
 from copy import deepcopy
 import hashlib
@@ -11,14 +15,12 @@ from noodles.config import config
 
 
 def scheduled_function(f, hints=None):
-    """
-    The Noodles schedule function decorator.
+    """The Noodles schedule function decorator.
 
     The decorated function will return a workflow in stead of
     being applied immediately. This workflow can then be passed to a job
     scheduler in order to be run on any architecture supporting the current
-    python environment.
-    """
+    python environment."""
     if hints is None:
         hints = {}
 
@@ -38,6 +40,7 @@ def scheduled_function(f, hints=None):
             f, args, kwargs, deepcopy(hints),
             call_by_value=config['call_by_value']))
 
+    # add *(scheduled)* to the beginning of the docstring.
     if hasattr(wrapped, '__doc__') and wrapped.__doc__ is not None:
         wrapped.__doc__ = "*(scheduled)* " + wrapped.__doc__
 
@@ -45,10 +48,18 @@ def scheduled_function(f, hints=None):
 
 
 def schedule(f):
+    """Decorator; schedule calls to function `f` into a workflow, in stead of
+    running them at once. The decorated function returns a
+    :class:`PromisedObject`."""
     return scheduled_function(f)
 
 
 def has_scheduled_methods(cls):
+    """Decorator; use this on a class for which some methods have been
+    decorated with :func:`schedule` or :func:`schedule_hint`. Those methods
+    are then tagged with the attribute `__member_of__`, so that we may
+    serialise and retrieve the correct method. This should be considered
+    a patch to a flaw in the Python object model."""
     for member in cls.__dict__.values():
         if hasattr(member, '__wrapped__'):
             member.__wrapped__.__member_of__ = cls
@@ -57,10 +68,17 @@ def has_scheduled_methods(cls):
 
 
 def schedule_hint(**hints):
+    """Decorator; same as :func:`schedule`, with added hints. These
+    hints can be anything."""
     return lambda f: scheduled_function(f, hints)
 
 
 def unwrap(f):
+    """Unwrap a wrapped function; the function needs to have been wrapped
+    using :func:`functools.wraps`, as is done in :func:`schedule`.
+    
+    If function `f` doesn't have the `__wrapped` attribute, the same
+    function `f` is returned."""
     try:
         return f.__wrapped__
     except AttributeError:
@@ -105,11 +123,25 @@ def _do_call(obj, *args, **kwargs):
 
 
 def update_hints(obj, data):
+    """Update the hints on the root-node of a workflow. Usually, schedule
+    hints are fixed per function. Sometimes a user may want to set hints
+    manually on a specific promised object. :func:`update_hints` uses the
+    `update` method on the hints dictionary with `data` as its argument.
+
+    :param obj: a :class:`PromisedObject`.
+    :param data: a :class:`dict` containing additional hints.
+
+    The hints are modified, in place, on the node. All workflows that contain
+    the node are affected."""
     root = obj._workflow.root
     obj._workflow.nodes[root].hints.update(data)
 
 
 def get_result(obj):
+    """Results are stored on the nodes in the workflow at run time. This
+    function can be used to get at a result of a node in a workflow after
+    run time. This is not a recommended way of getting at results, but can
+    help with debugging."""
     root = obj._workflow.root
     return obj._workflow.nodes[root].result
 
