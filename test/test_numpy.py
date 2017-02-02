@@ -1,20 +1,18 @@
-from nose.plugins.skip import SkipTest
+import pytest
 
 try:
     import numpy as np
     from numpy import (random, fft, exp)
-
     from noodles.serial.numpy import arrays_to_hdf5
-    from noodles.run.xenon import (XenonConfig, RemoteJobConfig, XenonKeeper)
+
+    from noodles.run.run_with_prov import (
+        run_parallel_opt)
 
 except ImportError:
-    raise SkipTest("No NumPy or Xenon installed.")
+    has_numpy = False
 
 else:
-    try:
-        from noodles.run.xenon import run_xenon_prov as run_xenon
-    except ImportError:
-        from noodles.run.xenon import run_xenon
+    has_numpy = True
 
 from noodles.display import (NCDisplay)
 from noodles import schedule, serial, schedule_hint
@@ -51,23 +49,14 @@ def make_noise(n, seed=0):
 
 
 def run(wf):
-    xenon_config = XenonConfig(
-        jobs_scheme='local'
-    )
-
-    job_config = RemoteJobConfig(
-        registry=registry,
-        time_out=1000
-    )
-
-    with XenonKeeper() as Xe, NCDisplay() as display:
-        result = run_xenon(
-            wf, Xe, "cache.json", 2, xenon_config, job_config,
-            display=display, deref=True)
+    with NCDisplay() as display:
+        result = run_parallel_opt(
+            wf, 2, registry, "cache.json", display=display)
 
     return result
 
 
+@pytest.mark.skipif(not has_numpy, reason="NumPy needed.")
 def test_hdf5():
     x = make_noise(256)
     k = make_kernel(256, 10)

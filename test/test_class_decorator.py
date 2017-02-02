@@ -1,6 +1,6 @@
 from noodles import schedule, run_single, unwrap, run_process, Storable
 from noodles import serial
-from nose.tools import raises
+from pytest import raises
 
 
 @schedule
@@ -119,9 +119,9 @@ def test_unwrap():
     assert f == unwrap(f)
 
 
-@raises(AttributeError)
 def test_class_decorator2():
-    a = make_object(A, 6).multiply(7)
-    b = a.divide(0)
-    result = run_single(b)
-    print(dir(result))
+    with raises(AttributeError):
+        a = make_object(A, 6).multiply(7)
+        b = a.divide(0)
+        result = run_single(b)
+        print(dir(result))

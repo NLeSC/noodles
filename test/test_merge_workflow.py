@@ -1,4 +1,4 @@
-from nose.tools import raises
+from pytest import raises
 from noodles.workflow import (
     Empty, ArgumentAddress,
     ArgumentKind, is_workflow, get_workflow, Workflow)
@@ -113,14 +113,14 @@ def test_arg_by_ref():
     assert result.y.x == 5
 
 
-@raises(TypeError)
 def test_hidden_promise():
-    a = Normal()
-    b = Scheduled()
-    c = Scheduled()
+    with raises(TypeError):
+        a = Normal()
+        b = Scheduled()
+        c = Scheduled()
 
-    a.x = b
-    c.x = a
+        a.x = b
+        c.x = a
 
 
 def test_tuple_unpack():
