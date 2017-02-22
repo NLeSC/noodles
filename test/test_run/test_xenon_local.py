@@ -1,11 +1,12 @@
-from nose.plugins.skip import SkipTest
+import pytest
 
 try:
     # Only test xenon if it is installed
     from noodles.run.xenon import (XenonConfig, RemoteJobConfig, XenonKeeper)
 except ImportError as e:
-    raise SkipTest(str(e))
+    has_xenon = False
 else:
+    has_xenon = True
     # Only test run_xenon_prov if provenance is installed, otherwise run_xenon
     try:
         from noodles.run.xenon import run_xenon_prov as run_xenon
@@ -18,6 +19,7 @@ from noodles import serial
 from noodles.tutorial import (log_add, mul, sub, accumulate)
 
 
+@pytest.mark.skipif(not has_xenon, reason="No (py)xenon installed.")
 def test_xenon_42():
     A = log_add(1, 1)
     B = sub(3, A)
