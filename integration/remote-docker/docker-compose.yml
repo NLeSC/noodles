@@ -2,7 +2,7 @@ mysql:
   image: mysql:5.5
   environment:
     - MYSQL_ROOT_PASSWORD=xenon-slurm-pw
-xenon-slurm:
+noodles-remote:
   image: nlesc/xenon-slurm
   links:
     - mysql
