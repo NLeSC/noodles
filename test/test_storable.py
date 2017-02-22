@@ -1,6 +1,6 @@
 from noodles import schedule, run_single, run_process, serial, lift
 from noodles.storable import Storable
-from nose.tools import raises
+from pytest import raises
 
 
 class A(Storable):
@@ -44,14 +44,14 @@ def test_storable():
     assert result.x == 7
 
 
-@raises(TypeError)
 def test_nonstorable():
-    a = A()
-    b = M()
+    with raises(TypeError):
+        a = A()
+        b = M()
 
-    a.x = 1
-    b.x = f(3, 4)
+        a.x = 1
+        b.x = f(3, 4)
 
-    zzc = g(a, b)
-    result = run_single(c)
-    assert result == 8
+        c = g(a, b)
+        result = run_single(c)
+        assert result == 8

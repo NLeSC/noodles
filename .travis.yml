@@ -6,7 +6,7 @@ install:
   - pip install -U codacy-coverage
   - pip install -U .[prov,numpy,test]
 script:
-  - nosetests test --with-coverage --cover-xml --cover-package=noodles
+  - pytest test --cov
 after-script:
   - coverage report
   - coverage xml
