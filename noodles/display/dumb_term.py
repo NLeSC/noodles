@@ -29,20 +29,11 @@ class DumbDisplay:
         self.error_filter = error_filter
         self.messages = []
 
-    def schedule(self, key, job, _):
-        if job.hints and 'display' in job.hints:
-            msg = job.hints['display'].format(**job.bound_args.arguments)
-        else:
-            msg = "{0} {1}".format(
-                job.foo.__name__, _format_arg_list(job.bound_args.args, None))
-
-        self.add_job(key, msg)
-        self.print_message(key, 'schedule')
-
     def print_message(self, key, msg):
         if key in self.jobs:
-            print("{0} | {1:12} | {2}".format(key, '['+msg.upper()+']', self.jobs[key]['name']),
-                    file=sys.stderr)
+            print("{0} | {1:12} | {2}".format(
+                    key, '['+msg.upper()+']', self.jobs[key]['name']),
+                  file=sys.stderr)
 
     def add_job(self, key, name):
         self.jobs[key] = {'name': name}
@@ -75,6 +66,17 @@ class DumbDisplay:
                     print(e)
 
     def __call__(self, key, status, data, err):
+        if hasattr(data, 'hints'):
+            job = data
+            if job.hints and 'display' in job.hints:
+                msg = job.hints['display'].format(**job.bound_args.arguments)
+            else:
+                msg = "{0} {1}".format(
+                    job.foo.__name__,
+                    _format_arg_list(job.bound_args.args, None))
+
+            self.add_job(key, msg)
+
         if hasattr(self, status):
             getattr(self, status)(key, data, err)
         else:

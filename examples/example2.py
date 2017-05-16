@@ -1,4 +1,4 @@
-from noodles import schedule, gather, serial
+from noodles import schedule, gather, serial, run_logging
 from noodles.run.run_with_prov import run_parallel_opt
 from noodles.display import (DumbDisplay)
 
@@ -39,8 +39,9 @@ r5 = my_sum(gather(*multiples))
 # draw_workflow("graph-example2.svg", r5)
 
 with DumbDisplay() as display:
-    answer = run_parallel_opt(
-            r5, 4, serial.base, "cache.json",
-            display=display, cache_all=True)
+    answer = run_logging(r5, 4, display)
+    #answer = run_parallel_opt(
+    #        r5, 4, serial.base, "cache.json",
+    #        display=display, cache_all=True)
 
 print("The answer is: {0}".format(answer))
