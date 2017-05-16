@@ -1,6 +1,6 @@
-from noodles import schedule, gather, run_parallel
-from prototype import draw_workflow
-
+from noodles import schedule, gather, serial
+from noodles.run.run_with_prov import run_parallel_opt
+from noodles.display import (DumbDisplay)
 
 @schedule
 def add(a, b):
@@ -36,7 +36,11 @@ multiples = [foo(i, r2, r1) for i in range(6)]
 
 r5 = my_sum(gather(*multiples))
 
-draw_workflow("graph-example2.svg", r5)
-answer = run_parallel(r5, 4)
+# draw_workflow("graph-example2.svg", r5)
+
+with DumbDisplay() as display:
+    answer = run_parallel_opt(
+            r5, 4, serial.base, "cache.json",
+            display=display, cache_all=True)
 
 print("The answer is: {0}".format(answer))
