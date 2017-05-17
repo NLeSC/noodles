@@ -4,7 +4,7 @@ python:
   - "3.5"
 install:
   - pip install -U codacy-coverage
-  - pip install -U .[prov,numpy,test,xenon]
+  - pip install -U .[prov,numpy,test]
 script:
   - pytest test --cov=./noodles
 after-script:
