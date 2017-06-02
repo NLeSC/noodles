@@ -21,6 +21,12 @@ def gather(*a):
     return list(a)
 
 
+@schedule
+def gather_dict(**kwargs):
+    """Creates a promise of a dictionary."""
+    return dict(**kwargs)
+
+
 def unpack(t, n):
     """Iterates over a promised sequence, the sequence should support random
     access by :meth:`object.__getitem__`. Also the length of the sequence
