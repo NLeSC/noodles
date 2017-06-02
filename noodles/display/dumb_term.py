@@ -31,7 +31,7 @@ class DumbDisplay:
 
     def print_message(self, key, msg):
         if key in self.jobs:
-            print("{0} | {1:12} | {2}".format(
+            print("{1:12} | {2}".format(
                     key, '['+msg.upper()+']', self.jobs[key]['name']),
                   file=sys.stderr)
 
