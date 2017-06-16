@@ -21,6 +21,11 @@ def gather(*a):
     return list(a)
 
 
+def gather_all(a):
+    """Converts an iterator of promises into a promise of a list."""
+    return gather(*a)
+
+
 @schedule
 def gather_dict(**kwargs):
     """Creates a promise of a dictionary."""
