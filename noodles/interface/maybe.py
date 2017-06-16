@@ -5,12 +5,12 @@ from ..utility import (object_name)
 
 
 class Fail:
-    def __init__(self, func, fails=[], exception=None):
+    def __init__(self, func, fails=None, exception=None):
         self.name = "{} ({}:{})".format(
             object_name(func),
             inspect.getsourcefile(func),
             inspect.getsourcelines(func)[1])
-        self.fails = fails
+        self.fails = fails or []
         self.trace = []
         self.exception = exception
 
