@@ -126,6 +126,7 @@ class Scheduler:
                 continue
 
             # insert the result in the nodes that need it
+            wf.nodes[n].result = result
             for (tgt, address) in wf.links[n]:
                 insert_result(wf.nodes[tgt], address, result)
                 if is_node_ready(wf.nodes[tgt]) and not graceful_exit:

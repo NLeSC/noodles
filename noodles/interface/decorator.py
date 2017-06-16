@@ -137,13 +137,12 @@ def update_hints(obj, data):
     obj._workflow.nodes[root].hints.update(data)
 
 
-def get_result(obj):
+def result(obj):
     """Results are stored on the nodes in the workflow at run time. This
     function can be used to get at a result of a node in a workflow after
     run time. This is not a recommended way of getting at results, but can
     help with debugging."""
-    root = obj._workflow.root
-    return obj._workflow.nodes[root].result
+    return obj.__result__()
 
 
 class PromisedObject:
@@ -169,6 +168,9 @@ class PromisedObject:
 
         self._workflow = get_workflow(
             _setattr(self, attr, value))
+
+    def __result__(self):
+        return self._workflow.root_node.result
 
     # predicates
     # def __lt__(self, other):

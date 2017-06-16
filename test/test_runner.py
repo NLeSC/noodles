@@ -1,4 +1,4 @@
-from noodles import schedule, run_single, run_parallel, gather
+from noodles import schedule, run_single, run_parallel, gather, result
 import time
 
 
@@ -33,6 +33,8 @@ def test_runner_01():
     C = add(A, B)
 
     assert run_single(C) == 2
+    assert result(A) == 1
+    assert result(B) == 1
 
 
 def test_runner_02():
@@ -43,6 +45,8 @@ def test_runner_02():
     C = sum(gather(*multiples))
 
     assert run_single(C) == 42
+    assert result(C) == 42
+    assert result(A) == 2
 
 
 def test_parallel_runner_01():
