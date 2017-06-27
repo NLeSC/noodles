@@ -1,4 +1,4 @@
-from noodles import schedule, run_single, unwrap, run_process, Storable
+from noodles import schedule, run_single, unwrap, run_process, Storable, Fail
 from noodles import serial
 from pytest import raises
 
@@ -120,8 +120,8 @@ def test_unwrap():
 
 
 def test_class_decorator2():
-    with raises(AttributeError):
-        a = make_object(A, 6).multiply(7)
-        b = a.divide(0)
-        result = run_single(b)
-        print(dir(result))
+    a = make_object(A, 6).multiply(7)
+    b = a.divide(0)
+    result = run_single(b)
+    assert isinstance(result, Fail)
+    print(result)
