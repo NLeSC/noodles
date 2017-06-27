@@ -60,14 +60,17 @@ class XenonConfig:
 
     @property
     def scheduler_args(self):
-        properties = xenon.conversions.dict_to_HashMap(self.jobs_properties)
-        return (self.jobs_scheme, self.location,
-                self.credential, properties)
+        return {'adaptor': self.jobs_scheme,
+                'location': self.location,
+                'properties': self.job_properties,
+                'credential': self.credential}
 
     @property
     def filesystem_args(self):
-        return (self.files_scheme, self.location,
-                self.credential, self.files_properties)
+        return {'adaptor': self.files_scheme,
+                'location': self.location,
+                'credential': self.credential,
+                'properties': self.files_properties}
 
 
 class RemoteJobConfig(object):
@@ -123,24 +126,26 @@ class RemoteJobConfig(object):
         self.queue = queue
         self.time_out = time_out
 
-    def command_line(self):
-        cmd = ['/bin/bash',
-               self.working_dir + '/worker.sh',
-               self.prefix, 'online', '-name', self.name,
-               '-registry', object_name(self.registry)]
+    def command(self):
+        executable = '/bin/bash'
+
+        arguments = [
+            self.working_dir + '/worker.sh',
+            self.prefix, 'online', '-name', self.name,
+            '-registry', object_name(self.registry)]
 
         if self.init:
-            cmd.extend(["-init", object_name(self.init)])
+            arguments.extend(["-init", object_name(self.init)])
             # cmd.append("-init")
 
         if self.finish:
-            cmd.extend(["-finish", object_name(self.finish)])
+            arguments.extend(["-finish", object_name(self.finish)])
             # cmd.append("-finish")
 
         if self.verbose:
-            cmd.append("-verbose")
+            arguments.append("-verbose")
 
-        return cmd
+        return executable, arguments
 
 
 class XenonJob:
@@ -181,31 +186,6 @@ class XenonJob:
         return self.job.isInteractive()
 
 
-class XenonKeeper:
-    is_initialized = False
-
-    def __init__(self, log_level='ERROR'):
-        if not XenonKeeper.is_initialized:
-            xenon.init(log_level=log_level)  # noqa
-            XenonKeeper.is_initialized = True
-
-        self._x = xenon.Xenon()
-        self.jobs = self._x.jobs()
-        self.credentials = self._x.credentials()
-        self._schedulers = {}
-
-    def add_scheduler(self, config: XenonConfig):
-        name = config.name
-        self._schedulers[name] = XenonScheduler(self, config)
-        return name
-
-    def __enter__(self):
-        return self
-
-    def __exit__(self, exc_type, exc_val, exc_tb):
-        self._x.close()
-
-
 class XenonScheduler:
     def __init__(self, keeper, config):
         self.config = config
@@ -213,15 +193,15 @@ class XenonScheduler:
         self._s = keeper.jobs.newScheduler(*config.scheduler_args)
 
     def submit(self, command, *, queue=None, interactive=True):
-        desc = xenon.jobs.JobDescription()
-        if interactive:
-            desc.setInteractive(True)
-        desc.setExecutable(command[0])
-        desc.setArguments(command[1:])
+        desc = xenon.jobs.JobDescription(
+            scheduler=self._s,
+            executable=command[0],
+            arguments=command[1:],
+            interactive=interactive)
         if queue:
-            desc.setQueueName(queue)
+            desc.queueName = queue
         elif self.config.jobs_scheme == 'local':
-            desc.setQueueName('multi')
+            desc.queueName = 'multi'
 
         job = self._x.jobs.submitJob(self._s, desc)
         return XenonJob(self._x, job, desc)

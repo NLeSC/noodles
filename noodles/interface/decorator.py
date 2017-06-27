@@ -10,6 +10,7 @@ import sys
 import inspect
 
 from ..workflow import (from_call, get_workflow)
+from .maybe import (maybe)
 
 from noodles.config import config
 
@@ -76,7 +77,7 @@ def schedule_hint(**hints):
 def unwrap(f):
     """Unwrap a wrapped function; the function needs to have been wrapped
     using :func:`functools.wraps`, as is done in :func:`schedule`.
-    
+
     If function `f` doesn't have the `__wrapped` attribute, the same
     function `f` is returned."""
     try:
@@ -86,11 +87,13 @@ def unwrap(f):
 
 
 @schedule
+@maybe
 def _getitem(obj, ix):
     return obj[ix]
 
 
 @schedule
+@maybe
 def _getattr(obj, attr):
     return getattr(obj, attr)
 
@@ -118,6 +121,7 @@ def _setattr(obj, attr, value):
 
 
 @schedule
+@maybe
 def _do_call(obj, *args, **kwargs):
     return obj(*args, **kwargs)
 
