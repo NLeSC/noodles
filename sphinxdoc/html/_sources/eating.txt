@@ -1,19 +1,16 @@
 .. highlight:: python
     :linenothreshold: 5
 
-Eating of Noodles (user docs)
-=============================
+Eating noodles (user docs)
+==========================
 
-The purpose of Noodles is to make it easy to design *computational workflows* straight from Python.
-Noodles is meant to be used by scientists that want to do heavy number crunching, and need a way to organise these computations in a readable and sustainable manner.
-These workflows are usually associated with a *directed acyclic graph* (DAG, or just: graph).
-Each computation in the workflow is a represented as a node in the graph and may have several dependencies.
-These dependencies are the arrows; or if you think in reverse, the arrows show transport of data.
+The primary goal of the *noodles* library is to ease the construction and execution of *computational workflows* using the Python language. This library is meant for scientists who want to perform complex compute-intensive tasks on parallel/distributed infrastructures in a readable, scalable and sustainable/reproducible? manner.
+A workflow is commonly modelled as a *directed acyclic graph* (DAG or simply graph) in which the computations are represented as nodes whereas the dependencies between them are represented as directed edges (indicating data transport).
 
 A first example
 ---------------
 
-Let's look at a small example creating a diamond workflow. All the examples in this documentation do some silly arithmetic. In practice these functions would do quite a bit heavier lifting.
+Let's look at a small example of creating a diamond workflow, which consists of simple (arithmetic) functions:
 
 ::
 
@@ -108,9 +105,9 @@ Using the Noodles approach it becomes very easy to paralellise computations. Let
     w = [my_func(i, v, u) for i in range(6)]
     x = accumulate(gather(*w))
 
-    answer = run_parallel(r5, n_threads=4)
+    answer = run_parallel(x, n_threads=4)
 
-    print("The answer is ${0}, again.".format(answer))
+    print("The answer is {0}, again.".format(answer))
 
 This time the workflow graph will look a bit more complicated.
 
