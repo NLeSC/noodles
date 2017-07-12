@@ -285,9 +285,9 @@ Instead, return a copy of the object with the changed values.</p>
 <span class="n">w</span> <span class="o">=</span> <span class="p">[</span><span class="n">my_func</span><span class="p">(</span><span class="n">i</span><span class="p">,</span> <span class="n">v</span><span class="p">,</span> <span class="n">u</span><span class="p">)</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">6</span><span class="p">)]</span>
 <span class="n">x</span> <span class="o">=</span> <span class="n">accumulate</span><span class="p">(</span><span class="n">gather</span><span class="p">(</span><span class="o">*</span><span class="n">w</span><span class="p">))</span>
 
-<span class="n">answer</span> <span class="o">=</span> <span class="n">run_parallel</span><span class="p">(</span><span class="n">r5</span><span class="p">,</span> <span class="n">n_threads</span><span class="o">=</span><span class="mi">4</span><span class="p">)</span>
+<span class="n">answer</span> <span class="o">=</span> <span class="n">run_parallel</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">n_threads</span><span class="o">=</span><span class="mi">4</span><span class="p">)</span>
 
-<span class="k">print</span><span class="p">(</span><span class="s2">&quot;The answer is ${0}, again.&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">answer</span><span class="p">))</span>
+<span class="k">print</span><span class="p">(</span><span class="s2">&quot;The answer is {0}, again.&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">answer</span><span class="p">))</span>
 </pre></div>
 </td></tr></table></div>
 <p>This time the workflow graph will look a bit more complicated.</p>
