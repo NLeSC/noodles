@@ -8,7 +8,7 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
-  <title>Eating of Noodles (user docs) &mdash; Noodles 0.2.0 documentation</title>
+  <title>Eating noodles (user docs) &mdash; Noodles 0.2.0 documentation</title>
   
 
   
@@ -30,6 +30,9 @@
   
 
   
+        <link rel="index" title="Index"
+              href="genindex.html"/>
+        <link rel="search" title="Search" href="search.html"/>
     <link rel="top" title="Noodles 0.2.0 documentation" href="index.html"/>
         <link rel="next" title="Cooking of Noodles (library docs)" href="cooking.html"/>
         <link rel="prev" title="Welcome to Noodles’s documentation!" href="index.html"/> 
@@ -86,7 +89,7 @@
             
                 <ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="index.html">Introduction</a></li>
-<li class="toctree-l1 current"><a class="current reference internal" href="#">Eating of Noodles (user docs)</a><ul>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Eating noodles (user docs)</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="#a-first-example">A first example</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="#doing-things-parallel">Doing things parallel</a></li>
 </ul>
@@ -138,7 +141,7 @@
   <ul class="wy-breadcrumbs">
     <li><a href="index.html">Docs</a> &raquo;</li>
       
-    <li>Eating of Noodles (user docs)</li>
+    <li>Eating noodles (user docs)</li>
       <li class="wy-breadcrumbs-aside">
         
           
@@ -152,16 +155,13 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
             
-  <div class="section" id="eating-of-noodles-user-docs">
-<h1>Eating of Noodles (user docs)<a class="headerlink" href="#eating-of-noodles-user-docs" title="Permalink to this headline">¶</a></h1>
-<p>The purpose of Noodles is to make it easy to design <em>computational workflows</em> straight from Python.
-Noodles is meant to be used by scientists that want to do heavy number crunching, and need a way to organise these computations in a readable and sustainable manner.
-These workflows are usually associated with a <em>directed acyclic graph</em> (DAG, or just: graph).
-Each computation in the workflow is a represented as a node in the graph and may have several dependencies.
-These dependencies are the arrows; or if you think in reverse, the arrows show transport of data.</p>
+  <div class="section" id="eating-noodles-user-docs">
+<h1>Eating noodles (user docs)<a class="headerlink" href="#eating-noodles-user-docs" title="Permalink to this headline">¶</a></h1>
+<p>The primary goal of the <em>noodles</em> library is to ease the construction and execution of <em>computational workflows</em> using the Python language. This library is meant for scientists who want to perform complex compute-intensive tasks on parallel/distributed infrastructures in a readable, scalable and sustainable/reproducible? manner.
+A workflow is commonly modelled as a <em>directed acyclic graph</em> (DAG or simply graph) in which the computations are represented as nodes whereas the dependencies between them are represented as directed edges (indicating data transport).</p>
 <div class="section" id="a-first-example">
 <h2>A first example<a class="headerlink" href="#a-first-example" title="Permalink to this headline">¶</a></h2>
-<p>Let&#8217;s look at a small example creating a diamond workflow. All the examples in this documentation do some silly arithmetic. In practice these functions would do quite a bit heavier lifting.</p>
+<p>Let&#8217;s look at a small example of creating a diamond workflow, which consists of simple (arithmetic) functions:</p>
 <div class="highlight-python"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre> 1
  2
  3
@@ -285,9 +285,9 @@ Instead, return a copy of the object with the changed values.</p>
 <span class="n">w</span> <span class="o">=</span> <span class="p">[</span><span class="n">my_func</span><span class="p">(</span><span class="n">i</span><span class="p">,</span> <span class="n">v</span><span class="p">,</span> <span class="n">u</span><span class="p">)</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">6</span><span class="p">)]</span>
 <span class="n">x</span> <span class="o">=</span> <span class="n">accumulate</span><span class="p">(</span><span class="n">gather</span><span class="p">(</span><span class="o">*</span><span class="n">w</span><span class="p">))</span>
 
-<span class="n">answer</span> <span class="o">=</span> <span class="n">run_parallel</span><span class="p">(</span><span class="n">r5</span><span class="p">,</span> <span class="n">n_threads</span><span class="o">=</span><span class="mi">4</span><span class="p">)</span>
+<span class="n">answer</span> <span class="o">=</span> <span class="n">run_parallel</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">n_threads</span><span class="o">=</span><span class="mi">4</span><span class="p">)</span>
 
-<span class="k">print</span><span class="p">(</span><span class="s2">&quot;The answer is ${0}, again.&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">answer</span><span class="p">))</span>
+<span class="k">print</span><span class="p">(</span><span class="s2">&quot;The answer is {0}, again.&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">answer</span><span class="p">))</span>
 </pre></div>
 </td></tr></table></div>
 <p>This time the workflow graph will look a bit more complicated.</p>

@@ -30,6 +30,9 @@
   
 
   
+        <link rel="index" title="Index"
+              href="genindex.html"/>
+        <link rel="search" title="Search" href="search.html"/>
     <link rel="top" title="Noodles 0.2.0 documentation" href="index.html"/>
         <link rel="next" title="The Noodles Scheduler" href="scheduler.html"/>
         <link rel="prev" title="Boil: the source" href="boil_source.html"/> 
@@ -86,17 +89,17 @@
             
                 <ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="index.html">Introduction</a></li>
-<li class="toctree-l1"><a class="reference internal" href="eating.html">Eating of Noodles (user docs)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="eating.html">Eating noodles (user docs)</a></li>
 <li class="toctree-l1"><a class="reference internal" href="cooking.html">Cooking of Noodles (library docs)</a></li>
 <li class="toctree-l1"><a class="reference internal" href="first_steps.html">First Steps</a></li>
 <li class="toctree-l1"><a class="reference internal" href="poetry_tutorial.html">Real World Tutorial 1: Translating Poetry</a></li>
 <li class="toctree-l1"><a class="reference internal" href="boil_tutorial.html">Real World Tutorial 2: Boil, a make tool.</a></li>
 <li class="toctree-l1 current"><a class="current reference internal" href="#">Development documentation</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="#internal-specs">Internal Specs</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#promised-object">Promised object</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#runners">Runners</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#module-noodles.workflow">Internal Specs</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#module-noodles.interface">Promised object</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#module-noodles.run.scheduler">Runners</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#serialisation">Serialisation</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#worker-executable">Worker executable</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#module-noodles.worker">Worker executable</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="scheduler.html">The Noodles Scheduler</a></li>
@@ -145,22 +148,538 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
             
-  <div class="section" id="development-documentation">
-<h1>Development documentation<a class="headerlink" href="#development-documentation" title="Permalink to this headline">¶</a></h1>
-<div class="section" id="internal-specs">
-<h2>Internal Specs<a class="headerlink" href="#internal-specs" title="Permalink to this headline">¶</a></h2>
+  <div class="section" id="module-noodles">
+<span id="development-documentation"></span><h1>Development documentation<a class="headerlink" href="#module-noodles" title="Permalink to this headline">¶</a></h1>
+<dl class="function">
+<dt id="noodles.schedule">
+<code class="descclassname">noodles.</code><code class="descname">schedule</code><span class="sig-paren">(</span><em>f</em><span class="sig-paren">)</span><a class="headerlink" href="#noodles.schedule" title="Permalink to this definition">¶</a></dt>
+<dd><p>Decorator; schedule calls to function <code class="xref py py-obj docutils literal"><span class="pre">f</span></code> into a workflow, in stead of
+running them at once. The decorated function returns a
+<code class="xref py py-class docutils literal"><span class="pre">PromisedObject</span></code>.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="noodles.run_single">
+<code class="descclassname">noodles.</code><code class="descname">run_single</code><span class="sig-paren">(</span><em>wf</em><span class="sig-paren">)</span><a class="headerlink" href="#noodles.run_single" title="Permalink to this definition">¶</a></dt>
+<dd><p>Run a workflow in a single thread. This is the absolute minimal
+runner, consisting of a single queue for jobs and a worker running
+jobs every time a result is pulled.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="noodles.run_parallel">
+<code class="descclassname">noodles.</code><code class="descname">run_parallel</code><span class="sig-paren">(</span><em>wf</em>, <em>n_threads</em><span class="sig-paren">)</span><a class="headerlink" href="#noodles.run_parallel" title="Permalink to this definition">¶</a></dt>
+<dd><p>Run a workflow in <code class="xref py py-obj docutils literal"><span class="pre">n_threads</span></code> parallel threads. Now we replaced the
+single worker with a thread-pool of workers.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="noodles.run_process">
+<code class="descclassname">noodles.</code><code class="descname">run_process</code><span class="sig-paren">(</span><em>wf</em>, <em>n_processes</em>, <em>registry</em>, <em>verbose=False</em>, <em>jobdirs=False</em>, <em>init=None</em>, <em>finish=None</em>, <em>deref=False</em>, <em>use_msgpack=False</em><span class="sig-paren">)</span><a class="headerlink" href="#noodles.run_process" title="Permalink to this definition">¶</a></dt>
+<dd><p>Run the workflow using a number of new python processes. Use this
+runner to test the workflow in a situation where data serial
+is needed.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>wf</strong> (<code class="xref py py-obj docutils literal"><span class="pre">Workflow</span></code> or <code class="xref py py-obj docutils literal"><span class="pre">PromisedObject</span></code>) &#8211; The workflow.</li>
+<li><strong>n_processes</strong> &#8211; Number of processes to start.</li>
+<li><strong>registry</strong> &#8211; The serial registry.</li>
+<li><strong>verbose</strong> &#8211; Request verbose output on worker side</li>
+<li><strong>jobdirs</strong> &#8211; Create a new directory for each job to prevent filename collision.(NYI)</li>
+<li><strong>init</strong> &#8211; An init function that needs to be run in each process before other jobs
+can be run. This should be a scheduled function returning True on
+success.</li>
+<li><strong>finish</strong> &#8211; A function that wraps up when the worker closes down.</li>
+<li><strong>deref</strong> (<em>bool</em>) &#8211; Set this to True to pass the result through one more encoding and
+decoding step with object derefencing turned on.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">the result of evaluating the workflow</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">any</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="noodles.gather">
+<code class="descclassname">noodles.</code><code class="descname">gather</code><span class="sig-paren">(</span><em>*a</em><span class="sig-paren">)</span><a class="headerlink" href="#noodles.gather" title="Permalink to this definition">¶</a></dt>
+<dd><p><em>(scheduled)</em> Converts a list of promises (i.e. <code class="xref py py-class docutils literal"><span class="pre">PromisedObject</span></code>) to a promised
+list of values.</p>
+</dd></dl>
+
+<div class="section" id="module-noodles.workflow">
+<span id="internal-specs"></span><h2>Internal Specs<a class="headerlink" href="#module-noodles.workflow" title="Permalink to this headline">¶</a></h2>
+<dl class="function">
+<dt id="noodles.workflow.from_call">
+<code class="descclassname">noodles.workflow.</code><code class="descname">from_call</code><span class="sig-paren">(</span><em>foo</em>, <em>args</em>, <em>kwargs</em>, <em>hints</em>, <em>call_by_value=True</em><span class="sig-paren">)</span><a class="headerlink" href="#noodles.workflow.from_call" title="Permalink to this definition">¶</a></dt>
+<dd><p>Takes a function and a set of arguments it needs to run on. Returns a newly
+constructed workflow representing the promised value from the evaluation of
+the function with said arguments.</p>
+<p>These arguments are stored in a BoundArguments object matching to the
+signature of the given function <code class="docutils literal"><span class="pre">foo</span></code>. That is, bound_args was
+constructed by doing:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">inspect</span><span class="o">.</span><span class="n">signature</span><span class="p">(</span><span class="n">foo</span><span class="p">)</span><span class="o">.</span><span class="n">bind</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+</pre></div>
 </div>
-<div class="section" id="promised-object">
-<h2>Promised object<a class="headerlink" href="#promised-object" title="Permalink to this headline">¶</a></h2>
+<p>The arguments stored in the <code class="docutils literal"><span class="pre">bound_args</span></code> object are filtered on being
+either plain, or promised. If an argument is promised, the value
+it represents is not actually available and needs to be computed by
+evaluating a workflow.</p>
+<p>If an argument is a promised value, the workflow representing the value
+is added to the new workflow. First all the nodes in the original workflow,
+if not already present in the new workflow from an earlier argument,
+are copied to the new workflow, and a new entry is made into the link
+dictionary. Then the links in the old workflow are also added to the
+link dictionary. Since the link dictionary points from nodes to a
+<code class="xref py py-class docutils literal"><span class="pre">set</span></code> of <code class="xref py py-class docutils literal"><span class="pre">ArgumentAddress</span></code> es, no links are
+duplicated.</p>
+<p>In the <code class="docutils literal"><span class="pre">bound_args</span></code> object the promised value is replaced by the
+<code class="docutils literal"><span class="pre">Empty</span></code> object, so that we can see which arguments still have to be
+evaluated.</p>
+<p>Doing this for all promised value arguments in the bound_args object,
+results in a new workflow with all the correct dependencies represented
+as links in the graph.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>foo</strong> (<em>Callable</em>) &#8211; Function (or object) being called.</li>
+<li><strong>args</strong> &#8211; Normal arguments to call</li>
+<li><strong>kwargs</strong> &#8211; Keyword arguments to call</li>
+<li><strong>hints</strong> &#8211; Hints that can be passed to the scheduler on where or how
+to schedule this job.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">New workflow.</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last"><a class="reference internal" href="#noodles.workflow.Workflow" title="noodles.workflow.Workflow">Workflow</a></p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="class">
+<dt id="noodles.workflow.NodeData">
+<em class="property">class </em><code class="descclassname">noodles.workflow.</code><code class="descname">NodeData</code><span class="sig-paren">(</span><em>function</em>, <em>arguments</em>, <em>hints</em><span class="sig-paren">)</span><a class="headerlink" href="#noodles.workflow.NodeData" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="attribute">
+<dt id="noodles.workflow.NodeData.arguments">
+<code class="descname">arguments</code><a class="headerlink" href="#noodles.workflow.NodeData.arguments" title="Permalink to this definition">¶</a></dt>
+<dd><p>Alias for field number 1</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="noodles.workflow.NodeData.function">
+<code class="descname">function</code><a class="headerlink" href="#noodles.workflow.NodeData.function" title="Permalink to this definition">¶</a></dt>
+<dd><p>Alias for field number 0</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="noodles.workflow.NodeData.hints">
+<code class="descname">hints</code><a class="headerlink" href="#noodles.workflow.NodeData.hints" title="Permalink to this definition">¶</a></dt>
+<dd><p>Alias for field number 2</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="noodles.workflow.FunctionNode">
+<em class="property">class </em><code class="descclassname">noodles.workflow.</code><code class="descname">FunctionNode</code><span class="sig-paren">(</span><em>foo</em>, <em>bound_args</em>, <em>hints</em>, <em>result</em><span class="sig-paren">)</span><a class="headerlink" href="#noodles.workflow.FunctionNode" title="Permalink to this definition">¶</a></dt>
+<dd><p>Captures a function call as a combination of function and arguments.
+Some of these arguments may be set to <code class="xref py py-obj docutils literal"><span class="pre">Empty</span></code>, these need to be
+filled in by the workflow before the function can be applied.</p>
+<dl class="attribute">
+<dt id="noodles.workflow.FunctionNode.foo">
+<code class="descname">foo</code><a class="headerlink" href="#noodles.workflow.FunctionNode.foo" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<p>The function (or object) that is being called.</p>
+<dl class="attribute">
+<dt id="noodles.workflow.FunctionNode.bound_args">
+<code class="descname">bound_args</code><a class="headerlink" href="#noodles.workflow.FunctionNode.bound_args" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<p>A <code class="xref py py-class docutils literal"><span class="pre">BoundArguments</span></code> object storing the arguments to
+the function.</p>
+<dl class="attribute">
+<dt id="noodles.workflow.FunctionNode.data">
+<code class="descname">data</code><a class="headerlink" href="#noodles.workflow.FunctionNode.data" title="Permalink to this definition">¶</a></dt>
+<dd><p>Convert to a <a class="reference internal" href="#noodles.workflow.NodeData" title="noodles.workflow.NodeData"><code class="xref py py-class docutils literal"><span class="pre">NodeData</span></code></a> for subsequent serial.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="noodles.workflow.Workflow">
+<em class="property">class </em><code class="descclassname">noodles.workflow.</code><code class="descname">Workflow</code><span class="sig-paren">(</span><em>root</em>, <em>nodes</em>, <em>links</em><span class="sig-paren">)</span><a class="headerlink" href="#noodles.workflow.Workflow" title="Permalink to this definition">¶</a></dt>
+<dd><p>The workflow data container.</p>
+<dl class="attribute">
+<dt id="noodles.workflow.Workflow.root">
+<code class="descname">root</code><a class="headerlink" href="#noodles.workflow.Workflow.root" title="Permalink to this definition">¶</a></dt>
+<dd><p>A reference to the root node in the graph.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="noodles.workflow.Workflow.nodes">
+<code class="descname">nodes</code><a class="headerlink" href="#noodles.workflow.Workflow.nodes" title="Permalink to this definition">¶</a></dt>
+<dd><p>A <code class="xref py py-obj docutils literal"><span class="pre">dict</span></code> listing the nodes in the graph. We use a <code class="xref py py-obj docutils literal"><span class="pre">dict</span></code> only to have
+a persistent object reference.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="noodles.workflow.Workflow.links">
+<code class="descname">links</code><a class="headerlink" href="#noodles.workflow.Workflow.links" title="Permalink to this definition">¶</a></dt>
+<dd><p>A <code class="xref py py-obj docutils literal"><span class="pre">dict</span></code> giving a <code class="xref py py-obj docutils literal"><span class="pre">set</span></code> of links from each node.</p>
+</dd></dl>
+
+</dd></dl>
+
 </div>
-<div class="section" id="runners">
-<h2>Runners<a class="headerlink" href="#runners" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="module-noodles.interface">
+<span id="promised-object"></span><h2>Promised object<a class="headerlink" href="#module-noodles.interface" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="noodles.interface.PromisedObject">
+<em class="property">class </em><code class="descclassname">noodles.interface.</code><code class="descname">PromisedObject</code><span class="sig-paren">(</span><em>workflow</em><span class="sig-paren">)</span><a class="headerlink" href="#noodles.interface.PromisedObject" title="Permalink to this definition">¶</a></dt>
+<dd><p>Wraps a <code class="xref py py-class docutils literal"><span class="pre">Workflow</span></code>. The workflow represents the future promise
+of a Python object. By wrapping the workflow, we can mock the behaviour of
+this future object and schedule methods that were called by the user
+as if nothing weird is going on.</p>
+</dd></dl>
+
+</div>
+<div class="section" id="module-noodles.run.scheduler">
+<span id="runners"></span><h2>Runners<a class="headerlink" href="#module-noodles.run.scheduler" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="noodles.run.scheduler.Scheduler">
+<em class="property">class </em><code class="descclassname">noodles.run.scheduler.</code><code class="descname">Scheduler</code><span class="sig-paren">(</span><em>verbose=False</em>, <em>error_handler=None</em>, <em>job_keeper=None</em><span class="sig-paren">)</span><a class="headerlink" href="#noodles.run.scheduler.Scheduler" title="Permalink to this definition">¶</a></dt>
+<dd><p>Schedules jobs, recieves results, then schedules more jobs as they
+become ready to compute. This class communicates with a pool of workers
+by means of coroutines.</p>
+<dl class="method">
+<dt id="noodles.run.scheduler.Scheduler.run">
+<code class="descname">run</code><span class="sig-paren">(</span><em>connection: noodles.run.connection.Connection</em>, <em>master: noodles.workflow.model.Workflow</em><span class="sig-paren">)</span><a class="headerlink" href="#noodles.run.scheduler.Scheduler.run" title="Permalink to this definition">¶</a></dt>
+<dd><p>Run a workflow.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>connection</strong> (<em>Connection</em>) &#8211; A connection giving a sink to the job-queue and a source yielding
+results.</li>
+<li><strong>master</strong> (<a class="reference internal" href="#noodles.workflow.Workflow" title="noodles.workflow.Workflow"><em>Workflow</em></a>) &#8211; The workflow.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</dd></dl>
+
+<span class="target" id="module-noodles.run.hybrid"></span><dl class="function">
+<dt id="noodles.run.hybrid.hybrid_threaded_worker">
+<code class="descclassname">noodles.run.hybrid.</code><code class="descname">hybrid_threaded_worker</code><span class="sig-paren">(</span><em>selector</em>, <em>workers</em><span class="sig-paren">)</span><a class="headerlink" href="#noodles.run.hybrid.hybrid_threaded_worker" title="Permalink to this definition">¶</a></dt>
+<dd><p>Runs a set of workers, each in a separate thread.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>selector</strong> &#8211; A function that takes a hints-tuple and returns a key
+indexing a worker in the <code class="xref py py-obj docutils literal"><span class="pre">workers</span></code> dictionary.</li>
+<li><strong>workers</strong> &#8211; A dictionary of workers.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">A connection for the scheduler.</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">Connection</p>
+</td>
+</tr>
+</tbody>
+</table>
+<p>The hybrid worker dispatches jobs to the different workers
+based on the information contained in the hints. If no hints
+were given, the job is run in the main thread.</p>
+<p>Dispatching is done in the main thread. Retrieving results is
+done in a separate thread for each worker. In this design it is
+assumed that dispatching a job takes little time, while waiting for
+one to return a result may take a long time.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="noodles.run.hybrid.run_hybrid">
+<code class="descclassname">noodles.run.hybrid.</code><code class="descname">run_hybrid</code><span class="sig-paren">(</span><em>wf</em>, <em>selector</em>, <em>workers</em><span class="sig-paren">)</span><a class="headerlink" href="#noodles.run.hybrid.run_hybrid" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the result of evaluating the workflow; runs through several
+supplied workers in as many threads.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>wf</strong> (<code class="xref py py-class docutils literal"><span class="pre">Workflow</span></code> or <code class="xref py py-class docutils literal"><span class="pre">PromisedObject</span></code>) &#8211; Workflow to compute</li>
+<li><strong>selector</strong> &#8211; A function selecting the worker that should be run, given a hint.</li>
+<li><strong>workers</strong> &#8211; A dictionary of workers</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">result of running the workflow</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
 </div>
 <div class="section" id="serialisation">
 <h2>Serialisation<a class="headerlink" href="#serialisation" title="Permalink to this headline">¶</a></h2>
+<span class="target" id="module-noodles.serial"></span><dl class="function">
+<dt id="noodles.serial.base">
+<code class="descclassname">noodles.serial.</code><code class="descname">base</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#noodles.serial.base" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the Noodles base serialisation registry.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="noodles.serial.pickle">
+<code class="descclassname">noodles.serial.</code><code class="descname">pickle</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#noodles.serial.pickle" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns a serialisation registry that &#8220;just pickles everything&#8221;.</p>
+<p>This registry can be used to bolt-on other registries and keep the
+pickle as the default. The objects are first pickled to a byte-array,
+which is subsequently encoded with base64.</p>
+</dd></dl>
+
+<span class="target" id="module-noodles.serial.registry"></span><dl class="class">
+<dt id="noodles.serial.registry.Registry">
+<em class="property">class </em><code class="descclassname">noodles.serial.registry.</code><code class="descname">Registry</code><span class="sig-paren">(</span><em>parent=None</em>, <em>types=None</em>, <em>hooks=None</em>, <em>hook_fn=None</em>, <em>default=None</em><span class="sig-paren">)</span><a class="headerlink" href="#noodles.serial.registry.Registry" title="Permalink to this definition">¶</a></dt>
+<dd><p>Serialisation registry, keeps a record of <a class="reference internal" href="#noodles.serial.registry.Serialiser" title="noodles.serial.registry.Serialiser"><code class="xref py py-obj docutils literal"><span class="pre">Serialiser</span></code></a> objects.</p>
+<p>The Registry keeps a dictionary mapping (qualified) class names to
+<a class="reference internal" href="#noodles.serial.registry.Serialiser" title="noodles.serial.registry.Serialiser"><code class="xref py py-class docutils literal"><span class="pre">Serialiser</span></code></a> objects. Given an object, the <code class="xref py py-obj docutils literal"><span class="pre">__getitem__</span></code>
+method looks for the highest base class that it has a serialiser for.
+As a fall-back we install a Serialiser matching the Python
+<code class="xref py py-obj docutils literal"><span class="pre">object</span></code> class.</p>
+<p>Detection by object type is not always meaningful or even possible.
+Before scannning for known base classes the look-up function passes
+the object through the <code class="xref py py-obj docutils literal"><span class="pre">hook</span></code> function, which should return a string
+or <code class="xref py py-obj docutils literal"><span class="pre">None</span></code>. If a string is returned that string is used to look-up
+the serialiser.</p>
+<p>Registries can be combined using the &#8216;+&#8217; operator. The left side argument
+is than used as <code class="xref py py-obj docutils literal"><span class="pre">parent</span></code> to the new Registry, while the right-hand argument
+overrides and augments the Serialisers present. The <code class="xref py py-obj docutils literal"><span class="pre">hook</span></code> functions
+are being chained, such that the right-hand registry takes precedence.
+The default serialiser is inherrited from the left-hand argument.</p>
+<dl class="method">
+<dt id="noodles.serial.registry.Registry.decode">
+<code class="descname">decode</code><span class="sig-paren">(</span><em>rec</em>, <em>deref=False</em><span class="sig-paren">)</span><a class="headerlink" href="#noodles.serial.registry.Registry.decode" title="Permalink to this definition">¶</a></dt>
+<dd><p>Decode a record to return an object that could be considered
+equivalent to the original.</p>
+<p>The record is not touched if <code class="xref py py-obj docutils literal"><span class="pre">_noodles</span></code> is not an item in the record.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>rec</strong> (<em>dict</em>) &#8211; A dictionary record to be decoded.</li>
+<li><strong>deref</strong> (<em>bool</em>) &#8211; Wether to decode a RefObject. If the encoder wrote files on a
+remote host, reading this file will be slow and result in an
+error if the file is not present.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="noodles.serial.registry.Registry.dereference">
+<code class="descname">dereference</code><span class="sig-paren">(</span><em>data</em>, <em>host</em><span class="sig-paren">)</span><a class="headerlink" href="#noodles.serial.registry.Registry.dereference" title="Permalink to this definition">¶</a></dt>
+<dd><p>Dereferences RefObjects stuck in the hierarchy. This is a bit
+of an ugly hack.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="noodles.serial.registry.Registry.encode">
+<code class="descname">encode</code><span class="sig-paren">(</span><em>obj</em>, <em>host=None</em><span class="sig-paren">)</span><a class="headerlink" href="#noodles.serial.registry.Registry.encode" title="Permalink to this definition">¶</a></dt>
+<dd><p>Encode an object using the serialisers available
+in this registry. Objects that have a type that is one of
+[dict, list, str, int, float, bool, tuple] are send back unchanged.</p>
+<p>A host-name can be given as an additional argument to identify the
+host in the resulting record if the encoder yields any filenames.</p>
+<p>This function only treats the object for one layer deep.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>obj</strong> &#8211; The object that needs encoding.</li>
+<li><strong>host</strong> (<em>str</em>) &#8211; The name of the encoding host.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="noodles.serial.registry.Registry.from_json">
+<code class="descname">from_json</code><span class="sig-paren">(</span><em>data</em>, <em>deref=False</em><span class="sig-paren">)</span><a class="headerlink" href="#noodles.serial.registry.Registry.from_json" title="Permalink to this definition">¶</a></dt>
+<dd><p>Decode the string from JSON to return the original object (if
+<code class="xref py py-obj docutils literal"><span class="pre">deref</span></code> is true. Uses the <code class="xref py py-obj docutils literal"><span class="pre">json.loads</span></code> function with <code class="xref py py-obj docutils literal"><span class="pre">self.decode</span></code>
+as object_hook.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>data</strong> (<em>str</em>) &#8211; JSON encoded string.</li>
+<li><strong>deref</strong> (<em>bool</em>) &#8211; Whether to decode records that gave <code class="xref py py-obj docutils literal"><span class="pre">ref=True</span></code> at encoding.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="noodles.serial.registry.Registry.to_json">
+<code class="descname">to_json</code><span class="sig-paren">(</span><em>obj</em>, <em>host=None</em>, <em>indent=None</em><span class="sig-paren">)</span><a class="headerlink" href="#noodles.serial.registry.Registry.to_json" title="Permalink to this definition">¶</a></dt>
+<dd><p>Recursively encode <code class="xref py py-obj docutils literal"><span class="pre">obj</span></code> and convert it to a JSON string.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>obj</strong> &#8211; Object to encode.</li>
+<li><strong>host</strong> (<em>str</em>) &#8211; hostname where this object is being encoded.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="noodles.serial.registry.Serialiser">
+<em class="property">class </em><code class="descclassname">noodles.serial.registry.</code><code class="descname">Serialiser</code><span class="sig-paren">(</span><em>name</em><span class="sig-paren">)</span><a class="headerlink" href="#noodles.serial.registry.Serialiser" title="Permalink to this definition">¶</a></dt>
+<dd><p>Serialiser base class.</p>
+<p>Serialisation classes should derive from <a class="reference internal" href="#noodles.serial.registry.Serialiser" title="noodles.serial.registry.Serialiser"><code class="xref py py-obj docutils literal"><span class="pre">Serialiser</span></code></a> and overload the
+<a class="reference internal" href="#noodles.serial.registry.Serialiser.encode" title="noodles.serial.registry.Serialiser.encode"><code class="xref py py-obj docutils literal"><span class="pre">encode</span></code></a> and <a class="reference internal" href="#noodles.serial.registry.Serialiser.decode" title="noodles.serial.registry.Serialiser.decode"><code class="xref py py-obj docutils literal"><span class="pre">decode</span></code></a> methods.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>base</strong> (<em>type</em>) &#8211; The type that this class is supposed to serialise. This may differ
+from the type of the object actually being serialised if its class
+was derived from <code class="xref py py-obj docutils literal"><span class="pre">base</span></code>. The supposed base-class is kept here for
+reference but serves no immediate purpose.</td>
+</tr>
+</tbody>
+</table>
+<dl class="staticmethod">
+<dt id="noodles.serial.registry.Serialiser.decode">
+<em class="property">static </em><code class="descname">decode</code><span class="sig-paren">(</span><em>data</em><span class="sig-paren">)</span><a class="headerlink" href="#noodles.serial.registry.Serialiser.decode" title="Permalink to this definition">¶</a></dt>
+<dd><p>Should decode the data to an object of type &#8216;cls&#8217;.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>cls</strong> (<em>type</em>) &#8211; The class is retrieved by the qualified name of the type
+of the object that was encoded; restored by importing it.</li>
+<li><strong>data</strong> &#8211; The data is the record that was passed to <code class="xref py py-obj docutils literal"><span class="pre">make_rec</span></code> by
+the encoder.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="noodles.serial.registry.Serialiser.encode">
+<code class="descname">encode</code><span class="sig-paren">(</span><em>obj</em>, <em>make_rec</em><span class="sig-paren">)</span><a class="headerlink" href="#noodles.serial.registry.Serialiser.encode" title="Permalink to this definition">¶</a></dt>
+<dd><p>Should encode an object of type <code class="xref py py-obj docutils literal"><span class="pre">self.base</span></code> (or derived).</p>
+<p>This method receives the object and a function <code class="xref py py-obj docutils literal"><span class="pre">make_rec</span></code>. This
+function has signature:</p>
+<div class="highlight-python"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">make_rec</span><span class="p">(</span><span class="n">rec</span><span class="p">,</span> <span class="n">ref</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span> <span class="n">files</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+    <span class="o">...</span>
+</pre></div>
 </div>
-<div class="section" id="worker-executable">
-<h2>Worker executable<a class="headerlink" href="#worker-executable" title="Permalink to this headline">¶</a></h2>
+<p>If encoding and decoding is somewhat cosuming on resources, the
+encoder may call with <code class="xref py py-obj docutils literal"><span class="pre">ref=True</span></code>. Then the resulting record won&#8217;t
+be decoded until needed by the next job. This is most certainly
+the case when an external file was written. In this case the
+filename(s) should be passed as a list by <code class="xref py py-obj docutils literal"><span class="pre">files=[...]</span></code>.</p>
+<p>The <code class="xref py py-obj docutils literal"><span class="pre">files</span></code> list is not passed back to the decoder. Rather it is used
+by noodles to keep track of written files and copy them between hosts
+if needed. It is the responsibily of the encoder to include
+the filename information in the passed record as well.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>obj</strong> &#8211; Object to be encoded.</li>
+<li><strong>make_rec</strong> &#8211; Function used to pack the encoded data with some meta-data.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="noodles.serial.registry.RefObject">
+<em class="property">class </em><code class="descclassname">noodles.serial.registry.</code><code class="descname">RefObject</code><span class="sig-paren">(</span><em>rec</em><span class="sig-paren">)</span><a class="headerlink" href="#noodles.serial.registry.RefObject" title="Permalink to this definition">¶</a></dt>
+<dd><p>Placeholder object to delay decoding a serialised object
+until needed by a worker.</p>
+</dd></dl>
+
+</div>
+<div class="section" id="module-noodles.worker">
+<span id="worker-executable"></span><h2>Worker executable<a class="headerlink" href="#module-noodles.worker" title="Permalink to this headline">¶</a></h2>
+<p>This is the Noodles executable worker module. This is usually run by the
+scheduler to dispatch jobs remotely, using</p>
+<div class="highlight-bash"><div class="highlight"><pre><span></span>&gt; python3.5 -m noodles.worker &lt;args&gt;...
+</pre></div>
+</div>
+<p>There are several modes in which the worker generates results. For all
+of these modes, the rule is <strong>one object per line</strong>.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">batch-mode:</th><td class="field-body"><p class="first">Give a single job as a JSON string on the command line. The
+result is printed to stdout, again as a JSON object.</p>
+<div class="highlight-bash"><div class="highlight"><pre><span></span>&gt; python3.5 -m noodles.worker -batch <span class="s2">&quot;{&#39;job&#39;: ...}&quot;</span>
+</pre></div>
+</div>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">online-mode:</th><td class="field-body"><p class="first">Recieve worker commands as JSON objects through stdin and
+send out results to stdout.</p>
+<div class="last highlight-bash"><div class="highlight"><pre><span></span>&gt; python3.5 -m noodles.worker -online <span class="o">[</span>-use &lt;worker&gt;<span class="o">]</span>
+</pre></div>
+</div>
+</td>
+</tr>
+</tbody>
+</table>
 </div>
 </div>
 
