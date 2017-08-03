@@ -149,6 +149,17 @@ def result(obj):
     return obj.__result__()
 
 
+class ConstRef:
+    def __init__(self, this):
+        self.this = this
+
+    def __getattr__(self, attr):
+        return getattr(self.this, attr)
+
+    def __deepcopy__(self, _):
+        return self
+
+
 class PromisedObject:
     """
     Wraps a :py:class:`Workflow`. The workflow represents the future promise
