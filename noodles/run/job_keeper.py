@@ -18,6 +18,7 @@ class JobKeeper(dict):
     def register(self, job):
         with self.lock:
             key = str(uuid.uuid4())
+            job.db_id = None
             job.log = []
             job.log.append((time.time(), 'register', None, None))
             self[key] = job
