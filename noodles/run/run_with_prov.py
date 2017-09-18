@@ -10,7 +10,8 @@ from .worker import (worker, run_job)
 from .job_keeper import (JobKeeper)
 
 from ..workflow import (get_workflow, is_workflow)
-from ..prov import (JobDB, prov_key)
+from ..prov import (JobDB)
+from ..prov.key import (prov_key)
 
 from itertools import (repeat)
 import threading

@@ -1,7 +1,7 @@
 from ..workflow import (Workflow, is_node_ready, Empty)
 from ..workflow.arguments import (serialize_arguments, ref_argument)
 from ..serial import (Registry)
-from .prov import (prov_key)
+from .key import (prov_key)
 
 
 def links(wf, i, deps):

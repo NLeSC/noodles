@@ -21,7 +21,8 @@ setup(
         'noodles.run.remote',
         'noodles.display',
         'noodles.interface', 'noodles.workflow', 'noodles.files',
-        'noodles.prov'],
+        'noodles.prov',
+        'noodles.draw_workflow'],
 
     classifiers=[
         'License :: OSI Approved :: Apache Software License',
