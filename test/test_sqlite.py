@@ -1,7 +1,7 @@
 # import pytest
 
 from noodles.prov.sqlite import JobDB
-from nodoles.prov.key import prov_key
+from noodles.prov.key import prov_key
 from noodles import serial
 from noodles.tutorial import (sub)
 from noodles.run.job_keeper import JobKeeper
