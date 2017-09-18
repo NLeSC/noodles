@@ -13,7 +13,7 @@ def fold(
     https://en.wikipedia.org/wiki/Fold_(higher-order_function)
 
     A simple example::
-    
+
 
     :param fun: stateful function.
     :param acc: initial state.
