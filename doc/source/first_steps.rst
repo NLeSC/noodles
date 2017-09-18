@@ -27,7 +27,7 @@ Now we can create a workflow composing several calls to this function.
     c = add(a, a)
     d = mul(b, c)
 
-That looks easy enough; the funny thing is though, that nothing has been computed yet! Noodles just created the workflow graphs corresponding to the values that still need to be computed. Until such time, we work with the *promise* of a future value. Using the module ``pygraphviz`` (`pip install pygraphviz`) we can look at the call graphs.
+That looks easy enough; the funny thing is though, that nothing has been computed yet! Noodles just created the workflow graphs corresponding to the values that still need to be computed. Until such time, we work with the *promise* of a future value. Using the module ``pygraphviz`` (`pip install pygraphviz`, check `this post <https://stackoverflow.com/questions/40528048/pip-install-pygraphviz-no-package-libcgraph-found>`_ if you have problems installing pygraphviz) we can look at the call graphs.
 
 .. code:: python
 
@@ -41,6 +41,8 @@ That looks easy enough; the funny thing is though, that nothing has been compute
     draw_workflow("wf1d.png", d._workflow)
     
     err = os.system("montage wf1?.png -tile 4x1 -geometry +10+0 wf1-series.png")
+
+``draw_workflow`` imports pygraphviz.
 
 .. figure:: _static/images/wf1-series.png
     :alt: building the workflow
