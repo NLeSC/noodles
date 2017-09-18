@@ -20,9 +20,9 @@ setup(
         'noodles', 'noodles.serial', 'noodles.run', 'noodles.run.xenon',
         'noodles.run.remote',
         'noodles.display',
+        'noodles.patterns',
         'noodles.interface', 'noodles.workflow', 'noodles.files',
         'noodles.prov', 'noodles.draw_workflow'],
-
     classifiers=[
         'License :: OSI Approved :: Apache Software License',
         'Intended Audience :: Developers',
