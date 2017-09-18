@@ -149,6 +149,11 @@ def s_find_first(pred, first, lst):
         return None
 
 
+@schedule
+def construct_object(cls, args):
+    return cls(args)
+
+
 def lift(obj, memo=None):
     """Make a promise out of object `obj`, where `obj` may contain promises
     internally.
@@ -229,7 +234,7 @@ def lift(obj, memo=None):
         internal = lift(subclass(obj), memo)
 
         if isinstance(internal, PromisedObject):
-            internal = schedule(obj.__class__)(internal)
+            internal = construct_object(obj.__class__, internal)
             rv = set_dict(internal, members)
         elif isinstance(members, PromisedObject):
             rv = set_dict(obj.__class__(internal), members)
