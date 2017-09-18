@@ -26,8 +26,8 @@ Let's look at a small example of creating a diamond workflow, which consists of 
 
     print("The answer is {0}.".format(answer))
 
-That allmost looks like normal Python! The only difference is the ``run_single`` statement at the end of this program.
-The catch is that none of the computation is actually done until the ``run_single`` statement has been given.
+That allmost looks like normal Python! The only difference is the :py:func:`~noodles.run_single` statement at the end of this program.
+The catch is that none of the computation is actually done until the :py:func:`~noodles.run_single` statement has been given.
 The variables ``u``, ``v``, ``w``, and ``x`` only represent the *promise* of a value.
 The functions that we imported are wrapped, such that they construct the directed acyclic graph of the computation in stead of just computing the result immediately.
 This DAG then looks like this:
@@ -73,10 +73,10 @@ However, you should be aware of what happens behind the curtains, to understand 
 
     ...
 
-The ``@schedule`` decorators takes care that the functions actually return *promises* instead of values.
-Such a ``PromisedObject`` is a placeholder for the expected result.
+The :py:func:`@schedule <noodles.schedule>` decorators takes care that the functions actually return *promises* instead of values.
+Such a :py:class:`~noodles.interface.PromisedObject` is a placeholder for the expected result.
 It stores the workflow graph that is needed to compute the promise.
-When another `schedule`-decorated function is called with a promise, the graphs of the dependencies are merged to create a new workflow graph.
+When another :py:func:`schedule <noodles.schedule>`-decorated function is called with a promise, the graphs of the dependencies are merged to create a new workflow graph.
 
 .. NOTE:: The promised object can be of any type and can be used as a normal object.
           You access attributes and functions of the object that is promised as you normally would.
@@ -119,11 +119,11 @@ This time the workflow graph will look a bit more complicated.
     The workflow graph of the second example.
 
 Here we see how a user can define normal python functions and use them to build a larger workflow.
-Furthermore, we introduce a new bit of magic: the ``gather`` function.
+Furthermore, we introduce a new bit of magic: the :py:func:`gather <noodles.gather>` function.
 When you build a list of computations using a list-comprehension like above, you essentially store a *list of promises* in variable ``w``.
 However, schedule-decorated functions cannot easily see which arguments contain promised values, such as ``w``, and which arguments are plain Python.
-The ``gather`` function converts the list of promises into a promise of a list, making it clear to the scheduled function this argument is a promise.
-The ``gather`` function is defined as follows:
+The :py:func:`gather <noodles.gather>` function converts the list of promises into a promise of a list, making it clear to the scheduled function this argument is a promise.
+The :py:func:`gather <noodles.gather>` function is defined as follows:
 
 ::
 
@@ -133,7 +133,7 @@ The ``gather`` function is defined as follows:
 
 By unpacking the list (by doing ``gather(*w)``) in the call to gather, each item in ``w`` becomes a dependency of the ``gather`` node in this workflow, as we can see in the figure above.
 
-To make use of the parallelism in this workflow, we run it with ``run_parallel``.
+To make use of the parallelism in this workflow, we run it with :py:func:`~noodles.run_parallel`.
 This runner function creates a specified number of threads, each taking jobs from the Noodles scheduler and returning results.
 
 Running workflows
@@ -141,21 +141,21 @@ Running workflows
 
 Noodles ships with a few ready-made functions that run the workflow for you, depending on the amount of work that needs to be done.
 
-``run_single``, local single thread
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+:py:func:`~noodles.run_single`, local single thread
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Runs your workflow in the same thread as the caller.
 This function is mainly for testing.
 When running workflows you almost always want to use one of the other functions.
 
-``run_parallel``, local multi-thread
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+:py:func:`~noodles.run_parallel`, local multi-thread
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Runs your workflow in parallel using any number of threads.
 Usually, specifying the number of cores in your CPU will give optimal performance for this runner.
 
 .. NOTE:: If you are very **very** certain that your workflow will never need to scale to cluster-computing, this runner is more lenient on the kinds of Python that is supported, because function arguments are not converted to and from JSON. Think of nested functions, lambda forms, generators, etc.
 
-``run_process``, local multi-process
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+:py:func:`~noodles.run_process`, local multi-process
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Starts a second process to run jobs. This is usefull for testing the JSON compatability of your workflow on your own machine.
 
 Xenon
