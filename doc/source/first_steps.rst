@@ -1,8 +1,7 @@
 First Steps
 ===========
 
-**This tutorial is also available in the form of a `Jupyter Notebook <https://github.com/NLeSC/noodles/blob/master/notebooks/An%20interactive%20introduction.ipynb>`_.
-Try it out, and play!**
+This tutorial is also available in the form of a `Jupyter Notebook <https://github.com/NLeSC/noodles/blob/master/notebooks/An%20interactive%20introduction.ipynb>`_. Try it out, and play!
 
 Noodles is there to make your life easier, *in parallel*! The reason why Noodles can be easy and do parallel Python at the same time is its *functional* approach. In one part you'll define a set of functions that you'd like to run with Noodles, in an other part you'll compose these functions into a *workflow graph*. To make this approach work a function should not have any *side effects*. Let's not linger and just start noodling! First we define some functions to use.
 
@@ -28,7 +27,7 @@ Now we can create a workflow composing several calls to this function.
     c = add(a, a)
     d = mul(b, c)
 
-**That looks easy enough; the funny thing is though, that nothing has been computed yet! Noodles just created the workflow graphs corresponding to the values that still need to be computed. Until such time, we work with the *promise* of a future value. Using the module ``pygraphviz`` (`pip install pygraphviz`, check `this post <https://stackoverflow.com/questions/40528048/pip-install-pygraphviz-no-package-libcgraph-found>`_ if you have problems installing pygraphviz) we can look at the call graphs.**
+That looks easy enough; the funny thing is though, that nothing has been computed yet! Noodles just created the workflow graphs corresponding to the values that still need to be computed. Until such time, we work with the *promise* of a future value. Using the module ``pygraphviz`` (`pip install pygraphviz`, check `this post <https://stackoverflow.com/questions/40528048/pip-install-pygraphviz-no-package-libcgraph-found>`_ if you have problems installing pygraphviz) we can look at the call graphs.
 
 .. code:: python
 
