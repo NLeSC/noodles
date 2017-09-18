@@ -50,7 +50,8 @@ def set_dict(obj, d):
     :param obj: input object.
     :param d: dictionary.
     :return: the modified object."""
-    obj.__dict__ = d
+    if d:
+        obj.__dict__ = d
     return obj
 
 
