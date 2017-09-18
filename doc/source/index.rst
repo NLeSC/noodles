@@ -8,13 +8,15 @@ Welcome to Noodles's documentation!
 
 Introduction
 ------------
-Noodles offers a model for parallel programming in Python. It can be used for a variety of tasks including data pipelines, and computational workflows. 
+Noodles offers a model for parallel programming in Python. It can be used for a variety of tasks including data pipelines, and computational workflows.
 
 The primary goal of Noodles is to make it easy to run jobs on cluster supercomputers, in parallel, straight from a Python shell. The user enters a Python script that looks and feels like a serial program. The Noodles engine then converts this script into a call graph. This graph can be executed on a variety of machines using the different back-end runners that Noodles provides. This is not so much a design driven by technology but by social considerations. The end user may expect an elegant, easy to understand, interface to a computational library. This user experience we refer to as *eating of noodles*.
 
-The computational library that is exposed to the user by means of Noodles needs to adhere to some design principles that are more strict than plain Python gives us. The library should follow a functional style of programming and is limited by the fact that function arguments need to pass through a layer where data is converted to and from a JSON format. The design of such a library is the *cooking of noodles*. As it is with ramen noodles, ofttimes the cook is also an avid consumer of noodles.
+The computational library that is exposed to the user by means of Noodles needs to adhere to some design principles that are more strict than plain Python gives us. The library should follow a functional style of programming and is limited by the fact that function arguments need to pass through a layer where data is converted to and from a JSON format. The design of such a library is the *cooking of noodles*. As it is with ramen noodles, often the cook is also an avid consumer of noodles.
 
 The complexity of running a workflow in parallel on a wide variety of architectures is taken care of by the Noodles engine. This is the *production of noodles* which is left as an exercise for the Noodles dev-team at the Netherlands eScience Center.
+
+Assumed knowledge for this tutorial: Familiarity with basics of the Python language, [decorators](https://www.thecodeship.com/patterns/guide-to-python-function-decorators/) and the distinction between [functional and object oriented programming](https://en.wikipedia.org/wiki/Comparison_of_programming_paradigms). 
 
 Copyright & Licence
 -------------------
