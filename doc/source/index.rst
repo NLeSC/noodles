@@ -16,7 +16,7 @@ The computational library that is exposed to the user by means of Noodles needs 
 
 The complexity of running a workflow in parallel on a wide variety of architectures is taken care of by the Noodles engine. This is the *production of noodles* which is left as an exercise for the Noodles dev-team at the Netherlands eScience Center.
 
-Assumed knowledge for this tutorial: Familiarity with basics of the Python language, `decorators<https://www.thecodeship.com/patterns/guide-to-python-function-decorators/>` and the distinction between `functional and object oriented programming<https://en.wikipedia.org/wiki/Comparison_of_programming_paradigms>`_.
+Assumed knowledge for this tutorial: Familiarity with basics of the Python language, `decorators`_, and the distinction between functional and object oriented programming: https://en.wikipedia.org/wiki/Comparison_of_programming_paradigms.
 
 Copyright & Licence
 -------------------
@@ -83,3 +83,4 @@ Indices and tables
 .. _pyxenon: http://github.com/NLeSC/pyxenon
 .. _LGPLv3: http://www.gnu.org/licenses/lgpl-3.0.html
 .. _`generating SSH keys`: https://help.github.com/articles/generating-ssh-keys/
+.. _`decorators`: https://www.thecodeship.com/patterns/guide-to-python-function-decorators/
