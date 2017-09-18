@@ -8,7 +8,7 @@ Welcome to Noodles's documentation!
 
 Introduction
 ------------
-Noodles offers a model for parallel programming in Python. It can be used for a variety of tasks including data pipelines, and computational workflows. 
+Noodles offers a model for parallel programming in Python. It can be used for a variety of tasks including data pipelines, and computational workflows.
 
 The primary goal of Noodles is to make it easy to run jobs on cluster supercomputers, in parallel, straight from a Python shell. The user enters a Python script that looks and feels like a serial program. The Noodles engine then converts this script into a call graph. This graph can be executed on a variety of machines using the different back-end runners that Noodles provides. This is not so much a design driven by technology but by social considerations. The end user may expect an elegant, easy to understand, interface to a computational library. This user experience we refer to as *eating of noodles*.
 
