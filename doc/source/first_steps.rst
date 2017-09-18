@@ -42,7 +42,7 @@ That looks easy enough; the funny thing is though, that nothing has been compute
     
     err = os.system("montage wf1?.png -tile 4x1 -geometry +10+0 wf1-series.png")
 
-``draw_workflow`` imports ``pygraphviz``.
+``draw_workflow`` imports ``pygraphviz``. ``wf1-series.png`` is saved to the directory from which you launched this notebook.
 
 .. figure:: _static/images/wf1-series.png
     :alt: building the workflow
