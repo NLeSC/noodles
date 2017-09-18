@@ -1,6 +1,6 @@
 from noodles import (
     schedule, has_scheduled_methods, run_single,
-    run_process, serial)
+    run_parallel, serial)
 
 
 def registry():
@@ -30,5 +30,5 @@ def test_class_methods_01():
     a = A(7)
     b = a(6)
 
-    result = run_process(b, 1, registry)
+    result = run_parallel(b, 1)
     assert result == 42
