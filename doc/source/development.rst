@@ -24,7 +24,7 @@ Runners
 Serialisation
 -------------
 .. automodule:: noodles.serial
-    :members: base, pickle, numpy
+    :members: base, pickle
 
 .. automodule:: noodles.serial.registry
     :members: Registry, Serialiser, RefObject
