@@ -61,8 +61,8 @@ class JobDB:
             # if no record is found, register the job and return the db id
             if row is None:
                 self.cur.execute(
-                    'insert into "jobs" ("prov", "version", "function", "arguments")'
-                    'values (?, ?, ?, ?)',
+                    'insert into "jobs" ("prov", "version", "function", '
+                    '"arguments") values (?, ?, ?, ?)',
                     (prov, job_msg['data']['hints'].get('version'),
                      json.dumps(job_msg['data']['function']),
                      json.dumps(job_msg['data']['arguments'])))
@@ -78,7 +78,7 @@ class JobDB:
             wf_running = rec.link in running.workflows
 
             if job_running or wf_running:
-                duplicates[rec.id].append(key)
+                self.duplicates[rec.id].append(rec.key)
                 return 'attached', rec.id, None
 
             print("WARNING: unfinished job in database. Removing it and "
@@ -95,9 +95,12 @@ class JobDB:
 
     def store_result(self, db_id, result):
         with self.lock:
-            self.add_time_stamp(key, 'done')
-            self.cur.execute('update "jobs" set "result" = ? where "id" = ?;', (result, db_id))
-            # self.cur.execute('select "duplicate" from "duplicates" where "primary" = ?;', db_id)
+            self.add_time_stamp(db_id, 'done')
+            self.cur.execute(
+                'update "jobs" set "result" = ? where "id" = ?;',
+                (result, db_id))
+            # self.cur.execute('select "duplicate" from "duplicates" where
+            # "primary" = ?;', db_id)
             # duplicates = self.cur.fetchall()
             return self.duplicates[db_id]
 
@@ -109,7 +112,7 @@ class JobDB:
     def get_linked_jobs(self, ppn):
         with self.lock:
             self.cur.execute(
-                'select "id" from "jobs" where "link" = ?', (p,))
+                'select "id" from "jobs" where "link" = ?', (ppn,))
             return self.cur.fetchall()
 
     def add_time_stamp(self, db_id, name):
