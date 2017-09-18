@@ -3,6 +3,9 @@ First Steps
 
 This tutorial is also available in the form of a `Jupyter Notebook <https://github.com/NLeSC/noodles/blob/master/notebooks/An%20interactive%20introduction.ipynb>`_. Try it out, and play!
 
+|Jupyter Notebook <https://github.com/NLeSC/noodles/blob/master/notebooks/An%20interactive%20introduction.ipynb>|_
+|bobob `Jupyter Notebook <https://github.com/NLeSC/noodles/blob/master/notebooks/An%20interactive%20introduction.ipynb>`_ ooboboub |_
+
 Noodles is there to make your life easier, *in parallel*! The reason why Noodles can be easy and do parallel Python at the same time is its *functional* approach. In one part you'll define a set of functions that you'd like to run with Noodles, in an other part you'll compose these functions into a *workflow graph*. To make this approach work a function should not have any *side effects*. Let's not linger and just start noodling! First we define some functions to use.
 
 
