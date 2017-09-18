@@ -118,8 +118,8 @@ def find_first(pred, lst):
     predicate `pred`.
 
     :param pred: a function of one argument returning `True` or `False`.
-    :param lst: a list of promises or values.  :return: a promise of a value or
-    `None`.
+    :param lst: a list of promises or values.
+    :return: a promise of a value or `None`.
 
     This is a wrapper around :func:`s_find_first`. The first item on the list
     is passed *as is*, forcing evalutation. The tail of the list is quoted, and
@@ -158,8 +158,8 @@ def lift(obj, memo=None):
     """Make a promise out of object `obj`, where `obj` may contain promises
     internally.
 
-    :param obj: Any object.  :param memo: used for internal caching (similar to
-    :func:`deepcopy`).
+    :param obj: Any object.
+    :param memo: used for internal caching (similar to :func:`deepcopy`).
 
     If the object is a :class:`PromisedObject`, or *pass-by-value*
     (:class:`str`, :class:`int`, :class:`float`, :class:`complex`) it is
