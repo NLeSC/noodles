@@ -1,7 +1,7 @@
 First Steps
 ===========
 
-**This tutorial is also available in the form of a `Jupyter Notebook <https://github.com/NLeSC/noodles/blob/master/notebooks/An%20interactive%20introduction.ipynb>`_. Try it out, and play!**
+**This tutorial is also available in the form of a `Jupyter Notebook. <https://github.com/NLeSC/noodles/blob/master/notebooks/An%20interactive%20introduction.ipynb>`_ Try it out, and play!**
 
 `Jupyter Notebook <https://github.com/NLeSC/noodles/blob/master/notebooks/An%20interactive%20introduction.ipynb>`_
 
