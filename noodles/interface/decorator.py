@@ -76,7 +76,7 @@ def schedule_hint(**hints):
 def unwrap(f):
     """Unwrap a wrapped function; the function needs to have been wrapped
     using :func:`functools.wraps`, as is done in :func:`schedule`.
-    
+
     If function `f` doesn't have the `__wrapped` attribute, the same
     function `f` is returned."""
     try:
@@ -143,6 +143,17 @@ def result(obj):
     run time. This is not a recommended way of getting at results, but can
     help with debugging."""
     return obj.__result__()
+
+
+class ConstRef:
+    def __init__(self, this):
+        self.this = this
+
+    def __getattr__(self, attr):
+        return getattr(self.this, attr)
+
+    def __deepcopy__(self, _):
+        return self
 
 
 class PromisedObject:
