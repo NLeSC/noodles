@@ -65,8 +65,8 @@ Documentation Contents
    Introduction <self>
    eating
    cooking
-   first_steps
-   poetry_tutorial
+   first_steps.ipynb
+   poetry_tutorial.ipynb
    boil_tutorial
    development
    scheduler
