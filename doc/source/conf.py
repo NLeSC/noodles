@@ -46,6 +46,7 @@ extensions = [
     'sphinx.ext.coverage',
     'sphinx.ext.mathjax',
     'nbsphinx',
+    'IPython.sphinxext.ipython_console_highlighting'
 ]
 
 # Add any paths that contain templates here, relative to this directory.
