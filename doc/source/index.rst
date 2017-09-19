@@ -71,6 +71,8 @@ Documentation Contents
    development
    scheduler
    brokers
+   An interactive introduction.ipynb
+
 
 Indices and tables
 ==================
