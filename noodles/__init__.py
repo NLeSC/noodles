@@ -14,6 +14,5 @@ __version__ = "0.2.3"
 __all__ = ['schedule', 'schedule_hint', 'run_single', 'run_process',
            'run_logging', 'run_parallel', 'unwrap',
            'Scheduler', 'Storable', 'has_scheduled_methods', 'Fail',
-           'fold', 'filter',
            'gather', 'gather_all', 'gather_dict', 'lift', 'unpack', 'maybe',
            'delay', 'update_hints', 'quote', 'unquote', 'result']
