@@ -60,18 +60,18 @@ Documentation Contents
 ======================
 
 .. toctree::
-   :maxdepth: 2
+    :maxdepth: 2
 
-   Introduction <self>
-   eating
-   cooking
-   first_steps.ipynb
-   poetry_tutorial.ipynb
-   boil_tutorial
-   development
-   scheduler
-   brokers
-   An interactive introduction.ipynb
+    Introduction <self>
+    eating
+    cooking
+    first_steps
+    poetry_tutorial
+    boil_tutorial
+    development
+    scheduler
+    brokers
+    An_interactive_introduction
 
 
 Indices and tables
