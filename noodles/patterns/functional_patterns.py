@@ -49,13 +49,9 @@ def filter(pred: Callable, xs: Iterable):
     :param xs: iterable object.
     :returns: :py:class:`PromisedObject`
     """
-    def generator():
-        for x in xs:
-            b = pred(x)
-            if b:
-                yield x
+    generator = (x for x in xs if pred(x))
 
-    return gather(*generator())
+    return gather(*generator)
 
 
 @schedule
@@ -96,14 +92,30 @@ def map(fun: Callable, xs: Iterable):
 
     returns::py:class:`PromisedObject`
     """
-    rs = [fun(x) for x in xs]
-    return gather(*rs)
+    generator = (fun(x) for x in xs)
+
+    return gather(*generator)
 
 
 @schedule
 def zip_with(fun: Callable, xs: Iterable, ys: Iterable):
     """
-    """
-    rs = [fun(*rs) for rs in zip(xs, ys)]
+    Fuse two Iterable object using the function `fun`.
+    Notice that if the two objects have different len,
+    the shortest object gives the result's shape.
 
-    return gather(*rs)
+    :param fun:
+       function taking two argument use to process
+       element x from `xs` and y from `ys`.
+
+    :param xs:
+       first iterable.
+
+    :param ys:
+       second iterable.
+
+    returns::py:class:`PromisedObject`
+    """
+    generator = (fun(*rs) for rs in zip(xs, ys))
+
+    return gather(*generator)
