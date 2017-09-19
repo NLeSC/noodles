@@ -196,7 +196,7 @@ We could write
 in the last line of the ``sentence`` method, but the string format
 method doesn't support wrapping. We rely on getting the signature of a
 function by calling ``inspect.signature``. When the built-in
-function is implemented in C, this raises `exception <https://stackoverflow.com/questions/10920499/get-built-in-method-signature-python>`_.
+function is implemented in C, this raises an `exception <https://stackoverflow.com/questions/10920499/get-built-in-method-signature-python>`_.
 We may find a work around for these cases in future versions of 
 Noodles. For the moment we'll have to define a little wrapper function.
 
