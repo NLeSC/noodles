@@ -26,7 +26,7 @@ Let's look at a small example of creating a diamond workflow, which consists of 
 
     print("The answer is {0}.".format(answer))
 
-That allmost looks like normal Python! The only difference is the ``run_single`` statement at the end of this program.
+That almost looks like normal Python! The only difference is the ``run_single`` statement at the end of this program.
 The catch is that none of the computation is actually done until the ``run_single`` statement has been given.
 The variables ``u``, ``v``, ``w``, and ``x`` only represent the *promise* of a value.
 The functions that we imported are wrapped, such that they construct the directed acyclic graph of the computation in stead of just computing the result immediately.
