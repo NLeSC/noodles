@@ -32,7 +32,7 @@ setup(
         'Programming Language :: Python :: 3.5',
         'Topic :: System :: Distributed Computing'],
 
-    install_requires=[],
+    install_requires=['graphviz'],
     extras_require={
         'prov': ['tinydb', 'ujson'],
         'xenon': ['pyxenon'],
