@@ -71,7 +71,7 @@ Documentation Contents
     development
     scheduler
     brokers
-    An_interactive_introduction
+    an_interactive_introduction
 
 
 Indices and tables
