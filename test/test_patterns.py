@@ -19,9 +19,10 @@ def test_pattern():
 def create_wf_1():
     arr = np.random.normal(size=100)
     xs = patterns.fold(aux_sum, 0, arr)
-    ys = patterns.map(lambda x: x ** 2, xs)
+    ys = patterns.map(lambda x: x ** 2, patterns.second(xs))
 
-    return schedule_allclose(ys, np.cumsum(arr) ** 2)
+    return schedule_allclose(
+        ys, np.cumsum(arr) ** 2)
 
 
 def create_wf_2():
@@ -37,7 +38,8 @@ def create_wf_3():
     ys = patterns.map(lambda x: np.pi * x, arr)
     rs = patterns.zip_with(x_sin_pix, arr, ys)
 
-    return schedule_allclose(rs, arr * np.sin(np.pi * arr))
+    return schedule_allclose(
+        rs, arr * np.sin(np.pi * arr))
 
 
 def create_wf_4():
@@ -45,6 +47,10 @@ def create_wf_4():
     xs = patterns.map(math.cos, arr)
 
     return patterns.any(lambda x: x < 0, xs)
+
+
+def expensive_computation(x):
+    return math.exp(x)
 
 
 def x_sin_pix(x, y):

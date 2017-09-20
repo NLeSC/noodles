@@ -1,6 +1,6 @@
 from .find_first import find_first
-from noodles import (gather, schedule, unpack)
-from typing import (Any, Callable, Iterable)
+from noodles import (schedule, unpack)
+from typing import (Any, Callable, Iterable, Tuple)
 
 
 @schedule
@@ -51,7 +51,23 @@ def filter(pred: Callable, xs: Iterable):
     """
     generator = (x for x in xs if pred(x))
 
-    return gather(*generator)
+    return list(generator)
+
+
+def first(promise: Tuple):
+    """
+    Get the first value of a promised Tuple.
+    """
+    x, _ = unpack(promise, 2)
+    return x
+
+
+def second(promise: Tuple):
+    """
+    Get the second value of a promise Tuple.
+    """
+    _, y = unpack(promise, 2)
+    return y
 
 
 @schedule
@@ -71,11 +87,14 @@ def fold(
     :returns: :py:class:`PromisedObject`
     """
     def generator(state):
+        rs = []
         for x in xs:
-            state, r = unpack(fun(state, x), 2)
-            yield r
+            state, r = fun(state, x)
+            rs.append(r)
 
-    return gather(*generator(state))
+        return state, rs
+
+    return generator(state)
 
 
 @schedule
@@ -92,9 +111,7 @@ def map(fun: Callable, xs: Iterable):
 
     returns::py:class:`PromisedObject`
     """
-    generator = (fun(x) for x in xs)
-
-    return gather(*generator)
+    return list(fun(x) for x in xs)
 
 
 @schedule
@@ -116,6 +133,4 @@ def zip_with(fun: Callable, xs: Iterable, ys: Iterable):
 
     returns::py:class:`PromisedObject`
     """
-    generator = (fun(*rs) for rs in zip(xs, ys))
-
-    return gather(*generator)
+    return list(fun(*rs) for rs in zip(xs, ys))
