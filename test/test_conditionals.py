@@ -1,6 +1,7 @@
 from noodles import (
         schedule, run_single, quote, unquote, run_process,
-        schedule_hint, run_logging, find_first)
+        schedule_hint, run_logging)
+from noodles.patterns import (find_first)
 from noodles.tutorial import (add, sub, mul)
 from noodles.serial import base
 from noodles.display import NCDisplay
