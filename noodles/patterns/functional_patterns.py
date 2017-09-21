@@ -89,7 +89,7 @@ def fold(
     def generator(state):
         rs = []
         for x in xs:
-            state, r = fun(state, x)
+            state, r = unpack(fun(state, x), 2)
             rs.append(r)
 
         return state, rs
