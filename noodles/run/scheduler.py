@@ -20,6 +20,10 @@ class Job:
     def node(self):
         return self.workflow.nodes[self.node_id]
 
+    @property
+    def name(self):
+        return ""
+
 
 class DynamicLink:
     def __init__(self, source, target, node):

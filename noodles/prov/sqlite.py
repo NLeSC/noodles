@@ -4,6 +4,8 @@ from collections import (namedtuple, defaultdict)
 # from ..utility import on
 import time
 import sys
+from ..run.messages import (JobMessage)
+from .key import (prov_key)
 
 try:
     import ujson as json
@@ -14,12 +16,21 @@ except ImportError:
 schema = '''
     create table if not exists "jobs" (
         "id"        integer unique primary key,
-        "prov"      text unique not null,
+        "run"       integer not null references "runs"("id")
+                    on delete cascade,
+        "name"      text,
+        "prov"      text,
         "link"      integer,
+        "duplicate" integer,
         "version"   text,
         "function"  text,
         "arguments" text,
         "result"    text );
+
+    create table if not exists "runs" (
+        "id"        integer unique primary key,
+        "time"      datetime default current_timestamp,
+        "info"      text );
 
     create table if not exists "timestamps" (
         "job"       integer not null references "jobs"("id")
@@ -30,7 +41,12 @@ schema = '''
 
 JobEntry = namedtuple(
         'JobEntry',
-        ['id', 'prov', 'link', 'version', 'function', 'arguments', 'result'])
+        ['id', 'run', 'name', 'prov', 'link', 'duplicate',
+         'version', 'function', 'arguments', 'result'])
+
+RunEntry = namedtuple(
+        'RunEntry'
+        ['id', 'time', 'info'])
 
 TimestampEntry = namedtuple(
         'TimestampEntry',
@@ -45,30 +61,85 @@ class JobDB:
     """Keeps a database of jobs, with a MD5 hash that encodes the function
     name, version, and all arguments to the function.
     """
-    def __init__(self, path):
+    def __init__(self, path, registry, info=None):
         self.duplicates = defaultdict(list)
         self.connection = sqlite3.connect(path, check_same_thread=False)
+        self.jobs = {}
+        self.registry = registry
 
         self.cur = self.connection.cursor()
         self.cur.executescript(schema)
         self.lock = Lock()
 
-    def add_job(self, prov, job_msg, running):
         with self.lock:
-            self.cur.execute('select * from "jobs" where "prov" = ?;', (prov,))
-            row = self.cur.fetchone()
+            self.cur.execute('insert into "runs" ("info") values (?)', info)
+            self.run = self.cur.lastrowid
 
-            # if no record is found, register the job and return the db id
-            if row is None:
+    # --------- job-keeper interface ------------
+
+    def __delitem__(self, key):
+        del self.jobs[key]
+
+    def __getitem__(self, key):
+        return self.jobs[key]
+
+    def register(self, job):
+        """Takes a job (unencoded) and adorns it with a unique key; this makes
+        an entry in the database without any further specification."""
+        with self.lock:
+            self.cur.execute(
+                'insert into "jobs" ("name") values (?)', job.name)
+            self.jobs[self.cur.lastrowid] = job
+            return JobMessage(self.cur.lastrowid, job.node)
+
+    def store_result(self, key, status, value, err):
+        """Store the result of a job back in the node; this does nothing to the
+        database."""
+        if status != 'done':
+            return
+
+        if key not in self.jobs:
+            print("WARNING: store_result called but job not in registry:\n"
+                  "   race condition? Not doing anything.\n", file=sys.stderr)
+            return
+
+        with self.lock:
+            job = self.jobs[key]
+            job.node.result = value
+
+    # --------- database interface ---------------------
+
+    def add_job_to_db(self, key, job):
+        """Add job info to the database."""
+        job_msg = self.registry.deep_encode(job)
+        prov = prov_key(job_msg)
+
+        with self.lock:
+            self.cur.execute(
+                'select * from "jobs" where "prov" = ? '
+                'and (("result" is not null) or '
+                '("run" = ? and "duplicate" is none))',
+                (prov, self.run))
+            existing = self.cur.fetchone()
+            existing = JobEntry(existing) if existing is not None else None
+
+            self.cur.execute(
+                'update "jobs" set "prov" = ?, "version" = ?, "function" = ?, '
+                '"arguments" = ? where "id" = ?',
+                (prov, job_msg['data']['hints'].get('version'),
+                 json.dumps(job_msg['data']['function']),
+                 json.dumps(job_msg['data']['arguments']),
+                 key))
+
+            if existing:
                 self.cur.execute(
-                    'insert into "jobs" ("prov", "version", "function", '
-                    '"arguments") values (?, ?, ?, ?)',
-                    (prov, job_msg['data']['hints'].get('version'),
-                     json.dumps(job_msg['data']['function']),
-                     json.dumps(job_msg['data']['arguments'])))
+                    'update "jobs" set "duplicate" = ? where "id" = ?',
+                    (existing.id, key))
 
-                return 'registered', self.cur.lastrowid, None
+                if existing.result is None:
+                    pass
 
+            # see if job is present
             rec = JobEntry(row)
 
             if rec.result is not None:
