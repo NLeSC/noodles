@@ -205,11 +205,11 @@ If you need to setup some more aspects of the environment, load modules, set var
         a = [add(i, j) for i in range(5) for j in range(5)]
         b = accumulate(gather(*a))
 
-        # XenonKeeper is the root Xenon object that gives access 
+        # XenonKeeper is the root Xenon object that gives access
         # to the Xenon Java library
         with XenonKeeper() as Xe:
-            # We recommend loging in on your compute resource 
-            # through private/public key pairs. This prevents 
+            # We recommend loging in on your compute resource
+            # through private/public key pairs. This prevents
             # passwords ending up as ASCII in your source files.
             certificate = Xe.credentials.newCertificateCredential(
                 'ssh', os.environ['HOME'] + '/.ssh/id_rsa', '<username>', '', None)

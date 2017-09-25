@@ -34,9 +34,11 @@ setup(
 
     install_requires=['graphviz'],
     extras_require={
+        'doc': ['sphinx', 'shpinx_rtd_theme', 'nbsphinx'],
         'prov': ['tinydb', 'ujson'],
         'xenon': ['pyxenon'],
         'numpy': ['numpy', 'h5py', 'msgpack-python', 'filelock'],
-        'test': ['pytest', 'pytest-cov', 'codacy-coverage', 'pyflakes', 'pep8', 'docker-py']
+        'test': ['pytest', 'pytest-cov', 'codacy-coverage', 'pyflakes', 'pep8',
+                 'docker-py']
     },
 )
