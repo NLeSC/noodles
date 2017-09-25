@@ -68,6 +68,7 @@ Documentation Contents
     first_steps
     poetry_tutorial
     boil_tutorial
+    prime_numbers
     development
     scheduler
     brokers
