@@ -1,6 +1,3 @@
-.. highlight:: python
-    :linenothreshold: 5
-
 Eating noodles (user docs)
 ==========================
 
@@ -12,7 +9,7 @@ A first example
 
 Let's look at a small example of creating a diamond workflow, which consists of simple (arithmetic) functions:
 
-::
+.. code:: python
 
     from noodles import run_single
     from noodles.tutorial import (add, sub, mul)
@@ -52,7 +49,7 @@ At this point it is good to know what the module ``noodles.tutorial`` looks like
 It looks very simple.
 However, you should be aware of what happens behind the curtains, to understand the limitations of this approach.
 
-::
+.. code:: python
 
     from noodles import schedule
 
@@ -89,7 +86,7 @@ Doing things parallel
 
 Using the Noodles approach it becomes very easy to paralellise computations. Let's look at a second example.
 
-::
+.. code:: python
 
     from noodles import (gather, run_parallel)
     from noodles.tutorial import (add, sub, mul, accumulate)
@@ -125,7 +122,7 @@ However, schedule-decorated functions cannot easily see which arguments contain 
 The :py:func:`gather <noodles.gather>` function converts the list of promises into a promise of a list, making it clear to the scheduled function this argument is a promise.
 The :py:func:`gather <noodles.gather>` function is defined as follows:
 
-::
+.. code:: python
 
     @schedule
     def gather(*lst):
@@ -190,7 +187,7 @@ The Xenon runner needs a way to setup the virtualenv on the remote side, so a wo
 
 If you need to setup some more aspects of the environment, load modules, set variables etc., modify this script and put it in the directory where you want to run the jobs. Specify this directory in the Python script.
 
-::
+.. code:: python
 
     from noodles import (
         serial, gather)

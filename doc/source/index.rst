@@ -65,14 +65,8 @@ Documentation Contents
     Introduction <self>
     eating
     cooking
-    first_steps
-    poetry_tutorial
-    boil_tutorial
-    prime_numbers
-    development
-    scheduler
-    brokers
-    an_interactive_introduction
+    tutorials
+    implementation
 
 
 Indices and tables
