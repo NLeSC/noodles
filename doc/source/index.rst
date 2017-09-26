@@ -21,7 +21,7 @@ Assumed knowledge for this tutorial: Familiarity with basics of the Python langu
 Copyright & Licence
 -------------------
 
-Noodles 0.1.0 is copyright by the *Netherlands eScience Center (NLeSC)* and released under the `LGPLv3`_.
+Noodles 0.1.0 is copyright by the *Netherlands eScience Center (NLeSC)* and released under the Apache v2 License.
 
 See http://www.esciencecenter.nl for more information on the NLeSC.
 
@@ -30,12 +30,9 @@ Installation
 
 .. WARNING:: We don't support Python versions lower than 3.5.
 
-The core of Noodles runs on **Python 3.5**. To run Noodles on your own machine, no extra dependencies are required. It is advised to install Noodles in a virtualenv. If you want support for `Xenon`_, install `pyxenon`_ too.
+The core of Noodles runs on **Python 3.5** and above. To run Noodles on your own machine, no extra dependencies are required. It is advised to install Noodles in a virtualenv. If you want support for `Xenon`_, install `pyxenon`_ too.
 
 .. code-block:: bash
-
-    # pyxenon needs Java, which may need JAVA_HOME to be set, put it in .bashrc
-    export JAVA_HOME="/usr/lib/jvm/default-java"  # or similar...
 
     # create the virtualenv
     virtualenv -p python3 <venv-dir>
@@ -78,6 +75,5 @@ Indices and tables
 
 .. _Xenon: http://nlesc.github.io/Xenon/
 .. _pyxenon: http://github.com/NLeSC/pyxenon
-.. _LGPLv3: http://www.gnu.org/licenses/lgpl-3.0.html
 .. _`generating SSH keys`: https://help.github.com/articles/generating-ssh-keys/
 .. _`decorators`: https://www.thecodeship.com/patterns/guide-to-python-function-decorators/
