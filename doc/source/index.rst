@@ -21,7 +21,7 @@ Assumed knowledge for this tutorial: Familiarity with basics of the Python langu
 Copyright & Licence
 -------------------
 
-Noodles 0.1.0 is copyright by the *Netherlands eScience Center (NLeSC)* and released under the Apache v2 License.
+Noodles 0.3.0 is copyright by the *Netherlands eScience Center (NLeSC)* and released under the Apache v2 License.
 
 See http://www.esciencecenter.nl for more information on the NLeSC.
 
