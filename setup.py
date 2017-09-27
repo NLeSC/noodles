@@ -20,9 +20,9 @@ setup(
         'noodles', 'noodles.serial', 'noodles.run', 'noodles.run.xenon',
         'noodles.run.remote',
         'noodles.display',
+        'noodles.patterns',
         'noodles.interface', 'noodles.workflow', 'noodles.files',
         'noodles.prov', 'noodles.draw_workflow'],
-
     classifiers=[
         'License :: OSI Approved :: Apache Software License',
         'Intended Audience :: Developers',
@@ -32,11 +32,13 @@ setup(
         'Programming Language :: Python :: 3.5',
         'Topic :: System :: Distributed Computing'],
 
-    install_requires=[],
+    install_requires=['graphviz'],
     extras_require={
+        'doc': ['sphinx', 'shpinx_rtd_theme', 'nbsphinx'],
         'prov': ['tinydb', 'ujson'],
         'xenon': ['pyxenon'],
         'numpy': ['numpy', 'h5py', 'msgpack-python', 'filelock'],
-        'test': ['pytest', 'pytest-cov', 'codacy-coverage', 'pyflakes', 'pep8', 'docker-py']
+        'test': ['pytest', 'pytest-cov', 'codacy-coverage', 'pyflakes', 'pep8',
+                 'docker-py', 'numpy']
     },
 )
