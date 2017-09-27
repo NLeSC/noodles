@@ -21,7 +21,7 @@ def create_wf_1():
     xs = patterns.fold(aux_sum, 0, arr)
     ys = patterns.map(lambda x: x ** 2, xs)
 
-    return schedule_allclose(ys, np.cumsum(arr) ** 2)
+    return schedule(np.allclose)(ys, np.cumsum(arr) ** 2)
 
 
 def create_wf_2():
@@ -37,7 +37,7 @@ def create_wf_3():
     ys = patterns.map(lambda x: np.pi * x, arr)
     rs = patterns.zip_with(x_sin_pix, arr, ys)
 
-    return schedule_allclose(rs, arr * np.sin(np.pi * arr))
+    return schedule(np.allclose)(rs, arr * np.sin(np.pi * arr))
 
 
 def create_wf_4():
@@ -49,13 +49,6 @@ def create_wf_4():
 
 def x_sin_pix(x, y):
     return x * math.sin(y)
-
-
-@schedule
-def schedule_allclose(arr, brr):
-    fun = schedule(np.allclose)
-
-    return fun(arr, brr)
 
 
 def aux_sum(acc, x):
