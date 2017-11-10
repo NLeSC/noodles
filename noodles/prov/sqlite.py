@@ -20,7 +20,6 @@ schema = '''
                     on delete cascade,
         "name"      text,
         "prov"      text,
-        "link"      integer,
         "duplicate" integer,
         "version"   text,
         "function"  text,
@@ -65,6 +64,7 @@ class JobDB:
         self.duplicates = defaultdict(list)
         self.connection = sqlite3.connect(path, check_same_thread=False)
         self.jobs = {}
+        self.links = {}
         self.registry = registry
 
         self.cur = self.connection.cursor()
@@ -107,6 +107,10 @@ class JobDB:
             job = self.jobs[key]
             job.node.result = value
 
+    def add_link(self, db_id, ppn):
+        with self.lock:
+            self.links[db_id] = ppn
+
     # --------- database interface ---------------------
 
     def add_job_to_db(self, key, job):
@@ -120,8 +124,8 @@ class JobDB:
                 'and (("result" is not null) or '
                 '("run" = ? and "duplicate" is none))',
                 (prov, self.run))
-            existing = self.cur.fetchone()
-            existing = JobEntry(existing) if existing is not None else None
+            rec = self.cur.fetchone()
+            rec = JobEntry(existing) if existing is not None else None
 
             self.cur.execute(
                 'update "jobs" set "prov" = ?, "version" = ?, "function" = ?, '
@@ -131,31 +135,21 @@ class JobDB:
                  json.dumps(job_msg['data']['arguments']),
                  key))
 
-            if existing:
+            if rec:
                 self.cur.execute(
                     'update "jobs" set "duplicate" = ? where "id" = ?',
                     (existing.id, key))
 
-                if existing.result is None:
-                    pass
-
-            # see if job is present
-            rec = JobEntry(row)
-
             if rec.result is not None:
                 return 'retrieved', rec.id, rec.result
 
-            job_running = rec.key in running
-            wf_running = rec.link in running.workflows
+            job_running = rec and rec.key in self
+            wf_running = rec and rec.key in self.links
 
             if job_running or wf_running:
                 self.duplicates[rec.id].append(rec.key)
                 return 'attached', rec.id, None
 
-            print("WARNING: unfinished job in database. Removing it and "
-                  " rerunning.", file=sys.stderr)
-            self.cur.execute(
-                'delete from "jobs" where "id" = ?;', rec.id)
             return 'broken', None, None
 
     def job_exists(self, prov):
@@ -164,7 +158,7 @@ class JobDB:
             rec = self.cur.fetchone()
             return rec is not None
 
-    def store_result(self, db_id, result):
+    def store_result_in_db(self, db_id, result):
         with self.lock:
             self.add_time_stamp(db_id, 'done')
             self.cur.execute(
@@ -174,17 +168,6 @@ class JobDB:
             # "primary" = ?;', db_id)
             # duplicates = self.cur.fetchall()
             return self.duplicates[db_id]
-
-    def add_link(self, db_id, ppn):
-        with self.lock:
-            self.cur.execute(
-                'update "jobs" set "link" = ? where "id" = ?', (ppn, db_id))
-
-    def get_linked_jobs(self, ppn):
-        with self.lock:
-            self.cur.execute(
-                'select "id" from "jobs" where "link" = ?', (ppn,))
-            return self.cur.fetchall()
 
     def add_time_stamp(self, db_id, name):
         with self.lock:
