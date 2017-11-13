@@ -11,3 +11,4 @@ cover
 .*.swp
 doc/build
 venv
+cache*

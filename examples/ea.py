@@ -1,9 +1,9 @@
-from noodles import gather, run_logging, schedule, has_scheduled_methods, run_process, serial, run_parallel, run_single
+from noodles import (run_logging)
 
 import subprocess
 import numpy as np
-from ea import (EA, Chromosome, Generation, Rastrigin, registry)
-from noodles.display import SimpleDisplay, DumbDisplay
+from ea import (EA, Rastrigin)
+from noodles.display import SimpleDisplay
 
 
 def error_filter(xcptn):
@@ -32,7 +32,7 @@ if __name__ == "__main__":
     print("╭─(Running evolution...)")
     with SimpleDisplay(error_filter) as display:
         answer = run_logging(g, 1, display)
-    #answer = run_single(g)
+    # answer = run_single(g)
 
     for i in answer.individuals:
         print(i.fitness)

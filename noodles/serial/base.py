@@ -1,4 +1,5 @@
 from .registry import (Registry, Serialiser)
+from .reasonable import (Reasonable, SerReasonableObject)
 from ..interface import (PromisedObject)
 from ..utility import (object_name, look_up, importable)
 from ..workflow import (Workflow, NodeData, FunctionNode, ArgumentAddress,
@@ -6,7 +7,7 @@ from ..workflow import (Workflow, NodeData, FunctionNode, ArgumentAddress,
 from ..storable import (Storable)
 # from .as_dict import (AsDict)
 # from enum import Enum
-from inspect import isfunction
+from inspect import isfunction, ismethod
 # from collections import namedtuple
 from itertools import count
 # import json
@@ -19,6 +20,19 @@ class SerDict(Serialiser):
 
     def encode(self, obj, make_rec):
         return make_rec(dict(obj))
+
+    def decode(self, cls, data):
+        return cls(data)
+
+
+class SerTuple(Serialiser):
+    """Tuples get converted to lists during serialisation.
+    We want to get tuples back, so make this explicit."""
+    def __init__(self):
+        super(SerTuple, self).__init__(tuple)
+
+    def encode(self, obj, make_rec):
+        return make_rec(list(obj))
 
     def decode(self, cls, data):
         return cls(data)
@@ -100,6 +114,19 @@ class SerMethod(Serialiser):
         return getattr(cls, data['method'])
 
 
+class SerBoundMethod(Serialiser):
+    def __init__(self):
+        super(SerBoundMethod, self).__init__('<boundmethod>')
+
+    def encode(self, obj, make_rec):
+        return make_rec({
+            'self': obj.__self__,
+            'name': obj.__name__})
+
+    def decode(self, _, data):
+        return getattr(data['self'], data['name'])
+
+
 class SerImportable(Serialiser):
     def __init__(self):
         super(SerImportable, self).__init__('<importable>')
@@ -112,26 +139,13 @@ class SerImportable(Serialiser):
 
 
 class SerStorable(Serialiser):
-    def __init__(self):
-        super(SerStorable, self).__init__(Storable)
+    def __init__(self, cls):
+        super(SerStorable, self).__init__(cls)
 
     def encode(self, obj, make_reca):
         return make_reca(
             {'type': object_name(type(obj)),
              'dict': obj.as_dict()})
-
-    def decode(self, _, data):
-        cls = look_up(data['type'])
-        return cls.from_dict(**data['dict'])
-
-
-class SerAutoStorable(Serialiser):
-    def __init__(self, cls):
-        super(SerAutoStorable, self).__init__(cls)
-
-    def encode(self, obj, make_rec):
-        return make_rec({'type': object_name(type(obj)),
-                         'dict': obj.as_dict()})
 
     def decode(self, _, data):
         cls = look_up(data['type'])
@@ -153,11 +167,11 @@ def _noodles_hook(obj):
     if '__member_of__' in dir(obj) and obj.__member_of__:
         return '<method>'
 
-    # if hasattr(obj, 'as_dict') and hasattr(type(obj), 'from_dict'):
-    #    return '<auto-storable>'
-
     if importable(obj):
         return '<importable>'
+
+    if ismethod(obj):
+        return '<boundmethod>'
 
     if isfunction(obj):
         return '<importable>'
@@ -170,17 +184,19 @@ def registry():
     return Registry(
         types={
             dict: SerDict(),
+            tuple: SerTuple(),
+            Reasonable: SerReasonableObject(Reasonable),
             ArgumentKind: SerEnum(ArgumentKind),
             FunctionNode: SerNode(),
             ArgumentAddress: SerNamedTuple(ArgumentAddress),
             Workflow: SerWorkflow(),
-            Storable: SerStorable(),
+            Storable: SerStorable(Storable),
             PromisedObject: SerPromisedObject()
         },
         hooks={
             '<method>': SerMethod(),
-            '<importable>': SerImportable()
-            # '<auto-storable>': SerAutoStorable()
+            '<boundmethod>': SerBoundMethod(),
+            '<importable>': SerImportable(),
         },
         hook_fn=_noodles_hook,
         default=Serialiser(object),

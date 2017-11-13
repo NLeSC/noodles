@@ -30,13 +30,14 @@ def hybrid_coroutine_worker(selector, workers):
     def get_result():
         source = jobs.source()
 
-        for key, job in source:
+        for msg in source:
+            key, job = msg
             worker = selector(job)
             if worker is None:
                 yield run_job(key, job)
             else:
                 # send the worker a job and wait for it to return
-                worker_sink[worker].send((key, job))
+                worker_sink[worker].send(msg)
                 result = next(worker_source[worker])
                 yield result
 
@@ -89,12 +90,12 @@ def hybrid_threaded_worker(selector, workers):
         default_sink = results.sink()
 
         while True:
-            key, job = yield
-            worker = selector(job)
+            msg = yield
+            worker = selector(msg.node)
             if worker:
-                job_sink[worker].send((key, job))
+                job_sink[worker].send(msg)
             else:
-                default_sink.send(run_job(key, job))
+                default_sink.send(run_job(*msg))
 
     for key, worker in workers.items():
         t = threading.Thread(

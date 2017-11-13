@@ -1,8 +1,8 @@
-from .arguments import set_argument, ref_argument, format_address, Empty
+from .arguments import set_argument, Empty
 
 
 def reset_workflow(workflow):
-    for src, tgt in workflow.links.items():
+    for tgt in workflow.links.values():
         for m, a in tgt:
             set_argument(workflow.nodes[m].bound_args, a, Empty)
 
@@ -15,8 +15,8 @@ def insert_result(node, address, value):
     is redundant, but if we don't give an error here the program would continue
     with unexpected results.
     """
-    #a = ref_argument(node.bound_args, address)
-    #if a != Empty:
+    # a = ref_argument(node.bound_args, address)
+    # if a != Empty:
     #    raise RuntimeError(
     #        "Noodle panic. Argument {arg} in {name} already given." \
     #        .format(arg=format_address(address),

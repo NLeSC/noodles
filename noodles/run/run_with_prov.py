@@ -1,6 +1,7 @@
 from .connection import (Connection)
 from .queue import (Queue)
-from .scheduler import (Scheduler, Result)
+from .scheduler import (Scheduler)
+from .messages import (ResultMessage)
 from .haploid import (
     pull, push, push_map, sink_map,
     branch, patch, broadcast)
@@ -26,7 +27,7 @@ def run_single(wf, registry, jobdb_file, display=None):
     db = JobDB(jobdb_file)
 
     def decode_result(key, obj):
-        return Result(key, 'retrieved', registry.deep_decode(obj), None)
+        return ResultMessage(key, 'retrieved', registry.deep_decode(obj), None)
 
     @pull
     def pass_job(source):
@@ -35,7 +36,7 @@ def run_single(wf, registry, jobdb_file, display=None):
             prov = prov_key(job_msg)
 
             if db.job_exists(prov):
-                status, other_key, result = db.get_result_or_attach(
+                status, _, result = db.get_result_or_attach(
                     key, prov, {})
                 if status == 'retrieved':
                     yield decode_result(key, result)
@@ -103,7 +104,7 @@ def schedule_job(results, registry, db,
                     if status == 'retrieved':
                         result_sink.send(
                             (key, 'retrieved',
-                             registry.deep_decode(result), None))
+                             registry.deep_decode(result, deref=True), None))
                         continue
                     elif status == 'attached':
                         continue
@@ -132,7 +133,7 @@ def store_result_deep(registry, db, job_keeper=None, pred=lambda job: True):
         attached = db.store_result(key, result_msg)
         if attached:
             for akey in attached:
-                yield (akey, 'attached', result, msg)
+                yield ResultMessage(akey, 'attached', result, msg)
 
     @pull
     def f(source):
@@ -157,7 +158,7 @@ def store_result_deep(registry, db, job_keeper=None, pred=lambda job: True):
                     for k in linked_jobs:
                         yield from store_result(k, result, msg)
 
-            yield (key, status, result, msg)
+            yield ResultMessage(key, status, result, msg)
 
     return f
 
@@ -209,10 +210,6 @@ def create_prov_worker(
 
     jobs = Queue()
 
-    @push_map
-    def log_job_start(key, job):
-        return (key, 'start', job, None)
-
     r_src = jobs.source \
         >> start_job(db) \
         >> worker \
@@ -235,10 +232,6 @@ def prov_wrap_connection(
     registry = registry()
     db = JobDB(jobdb_file)
 
-    @push_map
-    def log_job_start(key, job):
-        return (key, 'start', job, None)
-
     r_src = worker.source \
         >> store_result_deep(registry, db, job_keeper, pred)
 
@@ -254,7 +247,7 @@ def prov_wrap_connection(
 
 
 def run_parallel_opt(wf, n_threads, registry, jobdb_file,
-                     job_keeper=None, display=None):
+                     job_keeper=None, display=None, cache_all=False):
     """Run a workflow in `n_threads` parallel threads. Now we replaced the
     single worker with a thread-pool of workers.
 
@@ -288,8 +281,12 @@ def run_parallel_opt(wf, n_threads, registry, jobdb_file,
 
     results = Queue()
 
-    def pred(job):
-        return job.hints and 'store' in job.hints
+    if cache_all:
+        def pred(job):
+            return True
+    else:
+        def pred(job):
+            return job.hints and 'store' in job.hints
 
     LogQ = Queue()
     if display:

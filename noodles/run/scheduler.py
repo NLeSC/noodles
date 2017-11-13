@@ -1,5 +1,6 @@
 from .connection import (Connection)
 from .job_keeper import (JobKeeper)
+
 from ..workflow import (
     is_workflow, get_workflow, insert_result,
     is_node_ready, Workflow)
@@ -18,17 +19,6 @@ class Job:
     @property
     def node(self):
         return self.workflow.nodes[self.node_id]
-
-
-class Result:
-    def __init__(self, key, status, value, msg):
-        self.key = key
-        self.status = status
-        self.value = value
-        self.msg = msg
-
-    def __iter__(self):
-        return iter((self.key, self.status, self.value, self.msg))
 
 
 class DynamicLink:
@@ -136,6 +126,7 @@ class Scheduler:
                 continue
 
             # insert the result in the nodes that need it
+            wf.nodes[n].result = result
             for (tgt, address) in wf.links[n]:
                 insert_result(wf.nodes[tgt], address, result)
                 if is_node_ready(wf.nodes[tgt]) and not graceful_exit:

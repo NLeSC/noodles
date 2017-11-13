@@ -1,5 +1,6 @@
-from noodles import schedule, run_single, unwrap
-from nose.tools import raises
+from noodles import schedule, run_single, unwrap, run_process, Storable
+from noodles import serial
+from pytest import raises
 
 
 @schedule
@@ -18,8 +19,13 @@ def mul(x, y):
 
 
 @schedule
-class A:
+def make_object(cls, *args, **kwargs):
+    return cls(*args, **kwargs)
+
+
+class A(Storable):
     def __init__(self, value):
+        # super(A, self).__init__()
         self.value = value
         self.m_attr = 0
 
@@ -39,24 +45,36 @@ class A:
         return self
 
 
-@schedule
 class B:
     pass
 
 
 def test_class_decorator():
-    a = A(5).multiply(10)
+    a = make_object(A, 5).multiply(10)
     a.second = 7
     result = run_single(a)
     assert result.value == 50
     assert result.second == 7
 
 
+def registry():
+    return serial.base()
+
+
+def test_class_decorator_process():
+    a = make_object(A, 5).multiply(10)
+    a.second = 7
+    result = run_process(
+        a, n_processes=1, registry=registry)
+    assert result.value == 50
+    assert result.second == 7
+
+
 def test_class_property():
-    a = A(10)
+    a = make_object(A, 10)
     a.attr = 1.0
 
-    b = B()
+    b = make_object(B)
     b.first = a.attr
     b.second = a.mul_attr(3)
 
@@ -101,9 +119,9 @@ def test_unwrap():
     assert f == unwrap(f)
 
 
-@raises(AttributeError)
 def test_class_decorator2():
-    a = A(6).multiply(7)
-    b = a.divide(0)
-    result = run_single(b)
-    print(dir(result))
+    with raises(AttributeError):
+        a = make_object(A, 6).multiply(7)
+        b = a.divide(0)
+        result = run_single(b)
+        print(dir(result))

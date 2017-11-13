@@ -30,7 +30,6 @@ import uuid
 from contextlib import redirect_stdout
 
 import os
-from noodles.run.worker import run_job
 from .utility import (look_up)
 
 try:
@@ -39,32 +38,15 @@ try:
 except ImportError:
     has_msgpack = False
 
+from .run.worker import (
+    run_job)
 
-def get_job(msg):
-    return msg['key'], msg['node']
+from .run.messages import (
+    JobMessage)
 
-
-def get_job_json(registry, s):
-    obj = registry.from_json(s, deref=True)
-    return obj['key'], obj['node']
-
-
-def put_result_msgpack(registry, host, key, status, result, err_msg):
-    return registry.to_msgpack({
-        'key': key,
-        'status': status,
-        'result': result,
-        'err_msg': err_msg
-    }, host=host)
-
-
-def put_result_json(registry, host, key, status, result, err_msg):
-    return registry.to_json({
-        'key': key,
-        'status': status,
-        'result': result,
-        'err_msg': err_msg
-    }, host=host)
+from .run.remote.io import (
+    MsgPackObjectReader, MsgPackObjectWriter,
+    JSONObjectReader, JSONObjectWriter)
 
 
 def run_batch_mode(args):
@@ -77,41 +59,32 @@ def run_online_mode(args):
         finish = None
 
         if args.msgpack:
-            messages = msgpack.Unpacker(sys.stdin.buffer)
+            newin = os.fdopen(sys.stdin.fileno(), 'rb', buffering=0)
+            input_stream = MsgPackObjectReader(
+                registry, newin, deref=True)
+            output_stream = MsgPackObjectWriter(
+                registry, sys.stdout.buffer, host=args.name)
         else:
-            def msg_stream():
-                for line in sys.stdin:
-                    yield registry.from_json(line, deref=True)
-
-            messages = msg_stream()
+            input_stream = JSONObjectReader(
+                registry, sys.stdin, deref=True)
+            output_stream = JSONObjectWriter(
+                registry, sys.stdout, host=args.name)
 
         # run the init function if it is given
         if args.init:
-            # line = sys.stdin.readline()
-            key, job = get_job(next(messages))
-            if key != 'init':
-                raise RuntimeError("Expected init function.")
-
             with redirect_stdout(sys.stderr):
-                result = run_job(key, job)
-
-            if args.msgpack:
-                sys.stdout.buffer.write(put_result_msgpack(
-                    registry, args.name, *result))
-                sys.stdout.flush()
-            else:
-                print(put_result_json(registry, args.name, *result),
-                      flush=True)
+                look_up(args.init)()
 
         if args.finish:
-            # line = sys.stdin.readline()
-            key, job = get_job(next(messages))
-            if key != 'finish':
-                raise RuntimeError("Expected finish function.")
-            finish = job
+            finish = look_up(args.finish)
 
-        for msg in messages:
-            key, job = get_job(msg)
+        for msg in input_stream:
+            if isinstance(msg, JobMessage):
+                key, job = msg
+            elif isinstance(msg, tuple):
+                key, job = msg
+            else:
+                continue
 
             if args.jobdirs:
                 # make a directory
@@ -131,24 +104,15 @@ def run_online_mode(args):
 
             if args.verbose:
                 print("result: ", result, file=sys.stderr, flush=True)
-                print("json: ", put_result_json(
-                    registry, args.name, key,
-                    'success', result, None), file=sys.stderr, flush=True)
 
             if args.jobdirs:
                 # parent directory
                 os.chdir("..")
 
-            if args.msgpack:
-                sys.stdout.buffer.write(put_result_msgpack(
-                    registry, args.name, *result))
-                sys.stdout.flush()
-            else:
-                print(put_result_json(registry, args.name, *result),
-                      flush=True)
+            output_stream.send(result)
 
         if finish:
-            run_job(0, finish)
+            finish()
 
 
 if __name__ == "__main__":
@@ -201,11 +165,13 @@ if __name__ == "__main__":
         help="worker identity",
         default="worker-" + str(uuid.uuid4()))
     online_parser.add_argument(
-        "-init", help="an init function will be send before other jobs",
-        default=False, action='store_true')
+        "-init", type=str,
+        help="an init function will be send before other jobs",
+        default=None)
     online_parser.add_argument(
-        "-finish", help="a finish function will be send before other jobs",
-        default=False, action='store_true')
+        "-finish", type=str,
+        help="a finish function will be send before other jobs",
+        default=None)
 
     online_parser.set_defaults(func=run_online_mode)
 

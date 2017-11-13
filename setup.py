@@ -12,19 +12,19 @@ with open(path.join(here, 'README.rst'), encoding='utf-8') as f:
 
 setup(
     name='Noodles',
-    version='0.1.9300',
+    version='0.2.3',
     description='Workflow Engine',
     author='Johan Hidding',
     url='https://github.com/NLeSC/noodles',
     packages=[
         'noodles', 'noodles.serial', 'noodles.run', 'noodles.run.xenon',
+        'noodles.run.remote',
         'noodles.display',
         'noodles.interface', 'noodles.workflow', 'noodles.files',
-        'noodles.prov'],
+        'noodles.prov', 'noodles.draw_workflow'],
 
     classifiers=[
-        'License :: OSI Approved :: '
-        'GNU Lesser General Public License v3 or later (LGPLv3+)',
+        'License :: OSI Approved :: Apache Software License',
         'Intended Audience :: Developers',
         'Intended Audience :: Science/Research',
         'Environment :: Console',
@@ -32,10 +32,13 @@ setup(
         'Programming Language :: Python :: 3.5',
         'Topic :: System :: Distributed Computing'],
 
-    install_requires=[],
+    install_requires=['graphviz'],
     extras_require={
-        'prov': ['tinydb'],
+        'doc': ['sphinx', 'shpinx_rtd_theme', 'nbsphinx'],
+        'prov': ['tinydb', 'ujson'],
         'xenon': ['pyxenon'],
-        'test': ['nose', 'coverage', 'pyflakes', 'pep8']
+        'numpy': ['numpy', 'h5py', 'msgpack-python', 'filelock'],
+        'test': ['pytest', 'pytest-cov', 'codacy-coverage', 'pyflakes', 'pep8',
+                 'docker-py']
     },
 )

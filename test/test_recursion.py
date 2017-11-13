@@ -16,10 +16,10 @@ def factorial(n):
 
 
 def test_recursion_parallel():
-    f100 = factorial(100)
+    f100 = factorial(50.0)
     result = run_parallel(f100, n_threads=1)
     print(result)
-    assert floor(log(result)) == 363
+    assert floor(log(result)) == 148
 
 
 def registry():
@@ -27,7 +27,7 @@ def registry():
 
 
 def test_recursion_process():
-    f100 = factorial(100)
+    f100 = factorial(50.0)
     result = run_process(f100, n_processes=1, registry=registry, verbose=False)
     print(result)
-    assert floor(log(result)) == 363
+    assert floor(log(result)) == 148

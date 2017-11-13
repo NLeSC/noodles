@@ -10,12 +10,6 @@ import os
 import sys
 
 
-# from contextlib import redirect_stderr
-# xenon_log = open('xenon_log.txt', 'w')
-# with redirect_stderr(xenon_log):
-xenon.init(log_level='ERROR')  # noqa
-
-
 class XenonConfig:
     """Configuration to the Xenon library.
 
@@ -23,7 +17,7 @@ class XenonConfig:
     These jobs may be run locally, over ssh ar against a queue manager like
     SLURM.
 
-    [Documentation to Xenon can be found online](http://nlesc.github.io/xenon)
+    [Documentation to Xenon can be found online](http://nlesc.github.io/Xenon)
 
     :param name:
         The quasi human readable name to give to this Xenon instance.
@@ -136,10 +130,12 @@ class RemoteJobConfig(object):
                '-registry', object_name(self.registry)]
 
         if self.init:
-            cmd.append("-init")
+            cmd.extend(["-init", object_name(self.init)])
+            # cmd.append("-init")
 
         if self.finish:
-            cmd.append("-finish")
+            cmd.extend(["-finish", object_name(self.finish)])
+            # cmd.append("-finish")
 
         if self.verbose:
             cmd.append("-verbose")
@@ -186,7 +182,13 @@ class XenonJob:
 
 
 class XenonKeeper:
-    def __init__(self):
+    is_initialized = False
+
+    def __init__(self, log_level='ERROR'):
+        if not XenonKeeper.is_initialized:
+            xenon.init(log_level=log_level)  # noqa
+            XenonKeeper.is_initialized = True
+
         self._x = xenon.Xenon()
         self.jobs = self._x.jobs()
         self.credentials = self._x.credentials()

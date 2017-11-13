@@ -1,7 +1,7 @@
 
 term_codes = {
-    'fg':        (38, lambda r, g, b: ';2;{0};{1};{2}'.format(r, g, b), 'm'),
-    'bg':        (48, lambda r, g, b: ';2;{0};{1};{2}'.format(r, g, b), 'm'),
+    'fg':        (38, ';2;{0};{1};{2}'.format, 'm'),
+    'bg':        (48, ';2;{0};{1};{2}'.format, 'm'),
     'bold':      (1,  'm'),
     'underline': (4,  'm'),
     'regular':   (23, 'm'),

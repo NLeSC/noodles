@@ -1,36 +1,21 @@
 from ..queue import Queue
 from ..connection import Connection
-from ..coroutine import coroutine
 from ..haploid import (push)
-from ..scheduler import Result
+
+from ..messages import (
+    ResultMessage)
+
+from ..remote.io import (
+    JSONObjectWriter, JSONObjectReader)
 
 import xenon
 import jpype
 
 import threading
 import sys
-import uuid
 from collections import namedtuple
 
 from .xenon import (XenonKeeper, XenonConfig, XenonScheduler)
-
-
-def read_result(registry, s):
-    obj = registry.from_json(s)
-    status = obj['status']
-    key = obj['key']
-    try:
-        key = uuid.UUID(key)
-    except ValueError:
-        pass
-
-    return Result(key, status, obj['result'], obj['err_msg'])
-
-
-def put_job(registry, host, key, job):
-    obj = {'key': key if isinstance(key, str) else key.hex,
-           'node': job}
-    return registry.to_json(obj, host=host)
 
 
 def xenon_interactive_worker(XeS: XenonScheduler, job_config):
@@ -47,7 +32,8 @@ def xenon_interactive_worker(XeS: XenonScheduler, job_config):
         Job configuration. Specifies the command to be run remotely.
     """
     cmd = job_config.command_line()
-    J = XeS.submit(cmd, interactive=True)
+    queue = job_config.queue
+    J = XeS.submit(cmd, interactive=True, queue=queue)
 
     def read_stderr():
         jpype.attachThreadToJVM()
@@ -60,19 +46,15 @@ def xenon_interactive_worker(XeS: XenonScheduler, job_config):
 
     registry = job_config.registry()
 
-    @coroutine
+    @push
     def send_job():
-        out = xenon.conversions.OutputStream(J.streams.getStdin())
+        output_stream = xenon.conversions.OutputStream(J.streams.getStdin())
+        yield from JSONObjectWriter(registry, output_stream, host="scheduler")
 
-        while True:
-            key, ujob = yield
-            print(put_job(registry, 'scheduler', key, ujob),
-                  file=out, flush=True)
-
+    # @pull
     def get_result():
-        """ Returns a result tuple: key, status, result, err_msg """
-        for line in xenon.conversions.read_lines(J.streams.getStdout()):
-            yield read_result(registry, line)
+        input_stream = xenon.conversions.InputStream(J.streams.getStdout())
+        yield from JSONObjectReader(registry, input_stream)
 
     return Connection(get_result, send_job, aux=J)
 
@@ -93,17 +75,21 @@ class XenonInteractiveWorker(Connection):
     def init_worker(self):
         """Sends the `init` and `finish` jobs to the worker if this is needed.
         This part will be called first, after a remote worker goes online."""
-        if self.job_config.init is not None:
-            self.sink().send(
-                ("init", self.job_config.init()._workflow.root_node))
-            key, status, result, err_msg = next(self.source())
-            if key != "init" or not result:
-                raise RuntimeError(
-                    "The initializer function did not succeed on worker.")
-
-        if self.job_config.finish is not None:
-            self.sink().send(
-                ("finish", self.job_config.finish()._workflow.root_node))
+        pass
+        # print("Initializing worker: ", end='', flush=True)
+        # if self.job_config.init is not None:
+        #     print("[init] ", end='', flush=True)
+        #     self.sink().send(
+        #         ("init", self.job_config.init()._workflow.root_node))
+        #     key, status, result, err_msg = next(self.source())
+        #     if key != "init" or not result:
+        #         raise RuntimeError(
+        #             "The initializer function did not succeed on worker.")
+        #
+        # if self.job_config.finish is not None:
+        #     self.sink().send(
+        #         ("finish", self.job_config.finish()._workflow.root_node))
+        # print("[done]", flush=True)
 
     def wait_until_running(self, callback=None):
         """Waits until the remote worker is running, then calls the callback.
@@ -200,8 +186,8 @@ class DynamicPool(Connection):
                 # lock end ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
             for key in w.jobs:
-                sink.send(Result(key, 'aborted', None,
-                                 'connection to remote worker lost.'))
+                sink.send(ResultMessage(
+                    key, 'aborted', None, 'connection to remote worker lost.'))
 
         # Start the `activate` function when the worker goes online.
         threading.Thread(

@@ -1,26 +1,28 @@
-from nose.plugins.skip import SkipTest
+import pytest
 
 try:
-    import numpy
     import numpy as np
     from numpy import (random, fft, exp)
+    from noodles.serial.numpy import arrays_to_hdf5
 
-    from noodles.serial.numpy import registry as numpy_registry
+    from noodles.run.run_with_prov import (
+        run_parallel_opt)
 
 except ImportError:
-    raise SkipTest("No NumPy installed.")
+    has_numpy = False
 
+else:
+    has_numpy = True
 
-from noodles import schedule, run_process, serial
-import os
-from shutil import (copyfile, rmtree)
+from noodles.display import (NCDisplay)
+from noodles import schedule, serial, schedule_hint
 
 
 def registry():
-    return serial.base() + numpy_registry(file_prefix='test-numpy/')
+    return serial.base() + arrays_to_hdf5()
 
 
-@schedule
+@schedule_hint(display="fft", confirm=True, store=True)
 def do_fft(a):
     return fft.fft(a)
 
@@ -30,7 +32,7 @@ def make_kernel(n, sigma):
     return exp(-fft.fftfreq(n)**2 * sigma**2)
 
 
-@schedule
+@schedule_hint(display="ifft", confirm=True, store=True)
 def do_ifft(a):
     return fft.ifft(a).real
 
@@ -40,31 +42,26 @@ def apply_filter(a, b):
     return a * b
 
 
-@schedule
-def make_noise(n):
+@schedule_hint(display="make noise {seed}", confirm=True, store=True)
+def make_noise(n, seed=0):
+    random.seed(seed)
     return random.normal(0, 1, n)
 
-def test_pickle():
+
+def run(wf):
+    with NCDisplay() as display:
+        result = run_parallel_opt(
+            wf, 2, registry, "cache.json", display=display)
+
+    return result
+
+
+@pytest.mark.skipif(not has_numpy, reason="NumPy needed.")
+def test_hdf5():
     x = make_noise(256)
     k = make_kernel(256, 10)
     x_smooth = do_ifft(apply_filter(do_fft(x), k))
-
-    if os.path.exists("./test-numpy"):
-        rmtree("./test-numpy")
-
-    os.mkdir("./test-numpy")
-
-    result = run_process(x_smooth, 1, registry, deref=True)
+    result = run(x_smooth)
 
     assert isinstance(result, np.ndarray)
     assert result.size == 256
-
-    # above workflow has five steps
-    lst = os.listdir("./test-numpy")
-    assert len(lst) == 5
-
-    # remove the .npy files
-    for f in lst:
-        os.remove("./test-numpy/" + f)
-
-    os.rmdir("./test-numpy")

@@ -3,8 +3,11 @@ from ..utility import (
     object_name, look_up, deep_map, inverse_deep_map)
 
 import noodles
+
+# try:
+#    import ujson as json
+# except ImportError:
 import json
-# import sys
 
 try:
     import msgpack
@@ -157,7 +160,7 @@ class Registry(object):
         if obj is None:
             return None
 
-        if type(obj) in [dict, list, str, int, float, bool, tuple]:
+        if type(obj) in [dict, list, str, int, float, bool]:
             return obj
 
         if isinstance(obj, RefObject):
@@ -208,6 +211,7 @@ class Registry(object):
         if '_noodles' not in rec:
             return rec
 
+        # if not deref:
         if rec.get('ref', False) and not deref:
             return RefObject(rec)
 
@@ -233,8 +237,11 @@ class Registry(object):
         :param host:
             hostname where this object is being encoded.
         :type host: str"""
-        return json.dumps(deep_map(lambda o: self.encode(o, host), obj),
-                          indent=indent)
+        if indent:
+            return json.dumps(deep_map(lambda o: self.encode(o, host), obj),
+                              indent=indent)
+        else:
+            return json.dumps(deep_map(lambda o: self.encode(o, host), obj))
 
     def to_msgpack(self, obj, host=None):
         return msgpack.packb(deep_map(lambda o: self.encode(o, host), obj))
@@ -251,6 +258,7 @@ class Registry(object):
         :param deref:
             Whether to decode records that gave `ref=True` at encoding.
         :type deref: bool"""
+        # return self.deep_decode(json.loads(data), deref)
         return json.loads(data, object_hook=lambda o: self.decode(o, deref))
 
     def from_msgpack(self, data, deref=False):
@@ -323,7 +331,8 @@ class Serialiser(object):
 
         raise NotImplementedError(msg)
 
-    def decode(self, cls, data):
+    @staticmethod
+    def decode(cls, data):
         """Should decode the data to an object of type 'cls'.
 
         :param cls:
