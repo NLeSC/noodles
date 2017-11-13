@@ -1,3 +1,26 @@
+"""
+SQLite3 job database
+--------------------
+
+The database contains three tables:
+    - jobs
+    - sessions
+    - timestamps
+
+Each job that is started will get an entry in the "jobs" table.
+    1. If a job with the same "prov" field exists and it has a result, we mark
+    the new job by identifying the existing result in the "link" field.
+    2. If a job with the same "prov" field exists, but has no result and has
+    the same "session" as the new job, the new job is marked duplicate of the
+    older one. We keep a note in memory that, when the result is known, it is
+    also given for the newer job.
+    3. Otherwise, we pass the job on to a worker and wait for the result.
+
+In the case that a job returns a new workflow, we'd like to identify the result
+of that workflow with that of the original job. In that case we add a "link"
+once a non-workflow result is known.
+"""
+
 import sqlite3
 from threading import Lock
 from collections import (namedtuple, defaultdict)
@@ -16,17 +39,19 @@ except ImportError:
 schema = '''
     create table if not exists "jobs" (
         "id"        integer unique primary key,
-        "run"       integer not null references "runs"("id")
+        "session"   integer not null references "sessions"("id")
                     on delete cascade,
         "name"      text,
         "prov"      text,
-        "duplicate" integer,
+        "link"      integer references "jobs"("id"),
         "version"   text,
         "function"  text,
         "arguments" text,
         "result"    text );
 
-    create table if not exists "runs" (
+    create index "prov" on "jobs"("prov");
+
+    create table if not exists "sessions" (
         "id"        integer unique primary key,
         "time"      datetime default current_timestamp,
         "info"      text );
@@ -43,8 +68,8 @@ JobEntry = namedtuple(
         ['id', 'run', 'name', 'prov', 'link', 'duplicate',
          'version', 'function', 'arguments', 'result'])
 
-RunEntry = namedtuple(
-        'RunEntry'
+SessionEntry = namedtuple(
+        'SessionEntry'
         ['id', 'time', 'info'])
 
 TimestampEntry = namedtuple(
@@ -72,8 +97,8 @@ class JobDB:
         self.lock = Lock()
 
         with self.lock:
-            self.cur.execute('insert into "runs" ("info") values (?)', info)
-            self.run = self.cur.lastrowid
+            self.cur.execute('insert into "sessions" ("info") values (?)', info)
+            self.session = self.cur.lastrowid
 
     # --------- job-keeper interface ------------
 
@@ -108,6 +133,7 @@ class JobDB:
             job.node.result = value
 
     def add_link(self, db_id, ppn):
+        """Link the result of `ppn` to the job `db_id`."""
         with self.lock:
             self.links[db_id] = ppn
 
@@ -122,8 +148,8 @@ class JobDB:
             self.cur.execute(
                 'select * from "jobs" where "prov" = ? '
                 'and (("result" is not null) or '
-                '("run" = ? and "duplicate" is none))',
-                (prov, self.run))
+                '("session" = ? and "duplicate" is none))',
+                (prov, self.session))
             rec = self.cur.fetchone()
             rec = JobEntry(existing) if existing is not None else None
 
