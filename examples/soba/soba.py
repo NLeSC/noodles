@@ -6,7 +6,7 @@ from noodles.run.haploid import (push, branch, patch, sink_map, push_map)
 from noodles.run.worker import (worker)
 from noodles.run.thread_pool import (thread_pool)
 from noodles.run.scheduler import (Scheduler)
-from noodles.display import NCDisplay
+from noodles.display import (NCDisplay, DumbDisplay)
 
 import subprocess
 import sys
@@ -177,5 +177,5 @@ if __name__ == "__main__":
     jobs = [make_job(td['command'],
                      td['task'], td['exclude']) for td in input]
     wf = noodles.gather(*jobs)
-    with NCDisplay(error_filter) as display:
+    with DumbDisplay(error_filter) as display:
         run(wf, display=display, n_threads=args.n_threads)
