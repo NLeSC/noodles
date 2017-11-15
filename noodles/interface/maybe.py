@@ -6,10 +6,14 @@ from ..utility import (object_name)
 
 class Fail:
     def __init__(self, func, fails=None, exception=None):
-        self.name = "{} ({}:{})".format(
-            object_name(func),
-            inspect.getsourcefile(func),
-            inspect.getsourcelines(func)[1])
+        try:
+            self.name = "{} ({}:{})".format(
+                object_name(func),
+                inspect.getsourcefile(func),
+                inspect.getsourcelines(func)[1])
+        except AttributeError:
+            self.name = "<{} instance>".format(func.__class__.__name__)
+
         self.fails = fails or []
         self.trace = []
         self.exception = exception

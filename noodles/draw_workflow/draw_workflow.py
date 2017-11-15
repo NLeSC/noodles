@@ -2,6 +2,14 @@ from pygraphviz import AGraph
 from inspect import Parameter
 
 
+def _sugar(s):
+    s = s.replace("{", "{{").replace("}", "}}")
+    if len(s) > 50:
+        return s[:20] + " ... " + s[-20:]
+    else:
+        return s
+
+
 def _format_arg_list(a, v):
     if len(a) == 0:
         if v:
@@ -11,12 +19,12 @@ def _format_arg_list(a, v):
 
     s = "({0}{1})"
     for i in a[:-1]:
-        s = s.format(str(i) if i != Parameter.empty else "\u2014", ", {0}{1}")
+        s = s.format(_sugar(str(i)) if i != Parameter.empty else "\u2014", ", {0}{1}")
 
     if v:
         return s.format("\u2026", "")
 
-    return s.format(str(a[-1]) if a[-1] != Parameter.empty else "\u2014", "")
+    return s.format(_sugar(str(a[-1])) if a[-1] != Parameter.empty else "\u2014", "")
 
 
 def draw_workflow(filename, workflow):

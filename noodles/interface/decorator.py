@@ -93,6 +93,28 @@ def _getitem(obj, ix):
 
 
 @schedule
+def _setitem(obj, attr, value):
+    try:
+        obj = deepcopy(obj)
+        obj[attr] = value
+
+    except TypeError as err:
+        tb = sys.exc_info()[2]
+        from pprint import PrettyPrinter
+        pp = PrettyPrinter()
+        obj_repr = "<" + obj.__class__.__name__ + ">: " \
+            + pp.pformat(obj.__dict__)
+        msg = "In `_setattr` we deepcopy the object *during runtime*. " \
+              "If you're sure that what you're doing is safe, you can " \
+              " overload `__deepcopy__` to get more efficient code. " \
+              "However, something went " \
+              "wrong here: \n" + err.args[0] + '\n' + obj_repr
+        raise TypeError(msg).with_traceback(tb)
+
+    return obj
+
+
+@schedule
 @maybe
 def _getattr(obj, attr):
     return getattr(obj, attr)
@@ -272,6 +294,10 @@ class PromisedObject:
 
     def __getitem__(self, name):
         return _getitem(self, name)
+
+    def __setitem__(self, attr, value):
+        self._workflow = get_workflow(
+            _setitem(self, attr, value))
 
     # undefined behaviour
     def __iter__(self):
