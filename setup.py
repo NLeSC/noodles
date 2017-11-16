@@ -12,7 +12,7 @@ with open(path.join(here, 'README.rst'), encoding='utf-8') as f:
 
 setup(
     name='Noodles',
-    version='0.2.3',
+    version='0.2.4',
     description='Workflow Engine',
     author='Johan Hidding',
     url='https://github.com/NLeSC/noodles',
@@ -34,7 +34,7 @@ setup(
 
     install_requires=['graphviz'],
     extras_require={
-        'doc': ['sphinx', 'shpinx_rtd_theme', 'nbsphinx'],
+        'doc': ['sphinx', 'sphinx_rtd_theme', 'nbsphinx'],
         'prov': ['tinydb', 'ujson'],
         'xenon': ['pyxenon'],
         'numpy': ['numpy', 'h5py', 'msgpack-python', 'filelock'],

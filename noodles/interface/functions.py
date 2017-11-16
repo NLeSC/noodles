@@ -8,6 +8,22 @@ from .decorator import (schedule, PromisedObject)
 from ..serial.reasonable import Reasonable
 
 
+class Ref:
+    """The Ref object circumvents deep-copying effecting call by reference."""
+    def __init__(self, obj):
+        self._obj = obj
+
+    def unref(self):
+        return self._obj
+
+    def __deepcopy__(self, memo):
+        return self
+
+
+def ref(value):
+    return Ref(value)
+
+
 @schedule
 def delay(value):
     """Creates a promise of a given value. TODO: this function should have a
@@ -119,6 +135,12 @@ def unquote(quoted):
 @schedule
 def construct_object(cls, args):
     return cls(args)
+
+
+@schedule
+def simple_lift(obj):
+    """Create a promise from a plain object."""
+    return obj
 
 
 def lift(obj, memo=None):
