@@ -34,7 +34,7 @@ setup(
 
     install_requires=['graphviz'],
     extras_require={
-        'doc': ['sphinx', 'shpinx_rtd_theme', 'nbsphinx'],
+        'doc': ['sphinx', 'sphinx_rtd_theme', 'nbsphinx'],
         'prov': ['tinydb', 'ujson'],
         'xenon': ['pyxenon'],
         'numpy': ['numpy', 'h5py', 'msgpack-python', 'filelock'],
