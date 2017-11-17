@@ -65,11 +65,11 @@ schema = '''
 
 JobEntry = namedtuple(
         'JobEntry',
-        ['id', 'run', 'name', 'prov', 'link', 'duplicate',
+        ['id', 'session', 'name', 'prov', 'link',
          'version', 'function', 'arguments', 'result'])
 
 SessionEntry = namedtuple(
-        'SessionEntry'
+        'SessionEntry',
         ['id', 'time', 'info'])
 
 TimestampEntry = namedtuple(
@@ -97,7 +97,7 @@ class JobDB:
         self.lock = Lock()
 
         with self.lock:
-            self.cur.execute('insert into "sessions" ("info") values (?)', info)
+            self.cur.execute('insert into "sessions" ("info") values (?)', (info,))
             self.session = self.cur.lastrowid
 
     # --------- job-keeper interface ------------
@@ -113,7 +113,7 @@ class JobDB:
         an entry in the database without any further specification."""
         with self.lock:
             self.cur.execute(
-                'insert into "jobs" ("name") values (?)', job.name)
+                'insert into "jobs" ("name", "session") values (?, ?)', (job.name, self.session))
             self.jobs[self.cur.lastrowid] = job
             return JobMessage(self.cur.lastrowid, job.node)
 
@@ -148,10 +148,10 @@ class JobDB:
             self.cur.execute(
                 'select * from "jobs" where "prov" = ? '
                 'and (("result" is not null) or '
-                '("session" = ? and "duplicate" is none))',
+                '("session" = ? and "duplicate" is null))',
                 (prov, self.session))
             rec = self.cur.fetchone()
-            rec = JobEntry(existing) if existing is not None else None
+            rec = JobEntry(*rec) if rec is not None else None
 
             self.cur.execute(
                 'update "jobs" set "prov" = ?, "version" = ?, "function" = ?, '
@@ -161,22 +161,25 @@ class JobDB:
                  json.dumps(job_msg['data']['arguments']),
                  key))
 
+            print('found: ', rec)
+
             if rec:
-                self.cur.execute(
-                    'update "jobs" set "duplicate" = ? where "id" = ?',
-                    (existing.id, key))
+                if rec.result is not None:
+                    self.cur.execute(
+                        'update "jobs" set "link" = ? where "id" = ?',
+                        (rec.id, key))
 
-            if rec.result is not None:
-                return 'retrieved', rec.id, rec.result
+                    return 'retrieved', rec.id, rec.result
 
-            job_running = rec and rec.key in self
-            wf_running = rec and rec.key in self.links
+                if rec.session == self.session:
+                    self.cur.execute(
+                        'update "jobs" set "link" = ? where "id" = ?',
+                        (rec.id, key))
+                    self.duplicates[rec.id].append(key)
+                    return 'attached', rec.id, None
 
-            if job_running or wf_running:
-                self.duplicates[rec.id].append(rec.key)
-                return 'attached', rec.id, None
+            return 'initialized', key, None
 
-            return 'broken', None, None
 
     def job_exists(self, prov):
         with self.lock:
@@ -186,7 +189,6 @@ class JobDB:
 
     def store_result_in_db(self, db_id, result):
         with self.lock:
-            self.add_time_stamp(db_id, 'done')
             self.cur.execute(
                 'update "jobs" set "result" = ? where "id" = ?;',
                 (result, db_id))

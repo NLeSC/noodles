@@ -22,7 +22,7 @@ class Job:
 
     @property
     def name(self):
-        return ""
+        return self.node.foo.__name__
 
 
 class DynamicLink:
