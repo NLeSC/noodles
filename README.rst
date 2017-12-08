@@ -13,8 +13,8 @@
 Noodles - easy parallel programming for Python
 ==============================================
 
-Often, a computer program can be sped up by executing parts of its code __in
-parallel__ (simultaneously), as opposed to __synchronously__ (one part after
+Often, a computer program can be sped up by executing parts of its code *in
+parallel* (simultaneously), as opposed to *synchronously* (one part after
 another).
 
 A simple example may be where you assign two variables, as follows ``a = 2 * i``
@@ -41,7 +41,7 @@ track of which parts of their program depend on which other parts.
 
 Enter Noodles.
 
-Noodles is a Python package that can automatically construct a __callgraph__
+Noodles is a Python package that can automatically construct a *callgraph*
 for a given Python program, listing exactly which parts depend on which parts.
 Moreover, Noodles can subsequently use the callgraph to execute code in parallel
 on your local machine using multiple cores. If you so choose, you can even
