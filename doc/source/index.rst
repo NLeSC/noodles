@@ -8,15 +8,40 @@ Welcome to Noodles's documentation!
 
 Introduction
 ------------
-Noodles offers a model for parallel programming in Python. It can be used for a variety of tasks including data pipelines, and computational workflows.
+Often, a computer program can be sped up by executing parts of its code __in
+parallel__ (simultaneously), as opposed to __synchronously__ (one part after
+another).
 
-The primary goal of Noodles is to make it easy to run jobs on cluster supercomputers, in parallel, straight from a Python shell. The user enters a Python script that looks and feels like a serial program. The Noodles engine then converts this script into a call graph. This graph can be executed on a variety of machines using the different back-end runners that Noodles provides. This is not so much a design driven by technology but by social considerations. The end user may expect an elegant, easy to understand, interface to a computational library. This user experience we refer to as *eating of noodles*.
+A simple example may be where you assign two variables, as follows ``a = 2 * i``
+and ``b = 3 * i``. Either statement is only dependent on ``i``, but whether you
+assign ``a`` before ``b`` or vice versa, does not matter for how your program
+works. Whenever this is the case, there is potential to speed up a program,
+because the assignment of ``a`` and ``b`` could be done in parallel, using
+multiple cores on your computer's CPU. Obviously, for simple assignments like
+``a = 2 * i``, there is not much time to be gained, but what if ``a`` is the
+result of a time-consuming function, e.g. ``a = very_difficult_function(i)``?
+And what if your program makes many calls to that function, e.g. ``list_of_a =
+[very_difficult_function(i) for i in list_of_i]``? The potential speed-up could
+be tremendous.
 
-The computational library that is exposed to the user by means of Noodles needs to adhere to some design principles that are more strict than plain Python gives us. The library should follow a functional style of programming and is limited by the fact that function arguments need to pass through a layer where data is converted to and from a JSON format. The design of such a library is the *cooking of noodles*. As it is with ramen noodles, often the cook is also an avid consumer of noodles.
+So, parallel execution of computer programs is great for improving performance,
+but how do you tell the computer which parts should be executed in parallel, and
+which parts should be executed synchronously? How do you identify the order in
+which to execute each part, since the optimal order may be different from the
+order in which the parts appear in your program. These questions quickly become
+nearly impossible to answer as your program grows and changes during
+development. Because of this, many developers accept the slow execution of their
+program only because it saves them from the headaches associated with keeping
+track of which parts of their program depend on which other parts.
 
-The complexity of running a workflow in parallel on a wide variety of architectures is taken care of by the Noodles engine. This is the *production of noodles* which is left as an exercise for the Noodles dev-team at the Netherlands eScience Center.
+Enter Noodles.
 
-Assumed knowledge for this tutorial: Familiarity with basics of the Python language, `decorators`_, and the distinction between functional and object oriented programming: https://en.wikipedia.org/wiki/Comparison_of_programming_paradigms.
+Noodles is a Python package that can automatically construct a __callgraph__
+for a given Python program, listing exactly which parts depend on which parts.
+Moreover, Noodles can subsequently use the callgraph to execute code in parallel
+on your local machine using multiple cores. If you so choose, you can even
+configure Noodles such that it will execute the code remotely, for example on a
+big compute node in a cluster computer.
 
 Copyright & Licence
 -------------------
