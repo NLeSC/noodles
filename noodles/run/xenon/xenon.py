@@ -17,7 +17,7 @@ class XenonConfig:
     These jobs may be run locally, over ssh ar against a queue manager like
     SLURM.
 
-    [Documentation to Xenon can be found online](http://nlesc.github.io/Xenon)
+    [Documentation to PyXenon can be found online](http://pyxenon.rtfd.io/)
 
     :param name:
         The quasi human readable name to give to this Xenon instance.
@@ -47,12 +47,11 @@ class XenonConfig:
     :param files_properties:
         Configuration to the Xenon.files module.
     """
-    def __init__(self, *, name=None, jobs_scheme='local', files_scheme='local',
+    def __init__(self, *, name=None, scheduler_adaptor='local',
                  location=None, credential=None, jobs_properties=None,
                  files_properties=None):
         self.name = name or ("xenon-" + str(uuid.uuid4()))
-        self.jobs_scheme = jobs_scheme
-        self.files_scheme = files_scheme
+        self.scheduler_adaptor = scheduler_adaptor
         self.location = location
         self.credential = credential
         self.jobs_properties = jobs_properties
@@ -60,17 +59,16 @@ class XenonConfig:
 
     @property
     def scheduler_args(self):
-        return {'adaptor': self.jobs_scheme,
+        args = {'adaptor': self.scheduler_adaptor,
                 'location': self.location,
-                'properties': self.job_properties,
-                'credential': self.credential}
+                'properties': self.job_properties}
 
-    @property
-    def filesystem_args(self):
-        return {'adaptor': self.files_scheme,
-                'location': self.location,
-                'credential': self.credential,
-                'properties': self.files_properties}
+        if isinstance(self.credential, xenon.PasswordCredential):
+            args['password_credential'] = self.credential
+        if isinstance(self.credential, xenon.CertificateCredential):
+            args['certificate_credential'] = self.credential
+
+        return args
 
 
 class RemoteJobConfig(object):
@@ -160,7 +158,7 @@ class XenonJob:
     :param desc:
         The job description.
     """
-    def __init__(self, keeper, job, desc):
+    def __init__(self, job, desc):
         self.keeper = keeper
         self.job = job
         self.desc = desc

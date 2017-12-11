@@ -9,7 +9,6 @@ from ..remote.io import (
     JSONObjectWriter, JSONObjectReader)
 
 import xenon
-import jpype
 
 import threading
 import sys
