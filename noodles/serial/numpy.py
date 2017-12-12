@@ -24,6 +24,19 @@ class SerNumpyArray(Serialiser):
         return numpy.load(fi)
 
 
+class SerNumpyScalar(Serialiser):
+    def __init__(self):
+        super(SerNumpyScalar, self).__init__('<numpy-scalar>')
+
+    def encode(self, obj, make_rec):
+        return make_rec({
+            'dtype': str(obj.dtype),
+            'bytes': obj.tobytes()})
+
+    def decode(self, cls, data):
+        return numpy.frombuffer(data['bytes'], dtype=data['dtype'])[0]
+
+
 class SerNumpyArrayToFile(Serialiser):
     def __init__(self, file_prefix=None):
         super(SerNumpyArrayToFile, self).__init__(numpy.ndarray)
@@ -120,7 +133,8 @@ def arrays_to_file(file_prefix=None):
 def arrays_to_string(file_prefix=None):
     return Registry(
         types={
-            numpy.ndarray: SerNumpyArray()
+            numpy.ndarray: SerNumpyArray(),
+            numpy.floating: SerNumpyScalar()
         },
         hooks={
             '<ufunc>': SerUFunc()

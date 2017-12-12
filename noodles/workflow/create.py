@@ -94,7 +94,11 @@ def from_call(foo, args, kwargs, hints, call_by_value=True):
 
         # the argument may still become a workflow if it
         # is a Storable and it contains a promised object
-        if not is_workflow(arg) and call_by_value:
+        call_by_ref = 'call_by_ref' in hints and \
+            (hints['call_by_ref'] is True or
+             address.name in hints['call_by_ref'])
+
+        if not is_workflow(arg) and call_by_value and not call_by_ref:
             arg = deepcopy(arg)
 
         # if still not a workflow, we have a plain value!
