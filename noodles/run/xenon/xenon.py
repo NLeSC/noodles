@@ -159,7 +159,6 @@ class XenonJob:
         The job description.
     """
     def __init__(self, job, desc):
-        self.keeper = keeper
         self.job = job
         self.desc = desc
 
@@ -185,14 +184,12 @@ class XenonJob:
 
 
 class XenonScheduler:
-    def __init__(self, keeper, config):
+    def __init__(self, config):
         self.config = config
-        self._x = keeper
-        self._s = keeper.jobs.newScheduler(*config.scheduler_args)
+        self._s = xenon.Scheduler.create(*config.scheduler_args)
 
     def submit(self, command, *, queue=None, interactive=True):
-        desc = xenon.jobs.JobDescription(
-            scheduler=self._s,
+        desc = xenon.JobDescription(
             executable=command[0],
             arguments=command[1:],
             interactive=interactive)
