@@ -1,6 +1,6 @@
 from .registry import (Registry, Serialiser)
 from .reasonable import (Reasonable, SerReasonableObject)
-from ..interface import (PromisedObject)
+from ..interface import (PromisedObject, JobException, Quote)
 from ..utility import (object_name, look_up, importable)
 from ..workflow import (Workflow, NodeData, FunctionNode, ArgumentAddress,
                         ArgumentKind, reset_workflow, get_workflow)
@@ -10,6 +10,7 @@ from ..storable import (Storable)
 from inspect import isfunction, ismethod
 # from collections import namedtuple
 from itertools import count
+import base64
 # import json
 # import sys
 
@@ -23,6 +24,17 @@ class SerDict(Serialiser):
 
     def decode(self, cls, data):
         return cls(data)
+
+
+class SerBytes(Serialiser):
+    def __init__(self):
+        super(SerBytes, self).__init__(bytes)
+
+    def encode(self, obj, make_rec):
+        return make_rec(base64.b64encode(obj).decode())
+
+    def decode(self, cls, data):
+        return base64.b64decode(data.encode())
 
 
 class SerTuple(Serialiser):
@@ -185,13 +197,16 @@ def registry():
         types={
             dict: SerDict(),
             tuple: SerTuple(),
+            bytes: SerBytes(),
             Reasonable: SerReasonableObject(Reasonable),
             ArgumentKind: SerEnum(ArgumentKind),
             FunctionNode: SerNode(),
             ArgumentAddress: SerNamedTuple(ArgumentAddress),
             Workflow: SerWorkflow(),
             Storable: SerStorable(Storable),
-            PromisedObject: SerPromisedObject()
+            PromisedObject: SerPromisedObject(),
+            Quote: SerReasonableObject(Quote),
+            JobException: SerReasonableObject(JobException)
         },
         hooks={
             '<method>': SerMethod(),

@@ -12,3 +12,4 @@ cover
 doc/build
 venv
 cache*
+*.egg-info

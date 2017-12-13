@@ -5,7 +5,7 @@
 from .decorator import (schedule, PromisedObject)
 # from .maybe import (maybe)
 # from copy import deepcopy
-from ..serial.reasonable import Reasonable
+# from ..serial.reasonable import Reasonable
 
 
 class Ref:
@@ -104,7 +104,7 @@ def make_set(*args):
     return set(args)
 
 
-class Quote(Reasonable):
+class Quote:
     """Quote objects store the contents of a workflow, allowing the workflow to
     be passed as an argument to a higher order function without its contents
     being evaluated. Don't use this object, rather use the functions
