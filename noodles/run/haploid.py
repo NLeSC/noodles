@@ -129,11 +129,7 @@ class pull_map(pull):
             return super(pull_map, self).__join__(other)
 
     def map(self, source):
-        for args in source():
-            if args:
-                yield self.f(*args)
-            else:
-                yield
+        yield from map(lambda args: self.f(*args), source())
 
 
 class push_map(push):

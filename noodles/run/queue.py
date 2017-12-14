@@ -3,6 +3,10 @@ from .haploid import (push, pull)
 from .connection import Connection
 
 
+class QueueEnd(object):
+    pass
+
+
 class Queue(Connection):
     """
     We mock a server/client situation by creating a pipe object that
@@ -29,6 +33,8 @@ class Queue(Connection):
         def source():
             while True:
                 v = self.Q.get()
+                if v is QueueEnd:
+                    return
                 yield v
                 self.Q.task_done()
 

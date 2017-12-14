@@ -18,6 +18,9 @@ from .remote.io import (
     MsgPackObjectReader, MsgPackObjectWriter,
     JSONObjectReader, JSONObjectWriter)
 
+from .remote.worker_config import (
+    WorkerConfig)
+
 try:
     import msgpack  # noqa
     has_msgpack = True
@@ -29,7 +32,7 @@ def process_worker(registry, verbose=False, jobdirs=False,
                    init=None, finish=None, status=True, use_msgpack=False):
     name = "process-" + str(uuid.uuid4())
 
-    cmd = ["/bin/bash", os.getcwd() + "/worker.sh", sys.prefix, "online",
+    cmd = [sys.prefix + "/bin/python", "-m", "noodles.worker", "online",
            "-name", name, "-registry", object_name(registry)]
     if use_msgpack:
         assert has_msgpack
