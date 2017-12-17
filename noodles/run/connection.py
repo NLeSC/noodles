@@ -1,4 +1,4 @@
-from .haploid import pull
+from .haploid import pull, EndOfWork
 
 
 class Connection(object):

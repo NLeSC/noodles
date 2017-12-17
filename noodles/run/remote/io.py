@@ -4,6 +4,7 @@ two options: use json, or msgpack.
 """
 
 from ..coroutine import coroutine
+from ..connection import EndOfWork
 
 try:
     import msgpack
@@ -21,6 +22,10 @@ def MsgPackObjectReader(registry, fi, deref=False):
 def MsgPackObjectWriter(registry, fo, host=None):
     while True:
         obj = yield
+
+        if obj is EndOfWork:
+            return
+
         fo.write(registry.to_msgpack(obj, host=host))
         fo.flush()
 
@@ -35,6 +40,9 @@ def JSONObjectWriter(registry, fo, host=None):
     # import sys
     while True:
         obj = yield
+
+        if obj is EndOfWork:
+            return
         # obj_msg = registry.to_json(obj, host=host)
         # print(obj_msg, file=sys.stderr)
         print(registry.to_json(obj, host=host), file=fo, flush=True)

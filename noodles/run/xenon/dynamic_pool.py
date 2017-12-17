@@ -29,14 +29,15 @@ def xenon_interactive_worker(
     :type worker_config: noodles.run.xenon.XenonJobConfig
     """
     input_queue = Queue()
+    registry = worker_config.registry()
 
     @pull_map
-    def serialise(obj):
+    def serialise(*obj):
         """Serialise incoming objects, yielding strings."""
-        return registry.to_json(obj, host='scheduler').encode()
+        return (registry.to_json(obj, host='scheduler') + '\n').encode()
 
     job, output_stream = machine.scheduler.submit_interactive_job(
-        worker_config.xenon_job_description, (input_queue.source >> serialise)())
+        worker_config.xenon_job_description, serialise(input_queue.source))
 
     @sink_map
     def echo_stderr(text):
@@ -51,18 +52,46 @@ def xenon_interactive_worker(
     def read_output(source):
         """Handle output from job, sending stderr data to given
         `stderr_sink`, passing on lines from stdout."""
+        line_buffer = ""
         for chunk in source():
             if chunk.stdout:
-                yield from chunk.stdout.decode().split('\n')
+                lines = chunk.stdout.decode().splitlines(keepends=True)
+                print(lines)
+
+                if not lines:
+                    continue
+
+                if lines[0][-1] == '\n':
+                    yield (line_buffer + lines[0],)
+                    line_buffer = ""
+                else:
+                    line_buffer += lines[0]
+
+                if len(lines) == 1:
+                    continue
+
+                yield from ((x,) for x in lines[1:-1])
+
+                if lines[-1][-1] == '\n':
+                    yield (lines[-1],)
+                else:
+                    line_buffer = lines[-1]
 
             if chunk.stderr:
-                stderr_sink.send(chunk.stderr.decode())
+                for line in chunk.stderr.decode().split('\n'):
+                    l = line.strip()
+                    if l != '':
+                        stderr_sink.send((l,))
 
     @pull_map
     def deserialise(line):
-        return registry.from_json(line, deref=False)
+        result = registry.from_json(line, deref=False)
+        print("Got result:", result.value)
+        return result
 
-    return Connection(read_output >> deserialise, input_queue.sink, aux=job)
+    return Connection(
+        lambda: deserialise(lambda: read_output(lambda: output_stream)),
+        input_queue.sink, aux=job)
 
 
 class XenonInteractiveWorker(Connection):

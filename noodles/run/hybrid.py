@@ -2,7 +2,7 @@ import threading
 
 from ..workflow import get_workflow
 from .queue import Queue
-from .connection import Connection
+from .connection import Connection, EndOfWork
 from .protect import CatchExceptions
 from .haploid import (push, patch)
 from ..utility import unzip_dict
@@ -31,6 +31,9 @@ def hybrid_coroutine_worker(selector, workers):
         source = jobs.source()
 
         for msg in source:
+            if msg is EndOfWork:
+                return
+
             key, job = msg
             worker = selector(job)
             if worker is None:
@@ -91,6 +94,10 @@ def hybrid_threaded_worker(selector, workers):
 
         while True:
             msg = yield
+
+            if msg is EndOfWork:
+                return
+
             worker = selector(msg.node)
             if worker:
                 job_sink[worker].send(msg)

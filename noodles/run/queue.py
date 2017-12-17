@@ -1,10 +1,6 @@
 import queue
 from .haploid import (push, pull)
-from .connection import Connection
-
-
-class QueueEnd(object):
-    pass
+from .connection import Connection, EndOfWork
 
 
 class Queue(Connection):
@@ -33,7 +29,7 @@ class Queue(Connection):
         def source():
             while True:
                 v = self.Q.get()
-                if v is QueueEnd:
+                if v is EndOfWork:
                     return
                 yield v
                 self.Q.task_done()

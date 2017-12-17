@@ -4,7 +4,7 @@ from .scheduler import (Scheduler)
 from .messages import (ResultMessage)
 from .haploid import (
     pull, push, push_map, sink_map,
-    branch, patch, broadcast)
+    branch, patch, broadcast, EndOfWork)
 from .thread_pool import (thread_pool)
 from .worker import (worker, run_job)
 from .job_keeper import (JobKeeper)
@@ -93,7 +93,10 @@ def schedule_job(results, registry, db,
         result_sink = results.sink()
 
         while True:
-            key, job = yield
+            msg = yield
+            if msg is EndOfWork:
+                return
+            key, job = msg
 
             if pred(job):
                 job_msg = registry.deep_encode(job)

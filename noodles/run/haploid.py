@@ -3,6 +3,10 @@ from .coroutine import coroutine
 import inspect
 
 
+class EndOfWork(object):
+    pass
+
+
 def haploid(mode):
     def wrap(f):
         if mode == 'send':
@@ -129,7 +133,7 @@ class pull_map(pull):
             return super(pull_map, self).__join__(other)
 
     def map(self, source):
-        yield from map(lambda args: self.f(*args), source())
+        yield from map(lambda args: self.f(*args) if args else None, source())
 
 
 class push_map(push):
@@ -151,6 +155,8 @@ class push_map(push):
         sink = sink()
         while True:
             args = yield
+            if args is EndOfWork:
+                return
             if args:
                 sink.send(self.f(*args))
             else:

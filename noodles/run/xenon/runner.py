@@ -1,4 +1,4 @@
-from .dynamic_pool import DynamicPool
+from .dynamic_pool import DynamicPool, xenon_interactive_worker
 from ..scheduler import Scheduler
 from ..job_keeper import JobKeeper
 from ..haploid import (broadcast, sink_map, patch, branch)
@@ -8,6 +8,16 @@ from ...workflow import (get_workflow)
 
 import threading
 from copy import copy
+
+
+def run_xenon_simple(wf, machine, worker_config):
+    S = Scheduler()
+
+    result = S.run(
+        xenon_interactive_worker(machine, worker_config), get_workflow(wf)
+    )
+
+    return result
 
 
 def run_xenon(wf, machine, n_processes, worker_config, *, deref=False, job_keeper=None):

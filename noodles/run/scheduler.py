@@ -1,4 +1,4 @@
-from .connection import (Connection)
+from .connection import (Connection, EndOfWork)
 from .job_keeper import (JobKeeper)
 
 from ..workflow import (
@@ -107,7 +107,7 @@ class Scheduler:
                       result,
                       file=sys.stderr, flush=True)
 
-            del self.jobs[job_key]
+            # del self.jobs[job_key]
             if len(self.jobs) == 0 and graceful_exit:
                 return
 
@@ -134,6 +134,11 @@ class Scheduler:
 
             # see if we're done
             if wf == master and n == master.root:
+                try:
+                    sink.send(EndOfWork)
+                except StopIteration:
+                    pass
+
                 return result
 
         print("Seventh circle of HELL")

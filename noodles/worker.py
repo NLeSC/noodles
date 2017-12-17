@@ -29,6 +29,7 @@ import sys
 import uuid
 from contextlib import redirect_stdout
 
+import time
 import os
 from .utility import (look_up)
 
@@ -54,6 +55,10 @@ def run_batch_mode(args):
 
 
 def run_online_mode(args):
+    # print("\033[47;30m Netherlands\033[48;2;0;174;239;37m▌"
+    #       "\033[38;2;255;255;255me\u20d2Science\u20d2\033[37m▐"
+    #       "\033[47;30mcenter \033[m Noodles worker", file=sys.stderr)
+
     if args.n == 1:
         registry = look_up(args.registry)()
         finish = None
@@ -70,6 +75,8 @@ def run_online_mode(args):
             output_stream = JSONObjectWriter(
                 registry, sys.stdout, host=args.name)
 
+        sys.stdout.flush()
+
         # run the init function if it is given
         if args.init:
             with redirect_stdout(sys.stderr):
@@ -83,8 +90,10 @@ def run_online_mode(args):
                 key, job = msg
             elif isinstance(msg, tuple):
                 key, job = msg
-            else:
+            elif msg is None:
                 continue
+            else:
+                raise RuntimeError("Unknown message received.")
 
             if args.jobdirs:
                 # make a directory
@@ -103,7 +112,7 @@ def run_online_mode(args):
                 result = run_job(key, job)
 
             if args.verbose:
-                print("result: ", result, file=sys.stderr, flush=True)
+                print("result: ", result.value, file=sys.stderr, flush=True)
 
             if args.jobdirs:
                 # parent directory
@@ -113,6 +122,10 @@ def run_online_mode(args):
 
         if finish:
             finish()
+
+        time.sleep(0.1)
+        sys.stdout.flush()
+        sys.stderr.flush()
 
 
 if __name__ == "__main__":
