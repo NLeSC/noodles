@@ -34,6 +34,12 @@ class Connection(object):
         snk = self.sink()
         return src, snk
 
+    def close(self):
+        try:
+            self.sink().send(EndOfWork)
+        except StopIteration:
+            pass
+
     def __iter__(self):
         return iter((self.source, self.sink))
 

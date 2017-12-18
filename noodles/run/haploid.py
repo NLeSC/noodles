@@ -133,7 +133,15 @@ class pull_map(pull):
             return super(pull_map, self).__join__(other)
 
     def map(self, source):
-        yield from map(lambda args: self.f(*args) if args else None, source())
+        def handle(args):
+            if args is EndOfWork:
+                return self.f(EndOfWork)
+            elif args is None:
+                return None
+            else:
+                return self.f(*args)
+
+        yield from map(handle, source())
 
 
 class push_map(push):
@@ -156,6 +164,10 @@ class push_map(push):
         while True:
             args = yield
             if args is EndOfWork:
+                try:
+                    sink.send(EndOfWork)
+                except StopIteration:
+                    pass
                 return
             if args:
                 sink.send(self.f(*args))
@@ -169,7 +181,9 @@ def sink_map(f):
     def sink():
         while True:
             args = yield
-            if args:
+            if args is EndOfWork:
+                return
+            elif args:
                 f(*args)
             else:
                 raise RuntimeError('Encountered `None` in sink_map loop.')
@@ -206,6 +220,12 @@ def patch(source, sink):
     """Create a direct link between a source and a sink."""
     sink = sink()
     for v in source():
+        if v is EndOfWork:
+            try:
+                sink.send(EndOfWork)
+            except StopIteration:
+                pass
+            continue
         if v is not None:
             sink.send(v)
         else:

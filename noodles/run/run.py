@@ -67,10 +67,11 @@ def run_parallel_with_display(wf, n_threads, display):
 
     S = Scheduler(error_handler=display.error_handler)
 
-    threading.Thread(
+    t = threading.Thread(
         target=patch,
         args=(LogQ.source, sink_map(display)),
-        daemon=True).start()
+        daemon=True)
+    t.start()
 
     W = Queue() \
         >> branch(log_job_start >> LogQ.sink) \
@@ -78,6 +79,8 @@ def run_parallel_with_display(wf, n_threads, display):
         >> branch(LogQ.sink)
 
     result = S.run(W, get_workflow(wf))
+    LogQ.close()
+    t.join()
     LogQ.wait()
 
     return result

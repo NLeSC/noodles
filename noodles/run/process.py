@@ -12,7 +12,7 @@ from ..utility import object_name
 from .scheduler import Scheduler
 # from .protect import CatchExceptions
 from .hybrid import hybrid_threaded_worker
-from .haploid import (pull, push)
+from .haploid import (pull, push, EndOfWork)
 
 from .remote.io import (
     MsgPackObjectReader, MsgPackObjectWriter,
@@ -63,10 +63,27 @@ def process_worker(registry, verbose=False, jobdirs=False,
     @push
     def send_job():
         reg = registry()
+
         if use_msgpack:
-            yield from MsgPackObjectWriter(reg, p.stdin.buffer)
+            sink = MsgPackObjectWriter(reg, p.stdin.buffer)
         else:
-            yield from JSONObjectWriter(reg, p.stdin)
+            sink = JSONObjectWriter(reg, p.stdin)
+
+        while True:
+            msg = yield
+            if msg is EndOfWork:
+                try:
+                    sink.send(EndOfWork)
+                except StopIteration:
+                    pass
+
+                p.wait()
+                t.join()
+
+                return
+
+            sink.send(msg)
+
 
     @pull
     def get_result():
@@ -77,7 +94,7 @@ def process_worker(registry, verbose=False, jobdirs=False,
         else:
             yield from JSONObjectReader(reg, p.stdout)
 
-    return Connection(get_result, send_job, aux=read_stderr)
+    return Connection(get_result, send_job)
 
 
 def run_process(wf, n_processes, registry,
@@ -132,6 +149,10 @@ def run_process(wf, n_processes, registry,
 
     master_worker = hybrid_threaded_worker(random_selector, workers)
     result = Scheduler().run(master_worker, get_workflow(wf))
+
+    for w in workers.values():
+        w.close()
+#        w.aux.join()
 
     if deref:
         return registry().dereference(result, host='localhost')

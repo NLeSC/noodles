@@ -24,13 +24,18 @@ class Queue(Connection):
             while True:
                 r = yield
                 self.Q.put(r)
+                if r is EndOfWork:
+                    return
 
         @pull
         def source():
             while True:
                 v = self.Q.get()
                 if v is EndOfWork:
+                    yield v
+                    self.Q.task_done()
                     return
+
                 yield v
                 self.Q.task_done()
 

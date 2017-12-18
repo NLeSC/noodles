@@ -111,12 +111,12 @@ def hybrid_threaded_worker(selector, workers):
         t.daemon = True
         t.start()
 
-        if worker.aux:
-            t_aux = threading.Thread(
-                target=catch[key](worker.aux),
-                args=(),
-                daemon=True)
-            t_aux.start()
+        # if worker.aux:
+        #     t_aux = threading.Thread(
+        #         target=catch[key](worker.aux),
+        #         args=(),
+        #         daemon=True)
+        #     t_aux.start()
 
     return Connection(results.source, dispatch_job)
 

@@ -1,6 +1,6 @@
 from ..queue import Queue
 from ..connection import Connection
-from ..haploid import (push, pull, pull_map, sink_map)
+from ..haploid import (EndOfWork, push, pull, pull_map, sink_map)
 
 from ..messages import (
     ResultMessage)
@@ -36,8 +36,14 @@ def xenon_interactive_worker(
         """Serialise incoming objects, yielding strings."""
         return (registry.to_json(obj, host='scheduler') + '\n').encode()
 
+    def do_iterate(source):
+        for x in source():
+            if x is EndOfWork:
+                return
+            yield x
+
     job, output_stream = machine.scheduler.submit_interactive_job(
-        worker_config.xenon_job_description, serialise(input_queue.source))
+        worker_config.xenon_job_description, serialise(lambda: do_iterate(input_queue.source)))
 
     @sink_map
     def echo_stderr(text):
@@ -123,6 +129,12 @@ class XenonInteractiveWorker(Connection):
             raise TimeoutError("Timeout while waiting for worker to run: " +
                                self.worker_config.name)
 
+    def close(self):
+        try:
+            self.sink.send(EndOfWork)
+        except StopIteration:
+            pass
+
 
 RemoteWorker = namedtuple('RemoteWorker', [
     'name', 'lock', 'max', 'jobs', 'source', 'sink'])
@@ -164,6 +176,10 @@ class DynamicPool(Connection):
 
         super(DynamicPool, self).__init__(
             self.result_queue.source, dispatch_jobs)
+
+    def close_all(self):
+        for worker in workers.values():
+            worker.close()
 
     def add_xenon_worker(self, worker_config):
         """Adds a worker to the pool; sets gears in motion."""

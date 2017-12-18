@@ -4,7 +4,7 @@ import json
 import sys
 
 from threading import Lock
-from .haploid import (coroutine)
+from .haploid import (coroutine, EndOfWork)
 from .messages import (JobMessage)
 
 
@@ -45,7 +45,12 @@ class JobKeeper(dict):
     @coroutine
     def message(self):
         while True:
-            key, status, value, err = yield
+            msg = yield
+
+            if msg is EndOfWork:
+                return
+
+            key, status, value, err = msg
 
             with self.lock:
                 if key not in self:
@@ -80,7 +85,10 @@ class JobTimer(dict):
     @coroutine
     def message(self):
         while True:
-            key, status, value, err = yield
+            msg = yield
+            if msg is EndOfWork:
+                return
+            key, status, value, err = msg
             if hasattr(self, status):
                 getattr(self, status)(key, value, err)
 

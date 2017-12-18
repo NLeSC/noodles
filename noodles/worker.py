@@ -32,6 +32,7 @@ from contextlib import redirect_stdout
 import time
 import os
 from .utility import (look_up)
+from .run.haploid import (EndOfWork)
 
 try:
     import msgpack
@@ -55,9 +56,9 @@ def run_batch_mode(args):
 
 
 def run_online_mode(args):
-    # print("\033[47;30m Netherlands\033[48;2;0;174;239;37m▌"
-    #       "\033[38;2;255;255;255me\u20d2Science\u20d2\033[37m▐"
-    #       "\033[47;30mcenter \033[m Noodles worker", file=sys.stderr)
+    print("\033[47;30m Netherlands\033[48;2;0;174;239;37m▌"
+          "\033[38;2;255;255;255me\u20d2Science\u20d2\033[37m▐"
+          "\033[47;30mcenter \033[m Noodles worker", file=sys.stderr)
 
     if args.n == 1:
         registry = look_up(args.registry)()
@@ -88,12 +89,15 @@ def run_online_mode(args):
         for msg in input_stream:
             if isinstance(msg, JobMessage):
                 key, job = msg
+            elif msg is EndOfWork:
+                print("Bye", file=sys.stderr)
+                sys.exit(0)
             elif isinstance(msg, tuple):
                 key, job = msg
             elif msg is None:
                 continue
             else:
-                raise RuntimeError("Unknown message received.")
+                raise RuntimeError("Unknown message received: {}".format(msg))
 
             if args.jobdirs:
                 # make a directory

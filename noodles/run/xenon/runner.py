@@ -20,7 +20,7 @@ def run_xenon_simple(wf, machine, worker_config):
     return result
 
 
-def run_xenon(wf, machine, n_processes, worker_config, *, deref=False, job_keeper=None):
+def run_xenon(wf, machine, worker_config, n_processes, *, deref=False, job_keeper=None):
     """Run the workflow using a number of online Xenon workers.
 
     :param Xe:
@@ -64,6 +64,8 @@ def run_xenon(wf, machine, n_processes, worker_config, *, deref=False, job_keepe
     result = S.run(
         DP, get_workflow(wf)
     )
+
+    DP.close_all()
 
     if deref:
         return job_config.registry().dereference(result, host='scheduler')
