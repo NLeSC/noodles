@@ -1,9 +1,5 @@
-from .haploid import pull, EndOfWork
-
-
 class Connection(object):
-    """
-    Combine a source and a sink. These should represent the IO of
+    """Combine a source and a sink. These should represent the IO of
     some object, probably a worker. In this case the `source` is a
     coroutine generating results, while the sink needs to be fed jobs.
     """
@@ -30,18 +26,7 @@ class Connection(object):
         :returns:
             source, sink
         :rtype: tuple"""
-        src = self.source()
-        snk = self.sink()
-        return src, snk
-
-    def close(self):
-        try:
-            self.sink().send(EndOfWork)
-        except StopIteration:
-            pass
-
-    def __iter__(self):
-        return iter((self.source, self.sink))
+        return self.source(), self.sink()
 
     def __rshift__(self, other):
         return self.__join__(other)
@@ -49,4 +34,4 @@ class Connection(object):
     def __join__(self, other):
         """A connection has one output channel, so the '>>' operator
         connects the source to a coroutine, creating a new connection."""
-        return Connection(pull(lambda: other.fn(self.source)), self.sink)
+        return Connection(self.source >> other, self.sink)

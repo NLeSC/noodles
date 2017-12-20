@@ -1,4 +1,15 @@
-from noodles.lib import coroutine, EndOfWork, close_coroutine
+from noodles.lib import coroutine
+
+
+class EndOfWork(object):
+    pass
+
+
+def close_coroutine(x):
+    try:
+        x.send(EndOfWork)
+    except StopIteration:
+        pass
 
 
 def test_coroutine():
@@ -9,12 +20,12 @@ def test_coroutine():
             if value is EndOfWork:
                 return
             lst.append(value)
-    
+
     a = []
     sink = list_sink(a)
-    
+
     for i in range(10):
         sink.send(i)
     close_coroutine(sink)
-    
+
     assert a == list(range(10))
