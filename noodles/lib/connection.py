@@ -2,6 +2,8 @@ class Connection(object):
     """Combine a source and a sink. These should represent the IO of
     some object, probably a worker. In this case the `source` is a
     coroutine generating results, while the sink needs to be fed jobs.
+
+    .. |Connection| replace:: :py:class:`Connection`
     """
     def __init__(self, source, sink, aux=None):
         """Connection constructor

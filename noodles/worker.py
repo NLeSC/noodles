@@ -32,7 +32,7 @@ from contextlib import redirect_stdout
 import time
 import os
 from .utility import (look_up)
-from .run.haploid import (EndOfWork)
+from .run.messages import (EndOfWork)
 
 try:
     import msgpack

@@ -4,8 +4,8 @@ import json
 import sys
 
 from threading import Lock
-from .haploid import (coroutine, EndOfWork)
-from .messages import (JobMessage)
+from ..lib import (coroutine)
+from .messages import (JobMessage, EndOfWork)
 
 
 class JobKeeper(dict):

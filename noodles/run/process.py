@@ -7,12 +7,13 @@ import os
 import random
 from ..workflow import get_workflow
 # from ..logger import log
-from .connection import Connection
 from ..utility import object_name
 from .scheduler import Scheduler
 # from .protect import CatchExceptions
 from .hybrid import hybrid_threaded_worker
-from .haploid import (pull, push, EndOfWork)
+
+from ..lib import (pull, push, Connection)
+from .messages import (EndOfWork)
 
 from .remote.io import (
     MsgPackObjectReader, MsgPackObjectWriter,

@@ -56,6 +56,9 @@ class push(stream):
         else:
             self.sink = coroutine(fn)
 
+    def __lshift__(self, other):
+        return other.__join__(self)
+
     def __join__(self, other):
         if isinstance(other, push):
             return push(lambda *x: self.sink(lambda: other.sink(*x)),

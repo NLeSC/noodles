@@ -1,4 +1,6 @@
-from .connection import (Connection, EndOfWork)
+from ..lib import (Connection)
+
+from .messages import (EndOfWork)
 from .job_keeper import (JobKeeper)
 
 from ..workflow import (

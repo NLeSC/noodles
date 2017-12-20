@@ -1,6 +1,6 @@
 from functools import wraps
 from .messages import (ResultMessage)
-from .haploid import (push_map, pull_map)
+from ..lib import (push_map, pull_map)
 import threading
 
 

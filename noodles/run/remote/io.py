@@ -3,8 +3,8 @@ Manage IO between remote worker/pilot job, and the scheduler. Here there are
 two options: use json, or msgpack.
 """
 
-from ..coroutine import coroutine
-from ..connection import EndOfWork
+from ...lib import coroutine
+from ..messages import EndOfWork
 
 try:
     import msgpack

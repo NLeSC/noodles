@@ -1,10 +1,12 @@
-from .queue import (Queue)
-from .scheduler import (Scheduler)
-from .haploid import (push_map, sink_map, branch, patch)
-from .thread_pool import (thread_pool)
 from .worker import (worker)
-from ..workflow import (get_workflow)
 from .job_keeper import (JobTimer)
+from .messages import (EndOfWork)
+from .scheduler import (Scheduler)
+
+from ..workflow import (get_workflow)
+from ..lib import (
+    Queue, push_map, sink_map, branch, patch,
+    thread_pool)
 
 from itertools import (repeat)
 import threading
@@ -15,7 +17,7 @@ def run_single(wf):
     runner, consisting of a single queue for jobs and a worker running
     jobs every time a result is pulled."""
     S = Scheduler()
-    W = Queue() >> worker
+    W = Queue(end_of_queue=EndOfWork) >> worker
 
     return S.run(W, get_workflow(wf))
 
@@ -24,7 +26,8 @@ def run_parallel(wf, n_threads):
     """Run a workflow in `n_threads` parallel threads. Now we replaced the
     single worker with a thread-pool of workers."""
     S = Scheduler()
-    W = Queue() >> thread_pool(*repeat(worker, n_threads))
+    W = Queue(end_of_queue=EndOfWork) >> thread_pool(
+            *repeat(worker, n_threads), end_of_queue=EndOfWork)
 
     return S.run(W, get_workflow(wf))
 

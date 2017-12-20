@@ -11,11 +11,18 @@ class Queue(Connection):
     """A |Queue| object hides a :py:class:`queue.Queue` object
     behind a source and sink interface.
 
-    :py:attribute:: sink
-        Receives items that are put on the queue.
+    .. py:attribute:: sink
 
-    :py:attribute:: source
-        Pull items from the queue.
+        Receives items that are put on the queue. Pushing the `end-of-queue`
+        message through the sink will put it on the queue, and will also result
+        in a :py:exc:`StopIteration` exception being raised.
+
+    .. py:attribute:: source
+
+        Pull items from the queue. When `end-of-queue` is encountered the
+        generator returns after re-inserting the `end-of-queue` message on the
+        queue for other sources to pick up. This way, if many threads are
+        pulling from this queue, they all get the `end-of-queue` message.
 
     .. |Queue| replace:: :py:class:`Queue`
     """
@@ -41,17 +48,24 @@ class Queue(Connection):
         @pull
         def source():
             while True:
-                v = self.Q.get()
-                yield v
-                self.Q.task_done()
-
+                v = self._queue.get()
                 if v is self._end_of_queue:
+                    self._queue.task_done()
+                    self._queue.put(self._end_of_queue)
                     return
+
+                yield v
+                self._queue.task_done()
 
         super(Queue, self).__init__(source, sink)
 
+    def close(self):
+        """Sends `end_of_queue` message to the queue.
+        Doesn't stop running sinks."""
+        self._queue.put(self._end_of_queue)
+
     def empty(self):
-        return self.Q.empty()
+        return self._queue.empty()
 
     def wait(self):
-        self.Q.join()
+        self._queue.join()

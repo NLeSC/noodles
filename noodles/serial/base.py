@@ -5,7 +5,6 @@ from ..utility import (object_name, look_up, importable)
 from ..workflow import (Workflow, NodeData, FunctionNode, ArgumentAddress,
                         ArgumentKind, reset_workflow, get_workflow)
 from ..storable import (Storable)
-from ..run.haploid import (EndOfWork)
 
 # from .as_dict import (AsDict)
 # from enum import Enum
@@ -208,8 +207,7 @@ def registry():
             Storable: SerStorable(Storable),
             PromisedObject: SerPromisedObject(),
             Quote: SerReasonableObject(Quote),
-            JobException: SerReasonableObject(JobException),
-            EndOfWork: SerReasonableObject(EndOfWork)
+            JobException: SerReasonableObject(JobException)
         },
         hooks={
             '<method>': SerMethod(),

@@ -1,4 +1,4 @@
-from .haploid import (pull_map)
+from ..lib import (pull_map)
 from .messages import (ResultMessage)
 from ..interface import (AnnotatedValue, JobException)
 from ..utility import (object_name)

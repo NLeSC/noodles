@@ -1,17 +1,14 @@
-from .connection import (Connection)
-from .queue import (Queue)
 from .scheduler import (Scheduler)
-from .messages import (ResultMessage)
-from .haploid import (
-    pull, push, push_map, sink_map,
-    branch, patch, broadcast, EndOfWork)
-from .thread_pool import (thread_pool)
+from .messages import (ResultMessage, EndOfWork)
 from .worker import (worker, run_job)
 from .job_keeper import (JobKeeper)
 
 from ..workflow import (get_workflow, is_workflow)
 from ..prov import (JobDB)
 from ..prov.key import (prov_key)
+from ..lib import (
+    Connection, Queue, pull, push, push_map, sink_map, branch,
+    patch, broadcast, thread_pool)
 
 from itertools import (repeat)
 import threading
