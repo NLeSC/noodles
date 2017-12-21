@@ -1,5 +1,5 @@
 # from ..logger import log
-from ...utility import object_name
+from ...lib import object_name
 from noodles import serial
 # from .hybrid import hybrid_threaded_worker
 

@@ -4,7 +4,7 @@ import json
 import sys
 
 from threading import Lock
-from ..lib import (coroutine)
+from ..lib import (coroutine, EndOfQueue)
 from .messages import (JobMessage, EndOfWork)
 
 
@@ -47,7 +47,7 @@ class JobKeeper(dict):
         while True:
             msg = yield
 
-            if msg is EndOfWork:
+            if msg is EndOfQueue:
                 return
 
             key, status, value, err = msg

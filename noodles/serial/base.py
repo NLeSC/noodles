@@ -1,10 +1,9 @@
 from .registry import (Registry, Serialiser)
 from .reasonable import (Reasonable, SerReasonableObject)
-from ..interface import (PromisedObject, JobException, Quote)
-from ..utility import (object_name, look_up, importable)
+from ..interface import (PromisedObject, Quote)
+from ..lib import (object_name, look_up, importable)
 from ..workflow import (Workflow, NodeData, FunctionNode, ArgumentAddress,
                         ArgumentKind, reset_workflow, get_workflow)
-from ..storable import (Storable)
 
 # from .as_dict import (AsDict)
 # from enum import Enum
@@ -151,20 +150,6 @@ class SerImportable(Serialiser):
         return look_up(data)
 
 
-class SerStorable(Serialiser):
-    def __init__(self, cls):
-        super(SerStorable, self).__init__(cls)
-
-    def encode(self, obj, make_reca):
-        return make_reca(
-            {'type': object_name(type(obj)),
-             'dict': obj.as_dict()})
-
-    def decode(self, _, data):
-        cls = look_up(data['type'])
-        return cls.from_dict(**data['dict'])
-
-
 class SerNode(Serialiser):
     def __init__(self):
         super(SerNode, self).__init__(FunctionNode)
@@ -204,10 +189,8 @@ def registry():
             FunctionNode: SerNode(),
             ArgumentAddress: SerNamedTuple(ArgumentAddress),
             Workflow: SerWorkflow(),
-            Storable: SerStorable(Storable),
             PromisedObject: SerPromisedObject(),
-            Quote: SerReasonableObject(Quote),
-            JobException: SerReasonableObject(JobException)
+            Quote: SerReasonableObject(Quote)
         },
         hooks={
             '<method>': SerMethod(),

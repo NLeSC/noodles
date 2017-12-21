@@ -1,5 +1,5 @@
 from queue import Queue
-from ..utility import (
+from ..lib import (
     object_name, look_up, deep_map, inverse_deep_map)
 
 import noodles

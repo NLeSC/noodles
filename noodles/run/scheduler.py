@@ -1,12 +1,9 @@
-from ..lib import (Connection)
-
-from .messages import (EndOfWork)
+from ..lib import (Connection, FlushQueue, EndOfQueue)
 from .job_keeper import (JobKeeper)
 
 from ..workflow import (
     is_workflow, get_workflow, insert_result,
     is_node_ready, Workflow)
-from ..interface import (JobException)
 import sys
 
 
@@ -53,8 +50,6 @@ class Scheduler:
         else:
             self.jobs = job_keeper
         self.dynamic_links = self.jobs.workflows
-        # I'd rather say: self.jobs = job_keeper or {}
-        # but Python thruthiness of {} is False
         self.count = 0
         self.key_map = {}
         self.verbose = verbose
@@ -78,40 +73,33 @@ class Scheduler:
         # schedule work
         self.add_workflow(master, master, master.root, sink)
         graceful_exit = False
+        errors = []
 
         # process results
         for job_key, status, result, err_msg in source:
-            if status == 'aborted':
-                print("Got a fatal error: exiting.",
-                      file=sys.stderr, flush=True)
-                sys.exit()
-
             wf, n = self.jobs[job_key]
             if status == 'error':
-                if self.handle_error and isinstance(err_msg, JobException):
-                    if self.handle_error(wf.nodes[n], *err_msg):
-                        graceful_exit = True
-                    else:
-                        err_msg.reraise()
+                graceful_exit = True
+                errors.append(err_msg)
 
-                else:
-                    if isinstance(err_msg, JobException):
-                        err_msg.reraise()
-                    elif isinstance(err_msg, Exception):
-                        raise err_msg
-                    else:
-                        raise RuntimeError(
-                            error_msg_1.format(wf.nodes[n]) + "\n"
-                            "Exception raised: {}".format(err_msg))
+                try:
+                    sink.send(FlushQueue)
+                except StopIteration:
+                    pass
+
+                print("Uncaught error running job: {}, {}".format(n, err_msg),
+                      file=sys.stderr)
+                print("Flushing queue and waiting for threads to close.",
+                      file=sys.stderr, flush=True)
 
             if self.verbose:
                 print("sched result [{0}]: ".format(self.key_map[job_key]),
                       result,
                       file=sys.stderr, flush=True)
 
-            # del self.jobs[job_key]
+            del self.jobs[job_key]
             if len(self.jobs) == 0 and graceful_exit:
-                return
+                raise errors[0]
 
             # if this result is the root of a workflow, pop to parent
             # we do this before scheduling a child workflow, as to
@@ -137,13 +125,11 @@ class Scheduler:
             # see if we're done
             if wf == master and n == master.root:
                 try:
-                    sink.send(EndOfWork)
+                    sink.send(EndOfQueue)
                 except StopIteration:
                     pass
 
                 return result
-
-        print("Seventh circle of HELL")
 
     def schedule(self, job, sink):
         sink.send(self.jobs.register(job))

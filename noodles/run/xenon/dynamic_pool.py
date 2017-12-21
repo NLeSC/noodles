@@ -1,9 +1,8 @@
-from ..queue import Queue
-from ..connection import Connection
-from ..haploid import (EndOfWork, push, pull, pull_map, sink_map)
+from ...lib import (
+    Queue, Connection, EndOfQueue, push, pull, pull_map, sink_map)
 
 from ..messages import (
-    ResultMessage)
+    ResultMessage, EndOfWork)
 
 import xenon
 
@@ -32,13 +31,14 @@ def xenon_interactive_worker(
     registry = worker_config.registry()
 
     @pull_map
-    def serialise(*obj):
+    def serialise(obj):
         """Serialise incoming objects, yielding strings."""
         return (registry.to_json(obj, host='scheduler') + '\n').encode()
 
     def do_iterate(source):
         for x in source():
-            if x is EndOfWork:
+            if x is EndOfQueue:
+                yield EndOfWork
                 return
             yield x
 
@@ -68,7 +68,7 @@ def xenon_interactive_worker(
                     continue
 
                 if lines[0][-1] == '\n':
-                    yield (line_buffer + lines[0],)
+                    yield line_buffer + lines[0]
                     line_buffer = ""
                 else:
                     line_buffer += lines[0]
@@ -79,7 +79,7 @@ def xenon_interactive_worker(
                 yield from ((x,) for x in lines[1:-1])
 
                 if lines[-1][-1] == '\n':
-                    yield (lines[-1],)
+                    yield lines[-1]
                 else:
                     line_buffer = lines[-1]
 
@@ -87,7 +87,7 @@ def xenon_interactive_worker(
                 for line in chunk.stderr.decode().split('\n'):
                     l = line.strip()
                     if l != '':
-                        stderr_sink.send((l,))
+                        stderr_sink.send(l)
 
     @pull_map
     def deserialise(line):
@@ -107,7 +107,8 @@ class XenonInteractiveWorker(Connection):
     """
     def __init__(self, machine, worker_config):
         connection = xenon_interactive_worker(machine, worker_config)
-        super(XenonInteractiveWorker, self).__init__(*connection)
+        super(XenonInteractiveWorker, self).__init__(
+                connection.source, connection.sink)
 
         self.worker_config = worker_config
         self.job = connection.aux
@@ -131,7 +132,7 @@ class XenonInteractiveWorker(Connection):
 
     def close(self):
         try:
-            self.sink.send(EndOfWork)
+            self.sink.send(EndOfQueue)
         except StopIteration:
             pass
 

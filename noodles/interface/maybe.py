@@ -1,7 +1,7 @@
 from functools import (wraps)
 from itertools import (chain)
 import inspect
-from ..utility import (object_name)
+from ..lib import (object_name)
 
 
 class Fail:

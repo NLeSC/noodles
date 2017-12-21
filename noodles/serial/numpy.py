@@ -1,5 +1,5 @@
 from .registry import (Serialiser, Registry)
-from ..utility import look_up
+from ..lib import look_up
 import numpy
 import uuid
 import io

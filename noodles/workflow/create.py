@@ -14,9 +14,7 @@ def from_call(foo, args, kwargs, hints, call_by_value=True):
 
     These arguments are stored in a BoundArguments object matching to the
     signature of the given function ``foo``. That is, bound_args was
-    constructed by doing:
-
-    ::
+    constructed by doing::
 
         inspect.signature(foo).bind(*args, **kwargs)
 
@@ -93,7 +91,7 @@ def from_call(foo, args, kwargs, hints, call_by_value=True):
         arg = ref_argument(node.bound_args, address)
 
         # the argument may still become a workflow if it
-        # is a Storable and it contains a promised object
+        # has the __deepcopy__ operator overloaded to return a workflow
         call_by_ref = 'call_by_ref' in hints and \
             (hints['call_by_ref'] is True or
              address.name in hints['call_by_ref'])

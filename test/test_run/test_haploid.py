@@ -1,4 +1,4 @@
-from noodles.run.haploid import (pull, push, push_map, pull_map, patch)
+from noodles.lib import (pull, push, push_map, pull_map, patch)
 
 
 def test_pull_00():

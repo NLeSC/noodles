@@ -31,7 +31,7 @@ from contextlib import redirect_stdout
 
 import time
 import os
-from .utility import (look_up)
+from .lib import (look_up)
 from .run.messages import (EndOfWork)
 
 try:

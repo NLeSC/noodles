@@ -22,8 +22,11 @@ def MsgPackObjectReader(registry, fi, deref=False):
 def MsgPackObjectWriter(registry, fo, host=None):
     while True:
         obj = yield
-        fo.write(registry.to_msgpack(obj, host=host))
-        fo.flush()
+        try:
+            fo.write(registry.to_msgpack(obj, host=host))
+            fo.flush()
+        except BrokenPipeError:
+            return
 
 
 def JSONObjectReader(registry, fi, deref=False):
@@ -38,4 +41,8 @@ def JSONObjectWriter(registry, fo, host=None):
         obj = yield
         # obj_msg = registry.to_json(obj, host=host)
         # print(obj_msg, file=sys.stderr)
-        print(registry.to_json(obj, host=host), file=fo, flush=True)
+        try:
+            print(registry.to_json(obj, host=host), file=fo, flush=True)
+        except BrokenPipeError:
+            return
+

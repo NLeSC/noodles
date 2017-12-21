@@ -4,7 +4,7 @@ import os
 import sys
 
 from noodles import serial
-from ...utility import object_name
+from ...lib import object_name
 
 
 class WorkerConfig(object):
@@ -57,7 +57,7 @@ class WorkerConfig(object):
         executable = self.prefix / 'bin' / 'python'
 
         arguments = [
-            '-m', 'noodles.worker',
+            '-m', 'noodles.pilot_job',
             'online', '-name', self.name,
             '-registry', object_name(self.registry)]
 

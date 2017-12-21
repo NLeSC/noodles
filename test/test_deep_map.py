@@ -1,4 +1,4 @@
-from noodles.utility import deep_map
+from noodles.lib import deep_map
 
 
 class A:

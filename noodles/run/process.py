@@ -7,12 +7,11 @@ import os
 import random
 from ..workflow import get_workflow
 # from ..logger import log
-from ..utility import object_name
 from .scheduler import Scheduler
 # from .protect import CatchExceptions
 from .hybrid import hybrid_threaded_worker
 
-from ..lib import (pull, push, Connection)
+from ..lib import (pull, push, Connection, object_name, EndOfQueue)
 from .messages import (EndOfWork)
 
 from .remote.io import (
@@ -33,7 +32,7 @@ def process_worker(registry, verbose=False, jobdirs=False,
                    init=None, finish=None, status=True, use_msgpack=False):
     name = "process-" + str(uuid.uuid4())
 
-    cmd = [sys.prefix + "/bin/python", "-m", "noodles.worker", "online",
+    cmd = [sys.prefix + "/bin/python", "-m", "noodles.pilot_job", "online",
            "-name", name, "-registry", object_name(registry)]
     if use_msgpack:
         assert has_msgpack
@@ -72,7 +71,7 @@ def process_worker(registry, verbose=False, jobdirs=False,
 
         while True:
             msg = yield
-            if msg is EndOfWork:
+            if msg is EndOfQueue:
                 try:
                     sink.send(EndOfWork)
                 except StopIteration:
@@ -152,7 +151,11 @@ def run_process(wf, n_processes, registry,
     result = Scheduler().run(master_worker, get_workflow(wf))
 
     for w in workers.values():
-        w.close()
+        try:
+            w.sink().send(EndOfQueue)
+        except StopIteration:
+            pass
+
 #        w.aux.join()
 
     if deref:

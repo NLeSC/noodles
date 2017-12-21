@@ -1,8 +1,7 @@
 from .dynamic_pool import DynamicPool, xenon_interactive_worker
 from ..scheduler import Scheduler
 from ..job_keeper import JobKeeper
-from ..haploid import (broadcast, sink_map, patch, branch)
-from ..queue import Queue
+from ...lib import (Queue, broadcast, sink_map, patch, branch)
 
 from ...workflow import (get_workflow)
 

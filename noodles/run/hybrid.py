@@ -1,8 +1,7 @@
 import threading
 
 from ..workflow import get_workflow
-from ..lib import Queue, Connection, push, patch
-from ..utility import unzip_dict
+from ..lib import Queue, Connection, push, patch, EndOfQueue
 from .scheduler import Scheduler
 from .worker import run_job
 from .messages import EndOfWork
@@ -22,8 +21,11 @@ def hybrid_coroutine_worker(selector, workers):
     """
     jobs = Queue()
 
-    worker_source, worker_sink = unzip_dict(
-        {k: w.setup() for k, w in workers.items()})
+    worker_source = {}
+    worker_sink = {}
+
+    for k, w in workers.items():
+        worker_source[k], worker_sink[k] = w.setup()
 
     def get_result():
         source = jobs.source()
@@ -70,15 +72,15 @@ def hybrid_threaded_worker(selector, workers):
 
     @push
     def dispatch_job():
-        default_sink = results.sink()
+        default_sink = result_queue.sink()
 
         while True:
             msg = yield
 
-            if msg is EndOfWork:
+            if msg is EndOfQueue:
                 for k in workers.keys():
                     try:
-                        job_sink[k].send(EndOfWork)
+                        job_sink[k].send(EndOfQueue)
                     except StopIteration:
                         pass
                 return

@@ -1,6 +1,5 @@
 def find_links_to(links, node):
-    """
-    Find links to a node.
+    """Find links to a node.
 
     :param links:
         forward links of a workflow
@@ -20,17 +19,14 @@ def find_links_to(links, node):
 
 
 def _all_valid(links):
-    """
-    Iterates over all links, forgetting emtpy registers.
-    """
+    """Iterates over all links, forgetting emtpy registers."""
     for k, v in links.items():
         for i in v:
             yield k, i
 
 
 def invert_links(links):
-    """
-    Inverts the call-graph to get a dependency graph. Possibly slow,
+    """Inverts the call-graph to get a dependency graph. Possibly slow,
     short version.
 
     :param links:

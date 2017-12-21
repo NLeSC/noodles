@@ -7,6 +7,10 @@ class EndOfQueue(object):
     pass
 
 
+class FlushQueue(object):
+    pass
+
+
 class Queue(Connection):
     """A |Queue| object hides a :py:class:`queue.Queue` object
     behind a source and sink interface.
@@ -35,12 +39,17 @@ class Queue(Connection):
         """
         self._queue = queue.Queue()
         self._end_of_queue = end_of_queue
+        self._flush_queue = FlushQueue
 
         @push
         def sink():
             while True:
                 r = yield
                 self._queue.put(r)
+
+                if r is self._flush_queue:
+                    self.flush()
+                    return
 
                 if r is self._end_of_queue:
                     return
@@ -58,6 +67,13 @@ class Queue(Connection):
                 self._queue.task_done()
 
         super(Queue, self).__init__(source, sink)
+
+    def flush(self):
+        """Erases queue and set `end-of-queue` message."""
+        while not self._queue.empty():
+            self._queue.get()
+            self._queue.task_done()
+        self.close()
 
     def close(self):
         """Sends `end_of_queue` message to the queue.

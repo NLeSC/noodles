@@ -38,8 +38,9 @@ def f(x):
 
 
 class Display:
-    def __call__(self, key, status, data, err_msg):
-        print(status, data, err_msg)
+    def __call__(self, msg):
+        key, status, data, err = msg
+        print(status, data, err)
 
     def error_handler(self, job, xcptn):
         pass

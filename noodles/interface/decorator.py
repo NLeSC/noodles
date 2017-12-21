@@ -1,17 +1,12 @@
-"""
-.. default-domain:: py
-"""
-
 from functools import wraps
 from copy import deepcopy
 import hashlib
-# import operator
 import sys
 import inspect
 
 from ..workflow import (from_call, get_workflow)
 from .maybe import (maybe)
-
+from ..lib import (decorator, unwrap)
 from noodles.config import config
 
 
@@ -48,11 +43,12 @@ def scheduled_function(f, hints=None):
     return wrapped
 
 
-def schedule(f):
+@decorator
+def schedule(f, **hints):
     """Decorator; schedule calls to function `f` into a workflow, in stead of
     running them at once. The decorated function returns a
     :class:`PromisedObject`."""
-    return scheduled_function(f)
+    return scheduled_function(f, **hints)
 
 
 def has_scheduled_methods(cls):
@@ -72,18 +68,6 @@ def schedule_hint(**hints):
     """Decorator; same as :func:`schedule`, with added hints. These
     hints can be anything."""
     return lambda f: scheduled_function(f, hints)
-
-
-def unwrap(f):
-    """Unwrap a wrapped function; the function needs to have been wrapped
-    using :func:`functools.wraps`, as is done in :func:`schedule`.
-
-    If function `f` doesn't have the `__wrapped` attribute, the same
-    function `f` is returned."""
-    try:
-        return f.__wrapped__
-    except AttributeError:
-        return f
 
 
 @schedule
@@ -154,8 +138,8 @@ def update_hints(obj, data):
     manually on a specific promised object. :func:`update_hints` uses the
     `update` method on the hints dictionary with `data` as its argument.
 
-    :param obj: a :class:`PromisedObject`.
-    :param data: a :class:`dict` containing additional hints.
+    :param obj: a :py:class:`PromisedObject`.
+    :param data: a :py:class:`dict` containing additional hints.
 
     The hints are modified, in place, on the node. All workflows that contain
     the node are affected."""
@@ -299,7 +283,6 @@ class PromisedObject:
         self._workflow = get_workflow(
             _setitem(self, attr, value))
 
-    # undefined behaviour
     def __iter__(self):
         raise TypeError(
             "You have tried to iterate (or unpack) a PromisedObject. "
@@ -309,10 +292,8 @@ class PromisedObject:
             "to unpack a promised tuple.")
 
     def __deepcopy__(self, _):
-        # rnode = self._workflow.nodes[self._workflow.root]
-        # from pprint import PrettyPrinter
         raise TypeError(
             "A PromisedObject cannot be deepcopied. Most probably, you "
             "have a promise stored in another object, which you passed to "
             "a scheduled function. To transform an object with nested "
-            "promises to a top-level promise, apply the `lift` function.")
+            "promises to a top-level promise, apply the ``lift`` function.")
