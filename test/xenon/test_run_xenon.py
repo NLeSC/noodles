@@ -19,7 +19,7 @@ def test_xenon_42_simple(xenon_server):
     assert(result == 42)
 
 
-def test_xenon_42_dp(xenon_server):
+def test_xenon_42_multi(xenon_server):
     A = add(1, 1)
     B = sub(3, A)
 
@@ -27,7 +27,7 @@ def test_xenon_42_dp(xenon_server):
     C = schedule(sum)(gather_all(multiples))
 
     machine = Machine()
-    worker_config = XenonJobConfig(verbose=True)
+    worker_config = XenonJobConfig(queue_name='multi', verbose=True)
 
     result = run_xenon(
         C, machine, worker_config, 2)

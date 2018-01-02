@@ -92,6 +92,17 @@ class Scheduler:
                 print("Flushing queue and waiting for threads to close.",
                       file=sys.stderr, flush=True)
 
+            if status == 'aborted':
+                print("Job {} got aborted: {}".format(n, err_msg),
+                      file=sys.stderr)
+                print("Flushing queue and waiting for threads to close.",
+                      file=sys.stderr, flush=True)
+                graceful_exit = True
+                try:
+                    sink.send(FlushQueue)
+                except StopIteration:
+                    pass
+
             if self.verbose:
                 print("sched result [{0}]: ".format(self.key_map[job_key]),
                       result,

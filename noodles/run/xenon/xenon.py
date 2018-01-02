@@ -76,7 +76,6 @@ class Machine(object):
         self.credential = credential
         self.jobs_properties = jobs_properties
         self.files_properties = files_properties
-
         self._scheduler = None
         self._file_system = None
 

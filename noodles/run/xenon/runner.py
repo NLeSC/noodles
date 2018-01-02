@@ -1,12 +1,13 @@
 from .dynamic_pool import DynamicPool, xenon_interactive_worker
 from ..scheduler import Scheduler
 from ..job_keeper import JobKeeper
-from ...lib import (Queue, broadcast, sink_map, patch, branch)
+from ...lib import (Queue, broadcast, sink_map, patch, branch, thread_pool)
 
 from ...workflow import (get_workflow)
 
 import threading
 from copy import copy
+import sys
 
 
 def run_xenon_simple(wf, machine, worker_config):

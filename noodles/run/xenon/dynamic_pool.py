@@ -1,5 +1,6 @@
 from ...lib import (
-    Queue, Connection, EndOfQueue, push, pull, pull_map, sink_map)
+    Queue, Connection, EndOfQueue, push, pull, pull_map, sink_map,
+    thread_counter)
 
 from ..messages import (
     ResultMessage, EndOfWork)
@@ -14,7 +15,7 @@ from .xenon import (Machine)
 
 
 def xenon_interactive_worker(
-        machine, worker_config, stderr_sink=None):
+        machine, worker_config, input_queue=None, stderr_sink=None):
     """Uses Xenon to run a single remote interactive worker.
 
     Jobs are read from stdin, and results written to stdout.
@@ -27,7 +28,9 @@ def xenon_interactive_worker(
         Job configuration. Specifies the command to be run remotely.
     :type worker_config: noodles.run.xenon.XenonJobConfig
     """
-    input_queue = Queue()
+    if input_queue is None:
+        input_queue = Queue()
+
     registry = worker_config.registry()
 
     @pull_map
@@ -62,7 +65,6 @@ def xenon_interactive_worker(
         for chunk in source():
             if chunk.stdout:
                 lines = chunk.stdout.decode().splitlines(keepends=True)
-                print(lines)
 
                 if not lines:
                     continue
@@ -92,7 +94,6 @@ def xenon_interactive_worker(
     @pull_map
     def deserialise(line):
         result = registry.from_json(line, deref=False)
-        print("Got result:", result.value)
         return result
 
     return Connection(
@@ -156,31 +157,36 @@ class DynamicPool(Connection):
 
         self.job_queue = Queue()
         self.result_queue = Queue()
-        self.lock = threading.Lock()
+        self.wlock = threading.Lock()
+        self.plock = threading.Lock()
+        self.count = thread_counter(self.result_queue.close)
 
         @push
         def dispatch_jobs():
             job_sink = self.job_queue.sink()
 
             while True:
-                key, job = yield
+                msg = yield
 
                 for w in self.workers.values():
                     with w.lock:  # Worker lock ~~~~~~~~~~~~~~~~~~~~~
                         if len(w.jobs) < w.max:
-                            w.sink.send((key, job))
-                            w.jobs.append(key)
+                            w.sink.send(msg)
+                            w.jobs.append(msg.key)
                             break
                     # lock end ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
                 else:
-                    job_sink.send((key, job))
+                    job_sink.send(msg)
 
         super(DynamicPool, self).__init__(
             self.result_queue.source, dispatch_jobs)
 
     def close_all(self):
-        for worker in workers.values():
-            worker.close()
+        for w in self.workers.values():
+            try:
+                w.sink.send(EndOfQueue)
+            except StopIteration:
+                pass
 
     def add_xenon_worker(self, worker_config):
         """Adds a worker to the pool; sets gears in motion."""
@@ -189,16 +195,21 @@ class DynamicPool(Connection):
             worker_config.name, threading.Lock(),
             worker_config.n_threads, [], *c.setup())
 
-        with self.lock:
+        with self.wlock:
             self.workers[worker_config.name] = w
 
         def populate(job_source):
             """Populate the worker with jobs, if jobs are available."""
-            with w.lock, self.lock:  # Worker lock ~~~~~~~~~~~~~~~~~~
+            with w.lock, self.plock:  # Worker lock ~~~~~~~~~~~~~~~~~~
                 while len(w.jobs) < w.max and not self.job_queue.empty():
-                    key, job = next(job_source)
-                    w.sink.send((key, job))
-                    w.jobs.append(key)
+                    msg = next(job_source)
+                    w.sink.send(msg)
+
+                    if msg is not EndOfQueue:
+                        key, job = msg
+                        w.jobs.append(key)
+                    else:
+                        break
             # lock end ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
         def activate(_):
@@ -222,6 +233,7 @@ class DynamicPool(Connection):
                     key, 'aborted', None, 'connection to remote worker lost.'))
 
         # Start the `activate` function when the worker goes online.
-        threading.Thread(
-            target=c.wait_until_running, args=(activate,),
-            daemon=True).start()
+        t = threading.Thread(
+            target=self.count(c.wait_until_running), args=(activate,),
+            daemon=True)
+        t.start()
