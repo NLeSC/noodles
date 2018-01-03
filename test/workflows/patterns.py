@@ -1,6 +1,6 @@
 from .workflow_factory import workflow_factory
 from noodles import (
-    gather, patterns, schedule)
+    patterns, schedule)
 import math
 import numpy as np
 
