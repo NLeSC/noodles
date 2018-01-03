@@ -1,8 +1,25 @@
 import pytest
+from test.workflows import workflows
+from test.backends import backends
+
+
+def pytest_generate_tests(metafunc):
+    if 'workflow' in metafunc.fixturenames:
+        metafunc.parametrize(
+            "workflow", list(workflows.values()),
+            ids=list(workflows.keys()))
+
+    if 'backend' in metafunc.fixturenames:
+        metafunc.parametrize(
+            "backend", list(backends.values()),
+            ids=list(backends.keys()))
+
 
 try:
     import xenon
-
+except ImportError:
+    pass
+else:
     @pytest.fixture(scope="session")
     def xenon_server(request):
         print("============== Starting Xenon-GRPC server ================")
@@ -39,6 +56,3 @@ try:
         scheduler = xenon.Scheduler.create(adaptor='local')
         yield scheduler
         scheduler.close()
-
-except ImportError:
-    pass

@@ -1,22 +1,12 @@
+from .workflow_factory import workflow_factory
 from noodles import (
-    gather, patterns, run_parallel, schedule)
+    gather, patterns, schedule)
 import math
 import numpy as np
 
 
-def test_pattern():
-    """
-    test functional patterns
-    """
-    wfs = [create_wf_1(), create_wf_2(), create_wf_3(),
-           create_wf_4()]
-
-    tests = run_parallel(gather(*wfs), 1)
-
-    assert all(tests)
-
-
-def create_wf_1():
+@workflow_factory(result=True)
+def fold_and_map():
     arr = np.random.normal(size=100)
     xs = patterns.fold(aux_sum, 0, arr)
     ys = patterns.map(lambda x: x ** 2, xs)
@@ -24,7 +14,8 @@ def create_wf_1():
     return schedule(np.allclose)(ys, np.cumsum(arr) ** 2)
 
 
-def create_wf_2():
+@workflow_factory(result=True)
+def map_filter_and_all():
     arr = np.random.normal(size=100)
     xs = patterns.map(lambda x: abs(x), arr)
     rs = patterns.filter(lambda x: x < 0.5, xs)
@@ -32,7 +23,8 @@ def create_wf_2():
     return patterns.all(lambda x: x < 0.5, rs)
 
 
-def create_wf_3():
+@workflow_factory(result=True)
+def zip_with():
     arr = np.random.normal(size=100)
     ys = patterns.map(lambda x: np.pi * x, arr)
     rs = patterns.zip_with(x_sin_pix, arr, ys)
@@ -40,7 +32,8 @@ def create_wf_3():
     return schedule(np.allclose)(rs, arr * np.sin(np.pi * arr))
 
 
-def create_wf_4():
+@workflow_factory(result=True)
+def map_any():
     arr = np.pi * np.arange(10., dtype=np.float)
     xs = patterns.map(math.cos, arr)
 
