@@ -1,7 +1,5 @@
 from .coroutine import coroutine
-from .decorator import decorator
 import inspect
-import sys
 
 
 class stream(object):

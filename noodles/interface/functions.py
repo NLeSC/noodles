@@ -131,7 +131,6 @@ def unquote(quoted):
     return quoted
 
 
-
 @schedule
 def construct_object(cls, args):
     return cls(args)

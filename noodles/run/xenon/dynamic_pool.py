@@ -5,8 +5,6 @@ from ...lib import (
 from ..messages import (
     ResultMessage, EndOfWork)
 
-import xenon
-
 import threading
 import sys
 from collections import namedtuple
@@ -46,7 +44,8 @@ def xenon_interactive_worker(
             yield x
 
     job, output_stream = machine.scheduler.submit_interactive_job(
-        worker_config.xenon_job_description, serialise(lambda: do_iterate(input_queue.source)))
+        worker_config.xenon_job_description,
+        serialise(lambda: do_iterate(input_queue.source)))
 
     @sink_map
     def echo_stderr(text):
@@ -87,9 +86,9 @@ def xenon_interactive_worker(
 
             if chunk.stderr:
                 for line in chunk.stderr.decode().split('\n'):
-                    l = line.strip()
-                    if l != '':
-                        stderr_sink.send(l)
+                    stripped_line = line.strip()
+                    if stripped_line != '':
+                        stderr_sink.send(stripped_line)
 
     @pull_map
     def deserialise(line):

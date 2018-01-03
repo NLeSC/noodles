@@ -154,4 +154,5 @@ def arrays_to_hdf5(filename="cache.hdf5"):
         hook_fn=_numpy_hook
     )
 
+
 registry = arrays_to_string

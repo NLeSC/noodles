@@ -38,7 +38,7 @@ setup(
         'prov': ['tinydb', 'ujson'],
         'xenon': ['pyxenon'],
         'numpy': ['numpy', 'h5py', 'msgpack-python', 'filelock'],
-        'test': ['pytest', 'pytest-cov', 'codacy-coverage', 'pyflakes', 'pep8',
-                 'docker-py', 'numpy']
+        'test': ['pytest', 'pytest-cov', 'pytest-flake8', 'codacy-coverage', 'pyflakes', 'pep8',
+                 'docker-py', 'numpy', 'tox']
     },
 )

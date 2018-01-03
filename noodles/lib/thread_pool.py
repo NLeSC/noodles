@@ -43,12 +43,12 @@ def thread_pool(*workers, results=None, end_of_queue=EndOfQueue):
 
     If all threads have ended, the result queue receives end-of-queue.
 
-    :param results: If results should go somewhere else than a newly constructed
-        |Queue|, a different |Connection| object can be given.
+    :param results: If results should go somewhere else than a newly
+        constructed |Queue|, a different |Connection| object can be given.
     :type results: |Connection|
 
-    :param end_of_queue: end-of-queue signal object passed on to the creation of
-        the |Queue| object.
+    :param end_of_queue: end-of-queue signal object passed on to the creation
+        of the |Queue| object.
 
     :rtype: |pull|
     """

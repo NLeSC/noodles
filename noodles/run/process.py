@@ -18,9 +18,6 @@ from .remote.io import (
     MsgPackObjectReader, MsgPackObjectWriter,
     JSONObjectReader, JSONObjectWriter)
 
-from .remote.worker_config import (
-    WorkerConfig)
-
 try:
     import msgpack  # noqa
     has_msgpack = True
@@ -83,7 +80,6 @@ def process_worker(registry, verbose=False, jobdirs=False,
                 return
 
             sink.send(msg)
-
 
     @pull
     def get_result():

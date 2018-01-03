@@ -4,7 +4,6 @@ two options: use json, or msgpack.
 """
 
 from ...lib import coroutine
-from ..messages import EndOfWork
 
 try:
     import msgpack
@@ -45,4 +44,3 @@ def JSONObjectWriter(registry, fo, host=None):
             print(registry.to_json(obj, host=host), file=fo, flush=True)
         except BrokenPipeError:
             return
-

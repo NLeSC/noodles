@@ -1,13 +1,10 @@
 from .dynamic_pool import DynamicPool, xenon_interactive_worker
 from ..scheduler import Scheduler
 from ..job_keeper import JobKeeper
-from ...lib import (Queue, broadcast, sink_map, patch, branch, thread_pool)
 
 from ...workflow import (get_workflow)
 
-import threading
 from copy import copy
-import sys
 
 
 def run_xenon_simple(wf, machine, worker_config):
@@ -20,7 +17,9 @@ def run_xenon_simple(wf, machine, worker_config):
     return result
 
 
-def run_xenon(wf, machine, worker_config, n_processes, *, deref=False, job_keeper=None):
+def run_xenon(
+        wf, machine, worker_config, n_processes, *, deref=False,
+        job_keeper=None):
     """Run the workflow using a number of online Xenon workers.
 
     :param Xe:
@@ -68,6 +67,6 @@ def run_xenon(wf, machine, worker_config, n_processes, *, deref=False, job_keepe
     DP.close_all()
 
     if deref:
-        return job_config.registry().dereference(result, host='scheduler')
+        return worker_config.registry().dereference(result, host='scheduler')
     else:
         return result

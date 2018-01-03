@@ -39,4 +39,3 @@ class PilotMessage(Reasonable):
     def __init__(self, msg, **kwargs):
         self.msg = msg
         self.__dict__.update(kwargs)
-

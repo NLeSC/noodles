@@ -1,6 +1,5 @@
 from .worker import (worker)
 from .job_keeper import (JobTimer)
-from .messages import (EndOfWork)
 from .scheduler import (Scheduler)
 
 from ..workflow import (get_workflow)
@@ -10,16 +9,6 @@ from ..lib import (
 
 from itertools import (repeat)
 import threading
-
-
-def run_single(wf):
-    """Run a workflow in a single thread. This is the absolute minimal
-    runner, consisting of a single queue for jobs and a worker running
-    jobs every time a result is pulled."""
-    S = Scheduler()
-    W = Queue() >> worker
-
-    return S.run(W, get_workflow(wf))
 
 
 def run_parallel(wf, n_threads):

@@ -35,7 +35,7 @@ from .lib import (look_up)
 from .run.messages import (EndOfWork)
 
 try:
-    import msgpack
+    import msgpack  # noqa
     has_msgpack = True
 except ImportError:
     has_msgpack = False

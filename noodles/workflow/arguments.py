@@ -83,10 +83,10 @@ def set_argument(bound_args, address, value):
         if address.name not in bound_args.arguments:
             bound_args.arguments[address.name] = []
 
-        l = len(bound_args.arguments[address.name])
-        if address.key >= l:
+        n_args = len(bound_args.arguments[address.name])
+        if address.key >= n_args:
             bound_args.arguments[address.name].extend(
-                repeat(Empty, address.key - l + 1))
+                repeat(Empty, address.key - n_args + 1))
 
     if address.kind == ArgumentKind.keyword:
         if address.name not in bound_args.arguments:

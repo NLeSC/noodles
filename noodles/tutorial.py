@@ -58,7 +58,7 @@ def get_workflow_graph(promise):
     workflow = get_workflow(promise)
 
     dot = Digraph()
-    for i,n in workflow.nodes.items():
+    for i, n in workflow.nodes.items():
         dot.node(str(i), label="{0} \n {1}".format(
             n.foo.__name__,
             _format_arg_list(n.bound_args.args, None)))

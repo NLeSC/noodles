@@ -6,7 +6,7 @@ import inspect
 
 from ..workflow import (from_call, get_workflow)
 from .maybe import (maybe)
-from ..lib import (decorator, unwrap)
+from ..lib import (decorator)
 from noodles.config import config
 
 
@@ -23,12 +23,12 @@ def scheduled_function(f, hints=None):
     if 'version' not in hints:
         try:
             source_bytes = inspect.getsource(f).encode()
-            m = hashlib.md5()
-            m.update(source_bytes)
-            hints['version'] = m.hexdigest()
-
-        except:
+        except AttributeError:
             pass
+
+        m = hashlib.md5()
+        m.update(source_bytes)
+        hints['version'] = m.hexdigest()
 
     @wraps(f)
     def wrapped(*args, **kwargs):

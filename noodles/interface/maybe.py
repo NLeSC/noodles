@@ -56,7 +56,8 @@ def maybe(f):
 
     @wraps(f)
     def maybe_wrapped(*args, **kwargs):
-        fails = [(name, k, v)
+        fails = [
+            (name, k, v)
             for k, v in chain(enumerate(args), kwargs.items())
             if isinstance(v, Fail)]
 

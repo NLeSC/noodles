@@ -4,7 +4,6 @@ from ..workflow import get_workflow
 from ..lib import Queue, Connection, push, patch, EndOfQueue
 from .scheduler import Scheduler
 from .worker import run_job
-from .messages import EndOfWork
 
 
 def hybrid_coroutine_worker(selector, workers):
@@ -68,7 +67,7 @@ def hybrid_threaded_worker(selector, workers):
     """
     result_queue = Queue()
 
-    job_sink = { k: w.sink() for k, w in workers.items() }
+    job_sink = {k: w.sink() for k, w in workers.items()}
 
     @push
     def dispatch_job():
