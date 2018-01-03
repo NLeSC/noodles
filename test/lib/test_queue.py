@@ -1,4 +1,4 @@
-from noodles.lib import Queue, EndOfQueue, pull_map, patch, pull_from
+from noodles.lib import Queue, EndOfQueue, patch, pull_from
 from pytest import raises
 
 

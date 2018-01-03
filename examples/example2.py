@@ -1,6 +1,7 @@
-from noodles import schedule, gather, serial, run_logging
+from noodles import schedule, gather, serial
 from noodles.run.run_with_prov import run_parallel_opt
 from noodles.display import (DumbDisplay)
+
 
 @schedule
 def add(a, b):

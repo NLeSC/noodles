@@ -3,7 +3,6 @@ import pytest
 try:
     import xenon
 
-
     @pytest.fixture(scope="session")
     def xenon_server(request):
         print("============== Starting Xenon-GRPC server ================")
@@ -22,13 +21,12 @@ try:
                         status = scheduler.cancel_job(status.job)
                         if not status.done:
                             scheduler.wait_until_done(status.job)
-                    except:
+                    except xenon.XenonException:
                         print("not Ok")
                     else:
                         print("Ok")
 
         m.__exit__(None, None, None)
-
 
     @pytest.fixture
     def local_filesystem(request, xenon_server):
@@ -36,13 +34,11 @@ try:
         yield fs
         fs.close()
 
-
     @pytest.fixture
     def local_scheduler(request, xenon_server):
         scheduler = xenon.Scheduler.create(adaptor='local')
         yield scheduler
         scheduler.close()
-
 
 except ImportError:
     pass

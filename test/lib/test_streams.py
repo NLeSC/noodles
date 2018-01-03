@@ -1,7 +1,7 @@
 from pytest import raises
 from noodles.lib import (
-    pull, push, pull_map, push_map, sink_map,
-    broadcast, branch, patch, pull_from, push_from)
+    pull, pull_map, push_map, sink_map,
+    broadcast, branch, patch, pull_from)
 
 
 def test_pull_chaining():

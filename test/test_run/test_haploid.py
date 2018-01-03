@@ -1,4 +1,4 @@
-from noodles.lib import (pull, push, push_map, pull_map, patch)
+from noodles.lib import (pull, push, patch)
 
 
 def test_pull_00():
@@ -50,4 +50,3 @@ def test_push_00():
 
     print(list(inp()), " -> ", result)
     assert result == [0, 1, 4, 9, 16]
-

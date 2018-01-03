@@ -11,4 +11,3 @@ def test_unpack_00():
     a, b, c = unpack(f(), 3)
     d = run_single(add(a, add(b, c)))
     assert d == 6
-

@@ -1,11 +1,12 @@
-from noodles import (schedule, run_single, gather, lift)
-from noodles.tutorial import (add, sub, mul)
+from noodles import (schedule, run_single, lift)
+from noodles.tutorial import (add, sub)
 from collections import OrderedDict
 
 
 @schedule
 def g(x):
     return x['a'] + x['b']
+
 
 def test_lift_ordered_dict():
     x = OrderedDict()
@@ -33,4 +34,3 @@ def test_lift_01():
 
     result = run_single(b)
     assert result == 1
-

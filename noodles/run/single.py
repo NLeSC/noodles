@@ -6,6 +6,6 @@ from ..workflow import (get_workflow)
 
 def run_single(promise):
     """Evaluates a promise in single threaded mode."""
-    Scheduler().run(
+    return Scheduler().run(
         Queue() >> worker,
         get_workflow(promise))

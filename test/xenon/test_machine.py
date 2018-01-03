@@ -1,4 +1,3 @@
-import noodles
 from noodles import serial
 from noodles.tutorial import add, mul
 from noodles.run.xenon import (
@@ -9,7 +8,6 @@ from noodles.run.messages import (
 from pathlib import Path
 import xenon
 import socket
-import sys
 
 
 def test_machine_batch_job(xenon_server, tmpdir):

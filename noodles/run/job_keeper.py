@@ -49,6 +49,10 @@ class JobKeeper(dict):
 
             if msg is EndOfQueue:
                 return
+            if msg is None:
+                print("Warning: `None` received where not expected.",
+                      file=sys.stderr)
+                return
 
             key, status, value, err = msg
 

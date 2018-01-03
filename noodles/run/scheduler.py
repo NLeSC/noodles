@@ -3,7 +3,7 @@ from .job_keeper import (JobKeeper)
 
 from ..workflow import (
     is_workflow, get_workflow, insert_result,
-    is_node_ready, Workflow)
+    Workflow, is_node_ready)
 import sys
 
 

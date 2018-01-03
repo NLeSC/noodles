@@ -1,5 +1,5 @@
 import noodles
-from noodles.run.runners import run_single
+from noodles.run.single import run_single
 from noodles.tutorial import add
 
 

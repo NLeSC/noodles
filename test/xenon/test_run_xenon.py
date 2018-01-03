@@ -1,4 +1,5 @@
-from noodles.run.xenon import (Machine, XenonJobConfig, run_xenon_simple, run_xenon)
+from noodles.run.xenon import (
+    Machine, XenonJobConfig, run_xenon_simple, run_xenon)
 from noodles import gather_all, schedule
 from noodles.tutorial import (add, sub, mul)
 

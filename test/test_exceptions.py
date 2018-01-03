@@ -1,5 +1,5 @@
 from pytest import raises
-from noodles import (schedule, schedule_hint, run_single)
+from noodles import (schedule, run_single)
 
 
 class MyException(Exception):

@@ -31,4 +31,3 @@ def test_deep_map():
     assert result['value']['two']['value'][0]['value'] == 5
     assert result['value']['one']['type'] == 'B'
     assert result['value']['two']['value'][1]['value'] == "Hello"
-

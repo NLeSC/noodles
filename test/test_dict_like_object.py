@@ -1,12 +1,15 @@
 from noodles import run_process, schedule, serial
 
+
 class A(dict):
     pass
+
 
 @schedule
 def f(a):
     a['value'] = 5
     return a
+
 
 def test_dict_like():
     a = A()

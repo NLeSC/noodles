@@ -266,4 +266,7 @@ def patch(source, sink):
     """
     sink = sink()
     for v in source():
-        sink.send(v)
+        try:
+            sink.send(v)
+        except StopIteration:
+            return

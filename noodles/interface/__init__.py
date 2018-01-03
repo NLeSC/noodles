@@ -1,6 +1,7 @@
+from ..lib import (unwrap)
 from .decorator import (
     PromisedObject, schedule, schedule_hint, has_scheduled_methods,
-    unwrap, update_hints, result)
+    update_hints, result)
 from .functions import (
     delay, gather, gather_all, gather_dict, lift, unpack, quote,
     unquote, simple_lift, ref, Quote)

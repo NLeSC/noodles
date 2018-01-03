@@ -23,12 +23,12 @@ def scheduled_function(f, hints=None):
     if 'version' not in hints:
         try:
             source_bytes = inspect.getsource(f).encode()
-        except AttributeError:
+        except Exception:
             pass
-
-        m = hashlib.md5()
-        m.update(source_bytes)
-        hints['version'] = m.hexdigest()
+        else:
+            m = hashlib.md5()
+            m.update(source_bytes)
+            hints['version'] = m.hexdigest()
 
     @wraps(f)
     def wrapped(*args, **kwargs):

@@ -1,5 +1,4 @@
-from noodles import schedule, run_parallel, run_single, gather, run_logging
-import sys
+from noodles import schedule, run_parallel, gather, run_logging
 
 
 @schedule
