@@ -5,7 +5,7 @@ import math
 import numpy as np
 
 
-@workflow_factory(result=True)
+@workflow_factory(result=True, requires=['local'])
 def fold_and_map():
     arr = np.random.normal(size=100)
     xs = patterns.fold(aux_sum, 0, arr)
@@ -14,7 +14,7 @@ def fold_and_map():
     return schedule(np.allclose)(ys, np.cumsum(arr) ** 2)
 
 
-@workflow_factory(result=True)
+@workflow_factory(result=True, requires=['local'])
 def map_filter_and_all():
     arr = np.random.normal(size=100)
     xs = patterns.map(lambda x: abs(x), arr)
@@ -23,7 +23,7 @@ def map_filter_and_all():
     return patterns.all(lambda x: x < 0.5, rs)
 
 
-@workflow_factory(result=True)
+@workflow_factory(result=True, requires=['local'])
 def zip_with():
     arr = np.random.normal(size=100)
     ys = patterns.map(lambda x: np.pi * x, arr)
@@ -32,7 +32,7 @@ def zip_with():
     return schedule(np.allclose)(rs, arr * np.sin(np.pi * arr))
 
 
-@workflow_factory(result=True)
+@workflow_factory(result=True, requires=['local'])
 def map_any():
     arr = np.pi * np.arange(10., dtype=np.float)
     xs = patterns.map(math.cos, arr)

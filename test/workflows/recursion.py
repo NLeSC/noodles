@@ -22,5 +22,5 @@ def floor_log(x):
 
 
 @workflow_factory(result=148)
-def test_recursion_parallel():
+def recursion():
     return floor_log(factorial(50.0))

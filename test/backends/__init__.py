@@ -11,13 +11,14 @@ def registry():
 
 backends = {
     'single': backend_factory(
-        run_single),
+        run_single, supports=['local']),
     'threads-4': backend_factory(
-        run_parallel, n_threads=4),
+        run_parallel, supports=['local'], n_threads=4),
     'processes-2': backend_factory(
-        run_process, n_processes=2, registry=registry),
+        run_process, supports=['remote'], n_processes=2, registry=registry),
     'processes-2-msgpack': backend_factory(
-        run_process, n_processes=2, registry=registry, use_msgpack=True)
+        run_process, supports=['remote'], n_processes=2, registry=registry,
+        use_msgpack=True)
 }
 
 __all__ = ['backends']
