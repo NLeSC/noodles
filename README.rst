@@ -1,14 +1,8 @@
 .. image:: https://travis-ci.org/NLeSC/noodles.svg?branch=master
    :alt: Travis
-.. image:: https://api.codacy.com/project/badge/Grade/f45b3299dbb74ccb8f766701563a88db
-   :target: https://www.codacy.com/app/Noodles/noodles?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=NLeSC/noodles&amp;utm_campaign=Badge_Grade
-   :alt: Codacy Badge
 .. image:: https://zenodo.org/badge/45391130.svg
    :target: https://zenodo.org/badge/latestdoi/45391130
    :alt: DOI
-.. image:: https://api.codacy.com/project/badge/Coverage/f45b3299dbb74ccb8f766701563a88db
-   :target: https://www.codacy.com/app/Noodles/noodles?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=NLeSC/noodles&amp;utm_campaign=Badge_Coverage
-   :alt: Coverage Badge
 
 Noodles - easy parallel programming for Python
 ==============================================
