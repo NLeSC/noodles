@@ -16,3 +16,5 @@ cache*
 .tox
 .cache
 .coverage.*
+htmlcov
+coverage.xml

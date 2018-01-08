@@ -2,6 +2,8 @@ import sys
 import uuid
 from subprocess import Popen, PIPE
 import threading
+import logging
+
 
 import os
 import random
@@ -11,7 +13,7 @@ from .scheduler import Scheduler
 # from .protect import CatchExceptions
 from .hybrid import hybrid_threaded_worker
 
-from ..lib import (pull, push, Connection, object_name, EndOfQueue)
+from ..lib import (pull, push, Connection, object_name, EndOfQueue, FlushQueue)
 from .messages import (EndOfWork)
 
 from .remote.io import (
@@ -50,8 +52,9 @@ def process_worker(registry, verbose=False, jobdirs=False,
         stdin=PIPE, stdout=PIPE, stderr=PIPE, universal_newlines=True)
 
     def read_stderr():
+        logger = logging.getLogger('noodles')
         for line in p.stderr:
-            print(name + ": " + line.strip(), file=sys.stderr, flush=True)
+            logger.info(name + ": " + line.rstrip())
 
     t = threading.Thread(target=read_stderr)
     t.daemon = True
@@ -78,6 +81,9 @@ def process_worker(registry, verbose=False, jobdirs=False,
                 t.join()
 
                 return
+
+            if msg is FlushQueue:
+                continue
 
             sink.send(msg)
 

@@ -90,7 +90,7 @@ def run_online_mode(args):
             if isinstance(msg, JobMessage):
                 key, job = msg
             elif msg is EndOfWork:
-                print("Bye", file=sys.stderr)
+                print("received EndOfWork, bye", file=sys.stderr)
                 sys.exit(0)
             elif isinstance(msg, tuple):
                 key, job = msg

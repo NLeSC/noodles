@@ -1,7 +1,7 @@
 import threading
 
 from ..workflow import get_workflow
-from ..lib import Queue, Connection, push, patch, EndOfQueue
+from ..lib import Queue, Connection, push, patch, EndOfQueue, FlushQueue
 from .scheduler import Scheduler
 from .worker import run_job
 
@@ -80,6 +80,14 @@ def hybrid_threaded_worker(selector, workers):
                 for k in workers.keys():
                     try:
                         job_sink[k].send(EndOfQueue)
+                    except StopIteration:
+                        pass
+                return
+
+            if msg is FlushQueue:
+                for k in workers.keys():
+                    try:
+                        job_sink[k].send(FlushQueue)
                     except StopIteration:
                         pass
                 return

@@ -52,8 +52,8 @@ class SerNumpyArrayToFile(Serialiser):
 
 
 def array_sha256(a):
-    dtype = msgpack.dumps(str(a.dtype))
-    shape = msgpack.dumps(a.shape)
+    dtype = msgpack.dumps(str(a.dtype), use_bin_type=True)
+    shape = msgpack.dumps(a.shape, use_bin_type=True)
     bdata = a.flatten().view(numpy.uint8)
     sha = hashlib.sha256()
     sha.update(dtype)

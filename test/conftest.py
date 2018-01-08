@@ -3,11 +3,24 @@ from test.workflows import workflows
 from test.backends import backends
 
 
+def pytest_addoption(parser):
+    # parser.addoption("--all", action="store_true",
+    #    help="run all combinations")
+    parser.addoption("--workflow",
+        help="run test only on specified workflow")
+
+
 def pytest_generate_tests(metafunc):
     if 'workflow' in metafunc.fixturenames:
-        metafunc.parametrize(
-            "workflow", list(workflows.values()),
-            ids=list(workflows.keys()))
+        selection = metafunc.config.getoption('workflow')
+        if selection is None:
+            metafunc.parametrize(
+                "workflow", list(workflows.values()),
+                ids=list(workflows.keys()))
+        else:
+            metafunc.parametrize(
+                "workflow", [workflows[selection]],
+                ids=[selection])
 
     if 'backend' in metafunc.fixturenames:
         metafunc.parametrize(

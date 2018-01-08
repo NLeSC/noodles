@@ -1,6 +1,6 @@
 from . import (
     gather, conditionals, class_methods, unpack, lift, dict_likes,
-    recursion, nesting, capture_output, patterns)
+    recursion, nesting, capture_output, patterns, setters)
 from .workflow_factory import workflow_factory
 from itertools import chain
 from noodles.lib import unwrap
@@ -8,7 +8,7 @@ from noodles.lib import unwrap
 
 modules = [
     gather, conditionals, class_methods, unpack, lift, dict_likes,
-    recursion, nesting, capture_output, patterns
+    recursion, nesting, capture_output, patterns, setters
 ]
 
 workflows = dict(chain.from_iterable(

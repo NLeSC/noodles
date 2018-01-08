@@ -121,7 +121,7 @@ class Scheduler:
                 del self.dynamic_links[child]
 
             # if we retrieve a workflow, push a child
-            if is_workflow(result):
+            if is_workflow(result) and not graceful_exit:
                 child_wf = get_workflow(result)
                 self.add_workflow(child_wf, wf, n, sink)
                 continue

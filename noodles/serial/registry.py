@@ -244,7 +244,9 @@ class Registry(object):
             return json.dumps(deep_map(lambda o: self.encode(o, host), obj))
 
     def to_msgpack(self, obj, host=None):
-        return msgpack.packb(deep_map(lambda o: self.encode(o, host), obj))
+        return msgpack.packb(
+                deep_map(lambda o: self.encode(o, host), obj),
+                use_bin_type=True)
 
     def from_json(self, data, deref=False):
         """Decode the string from JSON to return the original object (if
