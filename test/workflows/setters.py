@@ -61,5 +61,3 @@ def set_attr_error():
     obj = noodles.delay(uncopyable_dict)
     obj.attr = 42
     return obj
-
-

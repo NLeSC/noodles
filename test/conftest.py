@@ -6,9 +6,11 @@ from test.backends import backends
 def pytest_addoption(parser):
     # parser.addoption("--all", action="store_true",
     #    help="run all combinations")
-    parser.addoption("--workflow",
+    parser.addoption(
+        "--workflow",
         help="run test only on specified workflow")
-    parser.addoption("--backend",
+    parser.addoption(
+        "--backend",
         help="run test only using specified backend")
 
 

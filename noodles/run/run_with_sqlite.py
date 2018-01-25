@@ -40,4 +40,3 @@ def run_single(wf, registry, db_file):
     single_worker = Queue() >> pass_job
 
     return scheduler.run(single_worker, get_workflow(wf))
-

@@ -27,7 +27,6 @@ from collections import (namedtuple, defaultdict)
 # from ..utility import on
 import time
 import sys
-from copy import copy
 from ..run.messages import (JobMessage, ResultMessage)
 from ..workflow import (is_workflow, get_workflow)
 from .key import (prov_key)
@@ -172,7 +171,9 @@ class JobDB:
 
                 if rec.result is not None and rec.is_workflow == 1:
                     if rec.link is not None:
-                        self.cur.execute('select * from "jobs" where "id" = ?', (rec.link,))
+                        self.cur.execute(
+                            'select * from "jobs" where "id" = ?',
+                            (rec.link,))
                         rec = self.cur.fetchone()
                     else:
                         self.attached[rec.id].append(key)
@@ -180,7 +181,8 @@ class JobDB:
 
                 if rec.result is not None:
                     result_value = self.registry.from_json(rec.result)
-                    result = ResultMessage(key, 'retrieved', result_value, None)
+                    result = ResultMessage(
+                        key, 'retrieved', result_value, None)
                     return 'retrieved', result
 
                 if rec.session == self.session:
@@ -212,7 +214,8 @@ class JobDB:
                 self.links[new_workflow_id].append(result.key)
 
                 if node == workflow.root:
-                    self.links[new_workflow_id].extend(self.links[id(workflow)])
+                    self.links[new_workflow_id].extend(
+                        self.links[id(workflow)])
                     del self.links[id(workflow)]
 
             elif node == workflow.root:
@@ -222,12 +225,13 @@ class JobDB:
                 # update links for jobs up in the call-stack (parent workflows)
                 n_questions = ','.join('?' * len(linked_keys))
                 self.cur.execute(
-                    'update "jobs" set "link" = ? where "id" in ({});'.format(n_questions),
+                    'update "jobs" set "link" = ? where "id" in ({});'
+                    .format(n_questions),
                     (result.key,) + linked_keys)
 
-                # jobs that were attached to the parent workflow(s) will not receive
-                # the current result automatically, so we need to force feed them
-                # to the scheduler.
+                # jobs that were attached to the parent workflow(s) will not
+                # receive the current result automatically, so we need to force
+                # feed them to the scheduler.
                 for k in linked_keys:
                     attached_keys += tuple(self.attached[k])
 
