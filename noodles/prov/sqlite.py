@@ -126,7 +126,7 @@ class JobDB:
             self.jobs[self.cur.lastrowid] = job
             return JobMessage(self.cur.lastrowid, job.node)
 
-    def store_result(self, key, status, value, err):
+    def store_result(self, key, status, value, _):
         """Store the result of a job back in the node; this does nothing to the
         database."""
         if status != 'done':
@@ -217,11 +217,17 @@ class JobDB:
 
             elif node == workflow.root:
                 linked_keys = tuple(self.links[id(workflow)])
+                del self.links[id(workflow)]
+
+                # update links for jobs up in the call-stack (parent workflows)
                 n_questions = ','.join('?' * len(linked_keys))
                 self.cur.execute(
                     'update "jobs" set "link" = ? where "id" in ({});'.format(n_questions),
                     (result.key,) + linked_keys)
 
+                # jobs that were attached to the parent workflow(s) will not receive
+                # the current result automatically, so we need to force feed them
+                # to the scheduler.
                 for k in linked_keys:
                     attached_keys += tuple(self.attached[k])
 
