@@ -1,26 +1,20 @@
 # import pytest
 
 from noodles.prov.sqlite import JobDB
-from noodles.prov.key import prov_key
 from noodles import serial
 from noodles.tutorial import (sub, add)
-from noodles.run.job_keeper import JobKeeper
 from noodles.run.scheduler import Job
 
 
 def test_add_job():
-    registry = serial.base()
     db = JobDB(':memory:', registry=serial.base())
 
     wf = sub(1, 1)
     job = Job(wf._workflow, wf._workflow.root)
-    print('registering', job.name)
     key, node = db.register(job)
-    print('key:', key)
     msg, db_id, value = db.add_job_to_db(key, node)
-    print(msg, db_id)
     assert msg == 'initialized'
-    
+
     duplicates = db.store_result_in_db(key, '0')
     assert duplicates == []
 
@@ -31,7 +25,6 @@ def test_add_job():
 
 
 def test_attaching():
-    registry = serial.base()
     db = JobDB(':memory:', registry=serial.base())
 
     wf = add(1, 1)
@@ -52,5 +45,3 @@ def test_attaching():
     msg, db_id, value = db.add_job_to_db(key3, node3)
     assert msg == 'retrieved'
     assert value == '2'
-
-

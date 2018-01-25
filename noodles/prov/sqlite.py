@@ -148,7 +148,7 @@ class JobDB:
             self.cur.execute(
                 'select * from "jobs" where "prov" = ? '
                 'and (("result" is not null) or '
-                '("session" = ? and "duplicate" is null))',
+                '("session" = ? and "link" is null))',
                 (prov, self.session))
             rec = self.cur.fetchone()
             rec = JobEntry(*rec) if rec is not None else None
@@ -160,8 +160,6 @@ class JobDB:
                  json.dumps(job_msg['data']['function']),
                  json.dumps(job_msg['data']['arguments']),
                  key))
-
-            print('found: ', rec)
 
             if rec:
                 if rec.result is not None:
