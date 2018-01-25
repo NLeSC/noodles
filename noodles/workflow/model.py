@@ -45,8 +45,14 @@ class FunctionNode:
             self.foo, get_arguments(self.bound_args), self.hints)
 
     def __str__(self):
+        def _str(x):
+            if x is Empty:
+                return '-'
+            else:
+                return str(x)
+
         s = self.foo.__name__ + '(' + \
-            ", ".join(map(str, self.bound_args.args)) + ')'
+            ", ".join(map(_str, self.bound_args.args)) + ')'
         if self.result != Empty:
             s += ' -> ' + str(self.result)
         return s

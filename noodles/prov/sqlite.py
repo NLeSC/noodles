@@ -11,7 +11,7 @@ Each job that is started will get an entry in the "jobs" table.
     1. If a job with the same "prov" field exists and it has a result, we mark
     the new job by identifying the existing result in the "link" field.
     2. If a job with the same "prov" field exists, but has no result and has
-    the same "session" as the new job, the new job is marked duplicate of the
+    the same "session" as the new job, the new job is marked link of the
     older one. We keep a note in memory that, when the result is known, it is
     also given for the newer job.
     3. Otherwise, we pass the job on to a worker and wait for the result.
@@ -27,7 +27,9 @@ from collections import (namedtuple, defaultdict)
 # from ..utility import on
 import time
 import sys
-from ..run.messages import (JobMessage)
+from copy import copy
+from ..run.messages import (JobMessage, ResultMessage)
+from ..workflow import (is_workflow, get_workflow)
 from .key import (prov_key)
 
 try:
@@ -38,16 +40,17 @@ except ImportError:
 
 schema = '''
     create table if not exists "jobs" (
-        "id"        integer unique primary key,
-        "session"   integer not null references "sessions"("id")
-                    on delete cascade,
-        "name"      text,
-        "prov"      text,
-        "link"      integer references "jobs"("id"),
-        "version"   text,
-        "function"  text,
-        "arguments" text,
-        "result"    text );
+        "id"          integer unique primary key,
+        "session"     integer not null references "sessions"("id")
+                      on delete cascade,
+        "name"        text,
+        "prov"        text,
+        "version"     text,
+        "function"    text,
+        "arguments"   text,
+        "result"      text,
+        "is_workflow" integer,
+        "link"        integer references "jobs"("id") );
 
     create index "prov" on "jobs"("prov");
 
@@ -65,8 +68,9 @@ schema = '''
 
 JobEntry = namedtuple(
         'JobEntry',
-        ['id', 'session', 'name', 'prov', 'link',
-         'version', 'function', 'arguments', 'result'])
+        ['id', 'session', 'name', 'prov',
+         'version', 'function', 'arguments', 'result',
+         'is_workflow', 'link'])
 
 SessionEntry = namedtuple(
         'SessionEntry',
@@ -86,21 +90,25 @@ class JobDB:
     name, version, and all arguments to the function.
     """
     def __init__(self, path, registry, info=None):
-        self.duplicates = defaultdict(list)
+        self.attached = defaultdict(list)
         self.connection = sqlite3.connect(path, check_same_thread=False)
         self.jobs = {}
-        self.links = {}
-        self.registry = registry
+        self.links = defaultdict(list)
+        self.registry = registry()
 
         self.cur = self.connection.cursor()
         self.cur.executescript(schema)
         self.lock = Lock()
+        self.workflows = {}
 
         with self.lock:
-            self.cur.execute('insert into "sessions" ("info") values (?)', (info,))
+            self.cur.execute(
+                'insert into "sessions" ("info") values (?)', (info,))
             self.session = self.cur.lastrowid
 
     # --------- job-keeper interface ------------
+    def __len__(self):
+        return len(self.jobs)
 
     def __delitem__(self, key):
         del self.jobs[key]
@@ -113,7 +121,8 @@ class JobDB:
         an entry in the database without any further specification."""
         with self.lock:
             self.cur.execute(
-                'insert into "jobs" ("name", "session") values (?, ?)', (job.name, self.session))
+                'insert into "jobs" ("name", "session") values (?, ?)',
+                (job.name, self.session))
             self.jobs[self.cur.lastrowid] = job
             return JobMessage(self.cur.lastrowid, job.node)
 
@@ -131,11 +140,6 @@ class JobDB:
         with self.lock:
             job = self.jobs[key]
             job.node.result = value
-
-    def add_link(self, db_id, ppn):
-        """Link the result of `ppn` to the job `db_id`."""
-        with self.lock:
-            self.links[db_id] = ppn
 
     # --------- database interface ---------------------
 
@@ -162,22 +166,28 @@ class JobDB:
                  key))
 
             if rec:
-                if rec.result is not None:
-                    self.cur.execute(
-                        'update "jobs" set "link" = ? where "id" = ?',
-                        (rec.id, key))
+                self.cur.execute(
+                    'update "jobs" set "link" = ? where "id" = ?',
+                    (rec.id, key))
 
-                    return 'retrieved', rec.id, rec.result
+                if rec.result is not None and rec.is_workflow == 1:
+                    if rec.link is not None:
+                        self.cur.execute('select * from "jobs" where "id" = ?', (rec.link,))
+                        rec = self.cur.fetchone()
+                    else:
+                        self.attached[rec.id].append(key)
+                        return 'attached', None
+
+                if rec.result is not None:
+                    result_value = self.registry.from_json(rec.result)
+                    result = ResultMessage(key, 'retrieved', result_value, None)
+                    return 'retrieved', result
 
                 if rec.session == self.session:
-                    self.cur.execute(
-                        'update "jobs" set "link" = ? where "id" = ?',
-                        (rec.id, key))
-                    self.duplicates[rec.id].append(key)
-                    return 'attached', rec.id, None
+                    self.attached[rec.id].append(key)
+                    return 'attached', None
 
-            return 'initialized', key, None
-
+            return 'initialized', None
 
     def job_exists(self, prov):
         with self.lock:
@@ -185,19 +195,40 @@ class JobDB:
             rec = self.cur.fetchone()
             return rec is not None
 
-    def store_result_in_db(self, db_id, result):
+    def store_result_in_db(self, result):
+        result_value_msg = self.registry.to_json(result.value)
         with self.lock:
             self.cur.execute(
-                'update "jobs" set "result" = ? where "id" = ?;',
-                (result, db_id))
-            # self.cur.execute('select "duplicate" from "duplicates" where
-            # "primary" = ?;', db_id)
-            # duplicates = self.cur.fetchall()
-            return self.duplicates[db_id]
+                'update "jobs" set "result" = ?, '
+                '"is_workflow" = ? where "id" = ?;',
+                (result_value_msg, is_workflow(result.value), result.key))
+
+            workflow, node = self[result.key]
+            attached_keys = tuple(self.attached[result.key])
+            del self.attached[result.key]
+
+            if is_workflow(result.value):
+                new_workflow_id = id(get_workflow(result.value))
+                self.links[new_workflow_id].append(result.key)
+
+                if node == workflow.root:
+                    self.links[new_workflow_id].extend(self.links[id(workflow)])
+                    del self.links[id(workflow)]
+
+            elif node == workflow.root:
+                linked_keys = tuple(self.links[id(workflow)])
+                n_questions = ','.join('?' * len(linked_keys))
+                self.cur.execute(
+                    'update "jobs" set "link" = ? where "id" in ({});'.format(n_questions),
+                    (result.key,) + linked_keys)
+
+                for k in linked_keys:
+                    attached_keys += tuple(self.attached[k])
+
+            return attached_keys
 
     def add_time_stamp(self, db_id, name):
         with self.lock:
             self.cur.execute(
                 'insert into "timestamps" ("job", "what")'
-                'values (?, ?)',
-                (db_id, name))
+                'values (?, ?);', (db_id, name))

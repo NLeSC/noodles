@@ -8,6 +8,8 @@ def pytest_addoption(parser):
     #    help="run all combinations")
     parser.addoption("--workflow",
         help="run test only on specified workflow")
+    parser.addoption("--backend",
+        help="run test only using specified backend")
 
 
 def pytest_generate_tests(metafunc):
@@ -23,9 +25,15 @@ def pytest_generate_tests(metafunc):
                 ids=[selection])
 
     if 'backend' in metafunc.fixturenames:
-        metafunc.parametrize(
-            "backend", list(backends.values()),
-            ids=list(backends.keys()))
+        selection = metafunc.config.getoption('backend')
+        if selection is None:
+            metafunc.parametrize(
+                "backend", list(backends.values()),
+                ids=list(backends.keys()))
+        else:
+            metafunc.parametrize(
+                "backend", [backends[selection]],
+                ids=[selection])
 
 
 try:
