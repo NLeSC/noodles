@@ -1,20 +1,18 @@
-from .connection import (Connection)
-from .queue import (Queue)
 from .scheduler import (Scheduler)
-from .messages import (ResultMessage)
-from .haploid import (
-    pull, push, push_map, sink_map,
-    branch, patch, broadcast)
-from .thread_pool import (thread_pool)
+from .messages import (ResultMessage, JobMessage)
 from .worker import (worker, run_job)
 from .job_keeper import (JobKeeper)
 
 from ..workflow import (get_workflow, is_workflow)
 from ..prov import (JobDB)
 from ..prov.key import (prov_key)
+from ..lib import (
+    Connection, Queue, pull, push, push_map, sink_map, branch,
+    patch, broadcast, thread_pool, EndOfQueue)
 
 from itertools import (repeat)
 import threading
+import sys
 
 
 def run_single(wf, registry, jobdb_file, display=None):
@@ -69,7 +67,8 @@ def start_job(db):
 
 
 @sink_map
-def print_result(key, status, result, msg):
+def print_result(result_msg):
+    key, status, result, msg = result_msg
     print(status, result)
 
 
@@ -93,7 +92,10 @@ def schedule_job(results, registry, db,
         result_sink = results.sink()
 
         while True:
-            key, job = yield
+            msg = yield
+            if msg is EndOfQueue:
+                return
+            key, job = msg
 
             if pred(job):
                 job_msg = registry.deep_encode(job)
@@ -188,8 +190,12 @@ def run_parallel(wf, n_threads, registry, jobdb_file, job_keeper=None):
         daemon=True).start()
 
     @push_map
-    def log_job_start(key, job):
-        return (key, 'start', job, None)
+    def log_job_start(job):
+        if not isinstance(job, JobMessage):
+            print("Deprication warning: jobs should be passed as JobMessage",
+                  file=sys.stderr)
+        key, node = job
+        return (key, 'start', node, None)
 
     r_src = jobs.source \
         >> start_job(db) \
@@ -217,8 +223,9 @@ def create_prov_worker(
         >> store_result_deep(registry, db, job_keeper, pred)
 
     @push_map
-    def log_job_sched(key, job):
-        return (key, 'schedule', job, None)
+    def log_job_sched(job):
+        if job is not EndOfQueue:
+            return (job.key, 'schedule', job.node, None)
 
     j_snk = broadcast(
         log_job_sched >> log_q.sink,
@@ -237,8 +244,9 @@ def prov_wrap_connection(
         >> store_result_deep(registry, db, job_keeper, pred)
 
     @push_map
-    def log_job_sched(key, job):
-        return (key, 'schedule', job, None)
+    def log_job_sched(job):
+        if job is not EndOfQueue:
+            return (job.key, 'schedule', job.node, None)
 
     j_snk = broadcast(
         log_job_sched >> log_q.sink,

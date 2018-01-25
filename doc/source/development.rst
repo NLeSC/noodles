@@ -33,3 +33,8 @@ Worker executable
 -----------------
 .. automodule:: noodles.worker
     :members:
+
+Streams
+-------
+.. automodule:: noodles.lib
+    :members:

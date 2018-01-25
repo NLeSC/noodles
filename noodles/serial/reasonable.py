@@ -8,17 +8,16 @@ class Reasonable(object):
     property manualy. This class is empty, it is used as a tag to designate
     other objects as reasonable."""
     pass
-    
+
 
 class SerReasonableObject(Serialiser):
     def __init__(self, cls):
         super(SerReasonableObject, self).__init__(cls)
-        
+
     def encode(self, obj, make_rec):
         return make_rec(obj.__dict__)
-        
+
     def decode(self, cls, data):
         obj = cls.__new__(cls)
         obj.__dict__ = data
         return obj
-

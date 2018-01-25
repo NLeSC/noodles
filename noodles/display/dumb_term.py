@@ -65,7 +65,8 @@ class DumbDisplay:
                 else:
                     print(e)
 
-    def __call__(self, key, status, data, err):
+    def __call__(self, msg):
+        key, status, data, err = msg
         if hasattr(data, 'hints'):
             job = data
             if job.hints and 'display' in job.hints:

@@ -1,6 +1,7 @@
 from noodles import (schedule, run_single)
 from noodles.tutorial import (add)
-from draw_workflow import draw_workflow
+from noodles.draw_workflow import draw_workflow
+
 
 @schedule
 class A:
@@ -23,4 +24,3 @@ u.square = add(u.square, v.square)
 draw_workflow("pythagoras.pdf", u.value._workflow)
 
 print("⎷(3² + 4²) = ", run_single(u.value))
-

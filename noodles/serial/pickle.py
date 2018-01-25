@@ -9,13 +9,12 @@ class PickleString(Serialiser):
         super(PickleString, self).__init__(cls)
 
     def encode(self, obj, make_rec):
-        data = base64.b64encode(pickle.dumps(obj, protocol=4)).decode('ascii')
+        data = base64.b64encode(pickle.dumps(obj)).decode('ascii')
         return make_rec(data)
 
     def decode(self, cls, data):
         return pickle.loads(
-            base64.b64decode(data.encode('ascii')),
-            protocol=4)
+            base64.b64decode(data.encode('ascii')))
 
 
 def registry():

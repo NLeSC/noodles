@@ -1,62 +1,103 @@
-from ..queue import Queue
-from ..connection import Connection
-from ..haploid import (push)
+from ...lib import (
+    Queue, Connection, EndOfQueue, push, pull, pull_map, sink_map,
+    thread_counter)
 
 from ..messages import (
-    ResultMessage)
-
-from ..remote.io import (
-    JSONObjectWriter, JSONObjectReader)
-
-import xenon
-import jpype
+    ResultMessage, EndOfWork)
 
 import threading
 import sys
 from collections import namedtuple
 
-from .xenon import (XenonKeeper, XenonConfig, XenonScheduler)
+from .xenon import (Machine)
 
 
-def xenon_interactive_worker(XeS: XenonScheduler, job_config):
+def xenon_interactive_worker(
+        machine, worker_config, input_queue=None, stderr_sink=None):
     """Uses Xenon to run a single remote interactive worker.
 
     Jobs are read from stdin, and results written to stdout.
 
-    :param XeS:
-        The :py:class:`XenonScheduler` object that allows us to schedule the
-        new worker.
-    :type Xe: XenonScheduler
+    :param machine:
+        Specification of the machine on which to run.
+    :type machine: noodles.run.xenon.Machine
 
-    :param job_config:
+    :param worker_config:
         Job configuration. Specifies the command to be run remotely.
+    :type worker_config: noodles.run.xenon.XenonJobConfig
     """
-    cmd = job_config.command_line()
-    queue = job_config.queue
-    J = XeS.submit(cmd, interactive=True, queue=queue)
+    if input_queue is None:
+        input_queue = Queue()
 
-    def read_stderr():
-        jpype.attachThreadToJVM()
-        for line in xenon.conversions.read_lines(J.streams.getStderr()):
-            print(job_config.name + ": " + line, file=sys.stderr, flush=True)
+    registry = worker_config.registry()
 
-    J.stderr_thread = threading.Thread(target=read_stderr)
-    J.stderr_thread.daemon = True
-    J.stderr_thread.start()
+    @pull_map
+    def serialise(obj):
+        """Serialise incoming objects, yielding strings."""
+        return (registry.to_json(obj, host='scheduler') + '\n').encode()
 
-    registry = job_config.registry()
+    def do_iterate(source):
+        for x in source():
+            if x is EndOfQueue:
+                yield EndOfWork
+                return
+            yield x
 
-    @push
-    def send_job():
-        output_stream = xenon.conversions.OutputStream(J.streams.getStdin())
-        yield from JSONObjectWriter(registry, output_stream, host="scheduler")
+    job, output_stream = machine.scheduler.submit_interactive_job(
+        worker_config.xenon_job_description,
+        serialise(lambda: do_iterate(input_queue.source)))
 
-    # @pull
-    def get_result():
-        input_stream = xenon.conversions.InputStream(J.streams.getStdout())
-        yield from JSONObjectReader(registry, input_stream)
+    @sink_map
+    def echo_stderr(text):
+        """Print lines."""
+        for line in text.split('\n'):
+            print("{}: {}".format(worker_config.name, line), file=sys.stderr)
 
-    return Connection(get_result, send_job, aux=J)
+    if stderr_sink is None:
+        stderr_sink = echo_stderr()
+
+    @pull
+    def read_output(source):
+        """Handle output from job, sending stderr data to given
+        `stderr_sink`, passing on lines from stdout."""
+        line_buffer = ""
+        for chunk in source():
+            if chunk.stdout:
+                lines = chunk.stdout.decode().splitlines(keepends=True)
+
+                if not lines:
+                    continue
+
+                if lines[0][-1] == '\n':
+                    yield line_buffer + lines[0]
+                    line_buffer = ""
+                else:
+                    line_buffer += lines[0]
+
+                if len(lines) == 1:
+                    continue
+
+                yield from ((x,) for x in lines[1:-1])
+
+                if lines[-1][-1] == '\n':
+                    yield lines[-1]
+                else:
+                    line_buffer = lines[-1]
+
+            if chunk.stderr:
+                for line in chunk.stderr.decode().split('\n'):
+                    stripped_line = line.strip()
+                    if stripped_line != '':
+                        stderr_sink.send(stripped_line)
+
+    @pull_map
+    def deserialise(line):
+        result = registry.from_json(line, deref=False)
+        return result
+
+    return Connection(
+        lambda: deserialise(lambda: read_output(lambda: output_stream)),
+        input_queue.sink, aux=job)
 
 
 class XenonInteractiveWorker(Connection):
@@ -64,47 +105,36 @@ class XenonInteractiveWorker(Connection):
     read and forward stderr. Then acts as a `Connection` that goes
     online as soon as the submitted job is running.
     """
-    def __init__(self, sched, job_config):
-        connection = xenon_interactive_worker(sched, job_config)
-        super(XenonInteractiveWorker, self).__init__(*connection)
+    def __init__(self, machine, worker_config):
+        connection = xenon_interactive_worker(machine, worker_config)
+        super(XenonInteractiveWorker, self).__init__(
+                connection.source, connection.sink)
 
-        self.job_config = job_config
+        self.worker_config = worker_config
         self.job = connection.aux
+        self.machine = machine
         self.online = False
-
-    def init_worker(self):
-        """Sends the `init` and `finish` jobs to the worker if this is needed.
-        This part will be called first, after a remote worker goes online."""
-        pass
-        # print("Initializing worker: ", end='', flush=True)
-        # if self.job_config.init is not None:
-        #     print("[init] ", end='', flush=True)
-        #     self.sink().send(
-        #         ("init", self.job_config.init()._workflow.root_node))
-        #     key, status, result, err_msg = next(self.source())
-        #     if key != "init" or not result:
-        #         raise RuntimeError(
-        #             "The initializer function did not succeed on worker.")
-        #
-        # if self.job_config.finish is not None:
-        #     self.sink().send(
-        #         ("finish", self.job_config.finish()._workflow.root_node))
-        # print("[done]", flush=True)
 
     def wait_until_running(self, callback=None):
         """Waits until the remote worker is running, then calls the callback.
         Usually, this method is passed to a different thread; the callback
         is then a function patching results through to the result queue."""
-        jpype.attachThreadToJVM()
-        status = self.job.wait_until_running(self.job_config.time_out)
-        if status.isRunning():
+        status = self.machine.scheduler.wait_until_running(
+                self.job, self.worker_config.time_out)
+
+        if status.running:
             self.online = True
-            self.init_worker()
             if callback:
                 callback(self)
         else:
             raise TimeoutError("Timeout while waiting for worker to run: " +
-                               self.job_config.name)
+                               self.worker_config.name)
+
+    def close(self):
+        try:
+            self.sink.send(EndOfQueue)
+        except StopIteration:
+            pass
 
 
 RemoteWorker = namedtuple('RemoteWorker', [
@@ -120,57 +150,69 @@ class DynamicPool(Connection):
     amount of workers, each with their own preferred amount of jobs. As of
     yet, we have no mechanism to distribute the jobs between workers in any
     way more knowledgable than that."""
-    def __init__(self, Xe: XenonKeeper, xenon_config: XenonConfig):
+    def __init__(self, machine: Machine):
         self.workers = {}
-        self.XeS = XenonScheduler(Xe, xenon_config)
+        self.machine = machine
+
         self.job_queue = Queue()
         self.result_queue = Queue()
-        self.lock = threading.Lock()
+        self.wlock = threading.Lock()
+        self.plock = threading.Lock()
+        self.count = thread_counter(self.result_queue.close)
 
         @push
         def dispatch_jobs():
             job_sink = self.job_queue.sink()
 
             while True:
-                key, job = yield
+                msg = yield
 
                 for w in self.workers.values():
                     with w.lock:  # Worker lock ~~~~~~~~~~~~~~~~~~~~~
                         if len(w.jobs) < w.max:
-                            w.sink.send((key, job))
-                            w.jobs.append(key)
+                            w.sink.send(msg)
+                            w.jobs.append(msg.key)
                             break
                     # lock end ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
                 else:
-                    job_sink.send((key, job))
+                    job_sink.send(msg)
 
         super(DynamicPool, self).__init__(
             self.result_queue.source, dispatch_jobs)
 
-    def add_xenon_worker(self, job_config):
-        """Adds a worker to the pool; sets gears in motion."""
-        c = XenonInteractiveWorker(self.XeS, job_config)
-        w = RemoteWorker(
-            job_config.name, threading.Lock(),
-            job_config.n_threads, [],
-            *c.setup())
+    def close_all(self):
+        for w in self.workers.values():
+            try:
+                w.sink.send(EndOfQueue)
+            except StopIteration:
+                pass
 
-        with self.lock:
-            self.workers[job_config.name] = w
+    def add_xenon_worker(self, worker_config):
+        """Adds a worker to the pool; sets gears in motion."""
+        c = XenonInteractiveWorker(self.machine, worker_config)
+        w = RemoteWorker(
+            worker_config.name, threading.Lock(),
+            worker_config.n_threads, [], *c.setup())
+
+        with self.wlock:
+            self.workers[worker_config.name] = w
 
         def populate(job_source):
             """Populate the worker with jobs, if jobs are available."""
-            with w.lock, self.lock:  # Worker lock ~~~~~~~~~~~~~~~~~~
+            with w.lock, self.plock:  # Worker lock ~~~~~~~~~~~~~~~~~~
                 while len(w.jobs) < w.max and not self.job_queue.empty():
-                    key, job = next(job_source)
-                    w.sink.send((key, job))
-                    w.jobs.append(key)
+                    msg = next(job_source)
+                    w.sink.send(msg)
+
+                    if msg is not EndOfQueue:
+                        key, job = msg
+                        w.jobs.append(key)
+                    else:
+                        break
             # lock end ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
         def activate(_):
             """Activate the worker."""
-            jpype.attachThreadToJVM()
-
             job_source = self.job_queue.source()
             populate(job_source)
 
@@ -190,6 +232,7 @@ class DynamicPool(Connection):
                     key, 'aborted', None, 'connection to remote worker lost.'))
 
         # Start the `activate` function when the worker goes online.
-        threading.Thread(
-            target=c.wait_until_running, args=(activate,),
-            daemon=True).start()
+        t = threading.Thread(
+            target=self.count(c.wait_until_running), args=(activate,),
+            daemon=True)
+        t.start()

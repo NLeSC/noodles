@@ -12,3 +12,9 @@ cover
 doc/build
 venv
 cache*
+*.egg-info
+.tox
+.cache
+.coverage.*
+htmlcov
+coverage.xml

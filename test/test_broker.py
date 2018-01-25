@@ -2,7 +2,8 @@ import noodles
 from noodles.tutorial import (add, sub, mul, accumulate)
 from noodles.display import (NCDisplay)
 from noodles.run.runners import (
-    run_single, run_parallel, run_parallel_with_display)
+    run_parallel, run_parallel_with_display)
+from noodles.run.single import run_single
 
 
 def test_broker_01():

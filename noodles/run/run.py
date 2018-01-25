@@ -4,12 +4,12 @@ Noodles in a `noodles.ini` file. For this reason they have to obey similar
 interfaces.
 """
 
-from .queue import (Queue)
-from .scheduler import (Scheduler)
-from .haploid import (push_map, sink_map, branch, patch)
-from .thread_pool import (thread_pool)
-from .worker import (worker)
+from ..lib import (Queue, push_map, sink_map, branch, patch, thread_pool)
 from ..workflow import (get_workflow)
+
+from .worker import (worker)
+from .scheduler import (Scheduler)
+from .messages import (EndOfWork)
 
 from itertools import (repeat)
 import threading
@@ -49,7 +49,8 @@ def run_parallel(wf, n_threads):
     """Run a workflow in `n_threads` parallel threads. Now we replaced the
     single worker with a thread-pool of workers."""
     S = Scheduler()
-    W = Queue() >> thread_pool(*repeat(worker, n_threads))
+    W = Queue() >> thread_pool(*repeat(worker, n_threads),
+                               end_of_queue=EndOfWork)
 
     return S.run(W, get_workflow(wf))
 
@@ -63,21 +64,25 @@ def run_parallel_with_display(wf, n_threads, display):
     def log_job_start(key, job):
         return (key, 'start', job, None)
 
-    LogQ = Queue()
+    LogQ = Queue(end_of_queue=EndOfWork)
 
     S = Scheduler(error_handler=display.error_handler)
 
-    threading.Thread(
+    t = threading.Thread(
         target=patch,
         args=(LogQ.source, sink_map(display)),
-        daemon=True).start()
+        daemon=True)
+    t.start()
 
     W = Queue() \
         >> branch(log_job_start >> LogQ.sink) \
-        >> thread_pool(*repeat(worker, n_threads)) \
+        >> thread_pool(*repeat(worker, n_threads),
+                       end_of_queue=EndOfWork) \
         >> branch(LogQ.sink)
 
     result = S.run(W, get_workflow(wf))
+    LogQ.close()
+    t.join()
     LogQ.wait()
 
     return result

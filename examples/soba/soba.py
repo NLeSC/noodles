@@ -5,17 +5,16 @@ from noodles.run.queue import (Queue)
 from noodles.run.haploid import (push, branch, patch, sink_map, push_map)
 from noodles.run.worker import (worker)
 from noodles.run.thread_pool import (thread_pool)
-from noodles.run.scheduler import (Scheduler)
-from noodles.display import (NCDisplay, DumbDisplay)
+from noodles.display import (DumbDisplay)
 
 import subprocess
 import sys
 import argparse
 import json
-import time
 import shlex
 import threading
 from itertools import repeat
+
 
 @push_map
 def log_job_start(key, job):
@@ -55,8 +54,6 @@ def dynamic_exclusion_worker(display, n_threads):
 
     LogQ = Queue()
 
-    S = Scheduler(error_handler=display.error_handler)
-
     threading.Thread(
         target=patch,
         args=(LogQ.source, sink_map(display)),
@@ -74,10 +71,10 @@ def dynamic_exclusion_worker(display, n_threads):
 
     @push
     def pass_job():
-        """The scheduler sends jobs to this coroutine. If the 'exclude' key
-        is found in the hints, it is run in exclusive mode. We keep an internal
-        record of these jobs, and whether they are 'waiting', 'running' or 'done'.
-        """
+        """The scheduler sends jobs to this coroutine. If the 'exclude' key is
+        found in the hints, it is run in exclusive mode. We keep an internal
+        record of these jobs, and whether they are 'waiting', 'running' or
+        'done'.  """
         while True:
             key, job = yield
 

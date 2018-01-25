@@ -1,5 +1,5 @@
 from .registry import (Registry, Serialiser)
-from ..utility import (object_name, look_up)
+from ..lib import (object_name, look_up)
 
 
 class SerNamedTuple(Serialiser):

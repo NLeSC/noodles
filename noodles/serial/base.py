@@ -1,15 +1,16 @@
 from .registry import (Registry, Serialiser)
 from .reasonable import (Reasonable, SerReasonableObject)
-from ..interface import (PromisedObject)
-from ..utility import (object_name, look_up, importable)
+from ..interface import (PromisedObject, Quote)
+from ..lib import (object_name, look_up, importable)
 from ..workflow import (Workflow, NodeData, FunctionNode, ArgumentAddress,
                         ArgumentKind, reset_workflow, get_workflow)
-from ..storable import (Storable)
+
 # from .as_dict import (AsDict)
 # from enum import Enum
 from inspect import isfunction, ismethod
 # from collections import namedtuple
 from itertools import count
+import base64
 # import json
 # import sys
 
@@ -23,6 +24,17 @@ class SerDict(Serialiser):
 
     def decode(self, cls, data):
         return cls(data)
+
+
+class SerBytes(Serialiser):
+    def __init__(self):
+        super(SerBytes, self).__init__(bytes)
+
+    def encode(self, obj, make_rec):
+        return make_rec(base64.b64encode(obj).decode())
+
+    def decode(self, cls, data):
+        return base64.b64decode(data.encode())
 
 
 class SerTuple(Serialiser):
@@ -138,20 +150,6 @@ class SerImportable(Serialiser):
         return look_up(data)
 
 
-class SerStorable(Serialiser):
-    def __init__(self, cls):
-        super(SerStorable, self).__init__(cls)
-
-    def encode(self, obj, make_reca):
-        return make_reca(
-            {'type': object_name(type(obj)),
-             'dict': obj.as_dict()})
-
-    def decode(self, _, data):
-        cls = look_up(data['type'])
-        return cls.from_dict(**data['dict'])
-
-
 class SerNode(Serialiser):
     def __init__(self):
         super(SerNode, self).__init__(FunctionNode)
@@ -185,13 +183,14 @@ def registry():
         types={
             dict: SerDict(),
             tuple: SerTuple(),
+            bytes: SerBytes(),
             Reasonable: SerReasonableObject(Reasonable),
             ArgumentKind: SerEnum(ArgumentKind),
             FunctionNode: SerNode(),
             ArgumentAddress: SerNamedTuple(ArgumentAddress),
             Workflow: SerWorkflow(),
-            Storable: SerStorable(Storable),
-            PromisedObject: SerPromisedObject()
+            PromisedObject: SerPromisedObject(),
+            Quote: SerReasonableObject(Quote)
         },
         hooks={
             '<method>': SerMethod(),

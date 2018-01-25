@@ -1,3 +1,9 @@
+"""
+.. |ArgumentKind| replace:: :py:class:`ArgumentKind`
+.. |ArgumentAddress| replace:: :py:class:`ArgumentAddress`
+.. |Argument| replace:: :py:class:`Argument`
+"""
+
 from collections import namedtuple
 from enum import Enum
 from itertools import repeat
@@ -5,32 +11,33 @@ from inspect import Parameter, signature
 
 Empty = Parameter.empty
 
+"""Denotes the kind of argument."""
 ArgumentKind = Enum(
     'ArgumentKind',
     ['regular', 'variadic', 'keyword'])
 
+"""Codifies the location to a unique argument of a function."""
 ArgumentAddress = namedtuple(
     'ArgumentAddress',
     ['kind', 'name', 'key'])
 
+"""Codifies a value given for some argument."""
 Argument = namedtuple(
     'Argument',
     ['address', 'value'])
 
 
 def serialize_arguments(bound_args):
-    """
-    Generator that takes the bound_args output of signature().bind and iterates
-    over all the arguments, returning reproducable addresses of each
+    """Generator that takes the bound_args output of signature().bind and
+    iterates over all the arguments, returning reproducable addresses of each
     argument.
 
-    An address is stored in an `ArgumentAddress` object (a
-    named tuple), containing the kind of argument
-    (regular, variadic or keyword),
-    the name of the argument, and, if not a regular argument, a key.
-    In the case of a variadic argument this is an integer index into the
-    variadic arguments list, in the case of a keyword argument it is a
-    string. For regular arguments the key is set to `None`.
+    An address is stored in an |ArgumentAddress| object (a named tuple),
+    containing the kind of argument (regular, variadic or keyword), the name of
+    the argument, and, if not a regular argument, a key.  In the case of a
+    variadic argument this is an integer index into the variadic arguments
+    list, in the case of a keyword argument it is a string. For regular
+    arguments the key is set to `None`.
 
     :param bound_args:
         Bound arguments structure, as described in the documentation of the
@@ -57,10 +64,8 @@ def serialize_arguments(bound_args):
 
 
 def ref_argument(bound_args, address):
-    """
-    Taking a bound_args object, and an ArgumentAddress, retrieves the data
-    currently stored in bound_args for this particular address.
-    """
+    """ Taking a bound_args object, and an ArgumentAddress, retrieves the data
+    currently stored in bound_args for this particular address."""
     if address.kind == ArgumentKind.regular:
         return bound_args.arguments[address.name]
 
@@ -68,10 +73,8 @@ def ref_argument(bound_args, address):
 
 
 def set_argument(bound_args, address, value):
-    """
-    Taking a bound_args object, and  an ArgumentAddress and a value,
-    sets the value pointed to by the address to `value`.
-    """
+    """ Taking a bound_args object, and an |ArgumentAddress| and a value, sets
+    the value pointed to by the address to `value`."""
     if address.kind == ArgumentKind.regular:
         bound_args.arguments[address.name] = value
         return
@@ -80,10 +83,10 @@ def set_argument(bound_args, address, value):
         if address.name not in bound_args.arguments:
             bound_args.arguments[address.name] = []
 
-        l = len(bound_args.arguments[address.name])
-        if address.key >= l:
+        n_args = len(bound_args.arguments[address.name])
+        if address.key >= n_args:
             bound_args.arguments[address.name].extend(
-                repeat(Empty, address.key - l + 1))
+                repeat(Empty, address.key - n_args + 1))
 
     if address.kind == ArgumentKind.keyword:
         if address.name not in bound_args.arguments:
@@ -93,9 +96,7 @@ def set_argument(bound_args, address, value):
 
 
 def format_address(address):
-    """
-    Formats an ArgumentAddress for human reading.
-    """
+    """Formats an ArgumentAddress for human reading."""
     if address.kind == ArgumentKind.regular:
         return address.name
 

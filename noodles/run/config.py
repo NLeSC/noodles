@@ -1,6 +1,6 @@
 import configparser
 from typing import (List)
-from ..utility import (look_up)
+from ..lib import (look_up)
 
 
 runners = [

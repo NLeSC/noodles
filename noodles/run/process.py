@@ -2,17 +2,19 @@ import sys
 import uuid
 from subprocess import Popen, PIPE
 import threading
+import logging
+
 
 import os
 import random
 from ..workflow import get_workflow
 # from ..logger import log
-from .connection import Connection
-from ..utility import object_name
 from .scheduler import Scheduler
 # from .protect import CatchExceptions
 from .hybrid import hybrid_threaded_worker
-from .haploid import (pull, push)
+
+from ..lib import (pull, push, Connection, object_name, EndOfQueue, FlushQueue)
+from .messages import (EndOfWork)
 
 from .remote.io import (
     MsgPackObjectReader, MsgPackObjectWriter,
@@ -29,7 +31,7 @@ def process_worker(registry, verbose=False, jobdirs=False,
                    init=None, finish=None, status=True, use_msgpack=False):
     name = "process-" + str(uuid.uuid4())
 
-    cmd = ["/bin/bash", os.getcwd() + "/worker.sh", sys.prefix, "online",
+    cmd = [sys.prefix + "/bin/python", "-m", "noodles.pilot_job", "online",
            "-name", name, "-registry", object_name(registry)]
     if use_msgpack:
         assert has_msgpack
@@ -50,8 +52,9 @@ def process_worker(registry, verbose=False, jobdirs=False,
         stdin=PIPE, stdout=PIPE, stderr=PIPE, universal_newlines=True)
 
     def read_stderr():
+        logger = logging.getLogger('noodles')
         for line in p.stderr:
-            print(name + ": " + line.strip(), file=sys.stderr, flush=True)
+            logger.info(name + ": " + line.rstrip())
 
     t = threading.Thread(target=read_stderr)
     t.daemon = True
@@ -60,10 +63,29 @@ def process_worker(registry, verbose=False, jobdirs=False,
     @push
     def send_job():
         reg = registry()
+
         if use_msgpack:
-            yield from MsgPackObjectWriter(reg, p.stdin.buffer)
+            sink = MsgPackObjectWriter(reg, p.stdin.buffer)
         else:
-            yield from JSONObjectWriter(reg, p.stdin)
+            sink = JSONObjectWriter(reg, p.stdin)
+
+        while True:
+            msg = yield
+            if msg is EndOfQueue:
+                try:
+                    sink.send(EndOfWork)
+                except StopIteration:
+                    pass
+
+                p.wait()
+                t.join()
+
+                return
+
+            if msg is FlushQueue:
+                continue
+
+            sink.send(msg)
 
     @pull
     def get_result():
@@ -74,7 +96,7 @@ def process_worker(registry, verbose=False, jobdirs=False,
         else:
             yield from JSONObjectReader(reg, p.stdout)
 
-    return Connection(get_result, send_job, aux=read_stderr)
+    return Connection(get_result, send_job)
 
 
 def run_process(wf, n_processes, registry,
@@ -129,6 +151,14 @@ def run_process(wf, n_processes, registry,
 
     master_worker = hybrid_threaded_worker(random_selector, workers)
     result = Scheduler().run(master_worker, get_workflow(wf))
+
+    for w in workers.values():
+        try:
+            w.sink().send(EndOfQueue)
+        except StopIteration:
+            pass
+
+#        w.aux.join()
 
     if deref:
         return registry().dereference(result, host='localhost')

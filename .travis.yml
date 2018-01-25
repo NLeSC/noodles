@@ -2,18 +2,12 @@ language: python
 sudo: false
 python:
   - "3.5"
+  - "3.6"
 install:
-  - pip install -U codacy-coverage
-  - pip install -U .[prov,numpy,test]
+  - pip install tox-travis
 script:
-  - pytest test --cov=./noodles
-after-script:
-  - coverage report
-  - coverage xml
-  - python-codacy-coverage -r coverage.xml
-
+  - tox
 branches:
   only:
     - master
     - devel
-

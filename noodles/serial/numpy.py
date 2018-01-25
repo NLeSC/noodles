@@ -1,5 +1,5 @@
 from .registry import (Serialiser, Registry)
-from ..utility import look_up
+from ..lib import look_up
 import numpy
 import uuid
 import io
@@ -24,6 +24,19 @@ class SerNumpyArray(Serialiser):
         return numpy.load(fi)
 
 
+class SerNumpyScalar(Serialiser):
+    def __init__(self):
+        super(SerNumpyScalar, self).__init__('<numpy-scalar>')
+
+    def encode(self, obj, make_rec):
+        return make_rec({
+            'dtype': str(obj.dtype),
+            'bytes': obj.tobytes()})
+
+    def decode(self, cls, data):
+        return numpy.frombuffer(data['bytes'], dtype=data['dtype'])[0]
+
+
 class SerNumpyArrayToFile(Serialiser):
     def __init__(self, file_prefix=None):
         super(SerNumpyArrayToFile, self).__init__(numpy.ndarray)
@@ -39,8 +52,8 @@ class SerNumpyArrayToFile(Serialiser):
 
 
 def array_sha256(a):
-    dtype = msgpack.dumps(str(a.dtype))
-    shape = msgpack.dumps(a.shape)
+    dtype = msgpack.dumps(str(a.dtype), use_bin_type=True)
+    shape = msgpack.dumps(a.shape, use_bin_type=True)
     bdata = a.flatten().view(numpy.uint8)
     sha = hashlib.sha256()
     sha.update(dtype)
@@ -120,7 +133,8 @@ def arrays_to_file(file_prefix=None):
 def arrays_to_string(file_prefix=None):
     return Registry(
         types={
-            numpy.ndarray: SerNumpyArray()
+            numpy.ndarray: SerNumpyArray(),
+            numpy.floating: SerNumpyScalar()
         },
         hooks={
             '<ufunc>': SerUFunc()
@@ -139,5 +153,6 @@ def arrays_to_hdf5(filename="cache.hdf5"):
         },
         hook_fn=_numpy_hook
     )
+
 
 registry = arrays_to_string

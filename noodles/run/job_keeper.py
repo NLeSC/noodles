@@ -4,8 +4,8 @@ import json
 import sys
 
 from threading import Lock
-from .haploid import (coroutine)
-from .messages import (JobMessage)
+from ..lib import (coroutine, EndOfQueue)
+from .messages import (JobMessage, EndOfWork)
 
 
 class JobKeeper(dict):
@@ -45,7 +45,16 @@ class JobKeeper(dict):
     @coroutine
     def message(self):
         while True:
-            key, status, value, err = yield
+            msg = yield
+
+            if msg is EndOfQueue:
+                return
+            if msg is None:
+                print("Warning: `None` received where not expected.",
+                      file=sys.stderr)
+                return
+
+            key, status, value, err = msg
 
             with self.lock:
                 if key not in self:
@@ -80,7 +89,10 @@ class JobTimer(dict):
     @coroutine
     def message(self):
         while True:
-            key, status, value, err = yield
+            msg = yield
+            if msg is EndOfWork:
+                return
+            key, status, value, err = msg
             if hasattr(self, status):
                 getattr(self, status)(key, value, err)
 

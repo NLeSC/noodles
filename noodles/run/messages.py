@@ -11,6 +11,10 @@ There are currently three types of messages:
 from ..serial import Reasonable
 
 
+class EndOfWork(object):
+    pass
+
+
 class JobMessage(Reasonable):
     def __init__(self, key, node):
         self.key = key
@@ -18,8 +22,8 @@ class JobMessage(Reasonable):
 
     def __iter__(self):
         return iter((self.key, self.node))
-        
-        
+
+
 class ResultMessage(Reasonable):
     def __init__(self, key, status, value, msg):
         self.key = key
@@ -35,4 +39,3 @@ class PilotMessage(Reasonable):
     def __init__(self, msg, **kwargs):
         self.msg = msg
         self.__dict__.update(kwargs)
-

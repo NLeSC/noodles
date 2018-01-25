@@ -1,7 +1,7 @@
 from functools import (wraps)
 from itertools import (chain)
 import inspect
-from ..utility import (object_name)
+from ..lib import (object_name)
 
 
 class Fail:
@@ -56,7 +56,8 @@ def maybe(f):
 
     @wraps(f)
     def maybe_wrapped(*args, **kwargs):
-        fails = [(name, k, v)
+        fails = [
+            (name, k, v)
             for k, v in chain(enumerate(args), kwargs.items())
             if isinstance(v, Fail)]
 

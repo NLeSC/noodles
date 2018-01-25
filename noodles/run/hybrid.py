@@ -1,11 +1,7 @@
 import threading
 
 from ..workflow import get_workflow
-from .queue import Queue
-from .connection import Connection
-from .protect import CatchExceptions
-from .haploid import (push, patch)
-from ..utility import unzip_dict
+from ..lib import Queue, Connection, push, patch, EndOfQueue, FlushQueue
 from .scheduler import Scheduler
 from .worker import run_job
 
@@ -24,8 +20,11 @@ def hybrid_coroutine_worker(selector, workers):
     """
     jobs = Queue()
 
-    worker_source, worker_sink = unzip_dict(
-        {k: w.setup() for k, w in workers.items()})
+    worker_source = {}
+    worker_sink = {}
+
+    for k, w in workers.items():
+        worker_source[k], worker_sink[k] = w.setup()
 
     def get_result():
         source = jobs.source()
@@ -66,31 +65,33 @@ def hybrid_threaded_worker(selector, workers):
     assumed that dispatching a job takes little time, while waiting for
     one to return a result may take a long time.
     """
-    results = Queue()
+    result_queue = Queue()
 
-    # print([w.source for k, w in workers.items()])
-
-    catch = {
-        k: CatchExceptions(results.sink)
-        for k, w in workers.items()
-    }
-
-    result_source = {
-        k: w.source >> catch[k].result_source
-        for k, w in workers.items()
-    }
-
-    job_sink = {
-        k: (catch[k].job_sink >> w.sink)()
-        for k, w in workers.items()
-    }
+    job_sink = {k: w.sink() for k, w in workers.items()}
 
     @push
     def dispatch_job():
-        default_sink = results.sink()
+        default_sink = result_queue.sink()
 
         while True:
             msg = yield
+
+            if msg is EndOfQueue:
+                for k in workers.keys():
+                    try:
+                        job_sink[k].send(EndOfQueue)
+                    except StopIteration:
+                        pass
+                return
+
+            if msg is FlushQueue:
+                for k in workers.keys():
+                    try:
+                        job_sink[k].send(FlushQueue)
+                    except StopIteration:
+                        pass
+                return
+
             worker = selector(msg.node)
             if worker:
                 job_sink[worker].send(msg)
@@ -99,19 +100,12 @@ def hybrid_threaded_worker(selector, workers):
 
     for key, worker in workers.items():
         t = threading.Thread(
-            target=catch[key](patch),
-            args=(result_source[key], results.sink))
+            target=patch,
+            args=(worker.source, result_queue.sink))
         t.daemon = True
         t.start()
 
-        if worker.aux:
-            t_aux = threading.Thread(
-                target=catch[key](worker.aux),
-                args=(),
-                daemon=True)
-            t_aux.start()
-
-    return Connection(results.source, dispatch_job)
+    return Connection(result_queue.source, dispatch_job)
 
 
 def run_hybrid(wf, selector, workers):

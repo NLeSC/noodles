@@ -8,7 +8,8 @@ class Display:
     def report(self):
         pass
 
-    def __call__(self, key, status, data, err_msg):
+    def __call__(self, msg):
+        key, status, data, err_msg = msg
         getattr(self, status)(key, data, err_msg)
 
     def __enter__(self):
