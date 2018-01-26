@@ -77,7 +77,7 @@ def xenon_interactive_worker(
                 if len(lines) == 1:
                     continue
 
-                yield from ((x,) for x in lines[1:-1])
+                yield from lines[1:-1]
 
                 if lines[-1][-1] == '\n':
                     yield lines[-1]
