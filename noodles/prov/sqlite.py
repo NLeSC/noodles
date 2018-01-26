@@ -107,13 +107,16 @@ class JobDB:
 
     # --------- job-keeper interface ------------
     def __len__(self):
-        return len(self.jobs)
+        with self.lock:
+            return len(self.jobs)
 
     def __delitem__(self, key):
-        del self.jobs[key]
+        with self.lock:
+            del self.jobs[key]
 
     def __getitem__(self, key):
-        return self.jobs[key]
+        with self.lock:
+            return self.jobs[key]
 
     def register(self, job):
         """Takes a job (unencoded) and adorns it with a unique key; this makes
@@ -205,9 +208,8 @@ class JobDB:
                 '"is_workflow" = ? where "id" = ?;',
                 (result_value_msg, is_workflow(result.value), result.key))
 
-            workflow, node = self[result.key]
-            attached_keys = tuple(self.attached[result.key])
-            del self.attached[result.key]
+            workflow, node = self.jobs[result.key]
+            attached_keys = ()
 
             if is_workflow(result.value):
                 new_workflow_id = id(get_workflow(result.value))
@@ -219,6 +221,9 @@ class JobDB:
                     del self.links[id(workflow)]
 
             elif node == workflow.root:
+                attached_keys = tuple(self.attached[result.key])
+                del self.attached[result.key]
+
                 linked_keys = tuple(self.links[id(workflow)])
                 del self.links[id(workflow)]
 
@@ -234,6 +239,10 @@ class JobDB:
                 # feed them to the scheduler.
                 for k in linked_keys:
                     attached_keys += tuple(self.attached[k])
+
+            else:
+                attached_keys = tuple(self.attached[result.key])
+                del self.attached[result.key]
 
             return attached_keys
 

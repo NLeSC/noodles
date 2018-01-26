@@ -53,7 +53,7 @@ def thread_pool(*workers, results=None, end_of_queue=EndOfQueue):
     :rtype: |pull|
     """
     if results is None:
-        results = Queue(end_of_queue=EndOfQueue)
+        results = Queue(end_of_queue=end_of_queue)
 
     count = thread_counter(results.close)
 
