@@ -7,64 +7,48 @@ from ...workflow import (get_workflow)
 from copy import copy
 
 
-def run_xenon_simple(wf, machine, worker_config):
-    S = Scheduler()
+def run_xenon_simple(workflow, machine, worker_config):
+    """Run a workflow using a single Xenon remote worker.
 
-    result = S.run(
-        xenon_interactive_worker(machine, worker_config), get_workflow(wf)
+    :param workflow: |Workflow| or |PromisedObject| to evaluate.
+    :param machine: |Machine| instance.
+    :param worker_config: Configuration for the pilot job."""
+    scheduler = Scheduler()
+
+    return scheduler.run(
+        xenon_interactive_worker(machine, worker_config),
+        get_workflow(workflow)
     )
-
-    return result
 
 
 def run_xenon(
-        wf, machine, worker_config, n_processes, *, deref=False,
-        job_keeper=None):
+        workflow, *, machine, worker_config, n_processes, deref=False):
     """Run the workflow using a number of online Xenon workers.
 
-    :param Xe:
-        The XenonKeeper instance.
-
-    :param wf:
-        The workflow.
-    :type wf: `Workflow` or `PromisedObject`
-
-    :param n_processes:
-        Number of processes to start.
-
-    :param xenon_config:
-        The :py:class:`XenonConfig` object that gives tells us how to use
-        Xenon.
-
-    :param job_config:
-        The :py:class:`RemoteJobConfig` object that specifies the command to
-        run remotely for each worker.
-
-    :param deref:
-        Set this to True to pass the result through one more encoding and
-        decoding step with object derefencing turned on.
-    :type deref: bool
-
+    :param workflow: |Workflow| or |PromisedObject| to evaluate.
+    :param machine: The |Machine| instance.
+    :param worker_config: Configuration of the pilot job
+    :param n_processes: Number of pilot jobs to start.
+    :param deref: Set this to True to pass the result through one more
+        encoding and decoding step with object dereferencing turned on.
     :returns: the result of evaluating the workflow
-    :rtype: any
     """
 
-    DP = DynamicPool(machine)
+    dynamic_pool = DynamicPool(machine)
 
     for i in range(n_processes):
         cfg = copy(worker_config)
         cfg.name = 'xenon-{0:02}'.format(i)
-        DP.add_xenon_worker(cfg)
+        dynamic_pool.add_xenon_worker(cfg)
 
-    if job_keeper is None:
-        job_keeper = JobKeeper()
+    job_keeper = JobKeeper()
     S = Scheduler(job_keeper=job_keeper)
 
     result = S.run(
-        DP, get_workflow(wf)
+        dynamic_pool, get_workflow(workflow)
     )
 
-    DP.close_all()
+    dynamic_pool.close_all()
 
     if deref:
         return worker_config.registry().dereference(result, host='scheduler')

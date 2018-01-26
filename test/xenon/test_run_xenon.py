@@ -15,7 +15,7 @@ def test_xenon_42_simple(xenon_server):
     worker_config = XenonJobConfig(verbose=True)
 
     result = run_xenon_simple(
-        C, machine, worker_config)
+        C, machine=machine, worker_config=worker_config)
 
     assert(result == 42)
 
@@ -31,6 +31,7 @@ def test_xenon_42_multi(xenon_server):
     worker_config = XenonJobConfig(queue_name='multi', verbose=True)
 
     result = run_xenon(
-        C, machine, worker_config, 2)
+        C, machine=machine, worker_config=worker_config,
+        n_processes=2)
 
     assert(result == 42)
