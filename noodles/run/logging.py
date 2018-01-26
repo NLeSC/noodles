@@ -4,6 +4,23 @@ import logging
 
 
 def make_logger(name, stream_type, jobs):
+    """Create a logger component.
+
+    :param name: name of logger child, i.e. logger will be named
+        `noodles.<name>`.
+    :type name: str
+    :param stream_type: type of the stream that this logger will
+        be inserted into, should be |pull_map| or |push_map|.
+    :type stream_type: function
+    :param jobs: job-keeper instance.
+    :type jobs: dict, |JobKeeper| or |JobDB|.
+
+    :return: a stream.
+
+    The resulting stream receives messages and sends them on after
+    sending an INFO message to the logger. In the case of a |JobMessage|
+    or |ResultMessage| a meaningful message is composed otherwise the
+    string representation of the object is passed."""
     logger = logging.getLogger('noodles').getChild(name)
 
     @stream_type
