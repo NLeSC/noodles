@@ -14,6 +14,7 @@ setup(
     name='Noodles',
     version='0.3.0',
     description='Workflow Engine',
+    long_description=long_description,
     author='Johan Hidding',
     url='https://github.com/NLeSC/noodles',
     packages=[
@@ -38,7 +39,7 @@ setup(
         'prov': ['tinydb', 'ujson'],
         'xenon': ['pyxenon'],
         'numpy': ['numpy', 'h5py', 'msgpack-python', 'filelock'],
-        'test': ['pytest', 'pytest-cov', 'pytest-flake8', 'codacy-coverage',
+        'test': ['pytest', 'pytest-cov', 'codacy-coverage',
                  'pyflakes', 'pep8', 'docker-py', 'numpy', 'tox']
     },
 )
