@@ -1,8 +1,4 @@
-.. image:: https://travis-ci.org/NLeSC/noodles.svg?branch=master
-   :alt: Travis
-.. image:: https://zenodo.org/badge/45391130.svg
-   :target: https://zenodo.org/badge/latestdoi/45391130
-   :alt: DOI
+|travis| |zenodo| |codecov|
 
 Noodles - easy parallel programming for Python
 ==============================================
@@ -140,3 +136,11 @@ The user then uses these in a workflow:
 Resulting in the graph:
 
 .. image:: examples/callgraph.png?raw=true
+
+.. |travis| image:: https://travis-ci.org/NLeSC/noodles.svg?branch=master
+  :alt: Travis
+.. |zenodo| image:: https://zenodo.org/badge/45391130.svg
+  :target: https://zenodo.org/badge/latestdoi/45391130
+  :alt: DOI
+.. |codecov| image:: https://codecov.io/gh/NLeSC/noodles/branch/master/graph/badge.svg
+  :target: https://codecov.io/gh/NLeSC/noodles
