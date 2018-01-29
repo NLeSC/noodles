@@ -1,4 +1,8 @@
-#!/usr/bin/env python3.5
+#!/usr/bin/env python3
+
+"""
+Boil build utility.
+"""
 
 import argparse
 import configparser
@@ -87,16 +91,17 @@ def object_filename(srcdir, filename, config):
 
 
 @noodles.schedule_hint(display="  Compiling {source_file} ... ",
-                       confirm=True,
-                       annotated=True)
+                       confirm=True)
+@noodles.maybe
 def compile_source(source_file, object_file, config):
+    """Compile a single source file."""
     p = subprocess.run(
         [config['cc'], '-c'] + config['cflags'].split() +
         [source_file, '-o', object_file],
         stderr=subprocess.PIPE, universal_newlines=True)
     p.check_returncode()
 
-    return object_file, p.stderr
+    return object_file
 
 
 def get_object_file(src_dir, src_file, config):
@@ -119,20 +124,22 @@ def get_object_file(src_dir, src_file, config):
 
 
 @noodles.schedule_hint(display="  Linking ... ",
-                       confirm=True,
-                       annotated=True)
+                       confirm=True)
+@noodles.maybe
 def link(object_files, config):
+    """Link object files to executable."""
     p = subprocess.run(
         [config['cc']] + object_files + ['-o', config['target']] +
         config['ldflags'].split(),
         stderr=subprocess.PIPE, universal_newlines=True)
     p.check_returncode()
 
-    return config['target'], p.stderr
+    return config['target']
 
 
 @noodles.schedule_hint(display="{msg}")
-def message(msg, value=0):
+def message(msg, value=None):
+    """Just print a message and pass on ``value``."""
     return value
 
 
@@ -144,10 +151,45 @@ def get_target(obj_files, config):
         list of object files
     :param config:
         boil configuration"""
+    if any(noodles.failed(obj) for obj in obj_files):
+        return Report(
+            'failed',
+            failures=[obj for obj in obj_files if noodles.failed(obj)])
+
     if is_out_of_date(config['target'], obj_files):
-        return link(obj_files, config)
+        return report_from_result(link(obj_files, config))
     else:
-        return message("target is up-to-date.")
+        return report_from_result('nothing-to-do')
+
+
+@noodles.schedule
+def report_from_result(result):
+    """Assemble report from a result."""
+    if noodles.failed(result):
+        return Report('failed', failures=[result])
+    else:
+        return Report('success', result=result)
+
+
+class Report:
+    """Contains status report of compile process."""
+    def __init__(self, status, result=None, failures=None):
+        self.status = status
+        self.result = result
+        self.failures = failures
+
+    def __str__(self):
+        line = '\033[31m' + '─' * 80 + '\033[m'
+
+        def format_failure(failure):
+            """Print a failure nicely."""
+            return str(failure) + '\n' + line + '\n' + \
+                failure.exception.stderr + line + '\n'
+
+        if self.status == 'failed':
+            return '\n\n'.join(map(format_failure, self.failures))
+        else:
+            return self.status
 
 
 @noodles.schedule_hint(display="Building target {config[target]}")
@@ -162,17 +204,15 @@ def make_target(config):
         for d in config['modules'].split()
     ]
 
-    files = chain(*(
-        find_files(d, config['ext'])
-        for d in dirs)
-    )
+    files = chain(
+        *(find_files(d, config['ext'])
+          for d in dirs))
 
-    obj_files = noodles.gather(*[
+    object_files = noodles.gather_all(
         get_object_file(src_dir, src_file, config)
-        for src_dir, src_file in files
-        ])
+        for src_dir, src_file in files)
 
-    return get_target(obj_files, config)
+    return get_target(object_files, config)
 
 
 def read_config(filename):
@@ -190,22 +230,16 @@ def read_config(filename):
     return {k: dict(reader[k]) for k in reader.sections()}
 
 
-def error_filter(type, value, tb):
-    if type is subprocess.CalledProcessError:
-        return value.stderr
-    else:
-        return None
-
-
 def try_to_run(cmd, err_prefix):
-    p = subprocess.run(
+    """Run a subprocess. Exit if subprocess fails."""
+    process = subprocess.run(
         cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
         universal_newlines=True)
     try:
-        p.check_returncode()
-        return p.stdout
-    except subprocess.CalledProcessError as e:
-        print(err_prefix, e.stderr)
+        process.check_returncode()
+        return process.stdout
+    except subprocess.CalledProcessError as exc:
+        print(err_prefix, exc.stderr)
         sys.exit(1)
 
 
@@ -262,5 +296,6 @@ if __name__ == '__main__':
 
         work = make_target(target_config)
         display_type = DumbDisplay if args.dumb else NCDisplay
-        with display_type(error_filter) as display:
-            noodles.run_logging(work, args.n_threads, display)
+        with display_type() as display:
+            report = noodles.run_logging(work, args.n_threads, display)
+        print(report)
