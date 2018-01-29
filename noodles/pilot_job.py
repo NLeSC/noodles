@@ -4,24 +4,14 @@ scheduler to dispatch jobs remotely, using
 
 .. code-block:: bash
 
-    > python3.5 -m noodles.worker <args>...
+    > python3 -m noodles.pilot_job <args>...
 
-There are several modes in which the worker generates results. For all
-of these modes, the rule is **one object per line**.
-
-:batch-mode: Give a single job as a JSON string on the command line. The
-    result is printed to stdout, again as a JSON object.
+Recieve worker commands as JSON objects through stdin and send out results to
+stdout.
 
     .. code-block:: bash
 
-        > python3.5 -m noodles.worker -batch "{'job': ...}"
-
-:online-mode: Recieve worker commands as JSON objects through stdin and
-    send out results to stdout.
-
-    .. code-block:: bash
-
-        > python3.5 -m noodles.worker -online [-use <worker>]
+        > python3 -m noodles.worker -online [-use <worker>]
 """
 
 import argparse

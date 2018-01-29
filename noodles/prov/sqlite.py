@@ -51,7 +51,7 @@ schema = '''
         "is_workflow" integer,
         "link"        integer references "jobs"("id") );
 
-    create index "prov" on "jobs"("prov");
+    create index if not exists "prov" on "jobs"("prov");
 
     create table if not exists "sessions" (
         "id"        integer unique primary key,
@@ -104,6 +104,13 @@ class JobDB:
             self.cur.execute(
                 'insert into "sessions" ("info") values (?)', (info,))
             self.session = self.cur.lastrowid
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc, exc_type, stacktrace):
+        self.connection.commit()
+        self.connection.close()
 
     # --------- job-keeper interface ------------
     def __len__(self):

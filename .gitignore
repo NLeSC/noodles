@@ -18,3 +18,4 @@ cache*
 .coverage.*
 htmlcov
 coverage.xml
+.vscode/.ropeproject

@@ -23,54 +23,54 @@ def run_parallel(workflow, *, n_threads, registry, db_file):
         keep the database in memory only.
     :return: Evaluated result.
     """
-    db = JobDB(db_file, registry)
-    job_queue = Queue()
-    result_queue = Queue()
+    with JobDB(db_file, registry) as db:
+        job_queue = Queue()
+        result_queue = Queue()
 
-    @pull
-    def pass_job(job_source):
-        result_sink = result_queue.sink()
+        @pull
+        def pass_job(job_source):
+            result_sink = result_queue.sink()
 
-        for message in job_source():
-            if message is EndOfQueue:
-                return
+            for message in job_source():
+                if message is EndOfQueue:
+                    return
 
-            key, job = message
+                key, job = message
 
-            status, retrieved_result = db.add_job_to_db(key, job)
+                status, retrieved_result = db.add_job_to_db(key, job)
 
-            if status == 'retrieved':
-                result_sink.send(retrieved_result)
-                continue
+                if status == 'retrieved':
+                    result_sink.send(retrieved_result)
+                    continue
 
-            elif status == 'attached':
-                continue
+                elif status == 'attached':
+                    continue
 
-            else:
-                yield message
+                else:
+                    yield message
 
-    job_logger = make_logger("incoming-jobs", push_map, db)
+        job_logger = make_logger("incoming-jobs", push_map, db)
 
-    @pull
-    def pass_result(worker_source):
-        for result in worker_source():
-            if result is EndOfQueue:
-                return
+        @pull
+        def pass_result(worker_source):
+            for result in worker_source():
+                if result is EndOfQueue:
+                    return
 
-            attached = db.store_result_in_db(result)
+                attached = db.store_result_in_db(result)
 
-            yield result
-            yield from (ResultMessage(key, 'attached', result.value, None)
-                        for key in attached)
+                yield result
+                yield from (ResultMessage(key, 'attached', result.value, None)
+                            for key in attached)
 
-    result_logger = make_logger("outgoing-results", pull_map, db)
+        result_logger = make_logger("outgoing-results", pull_map, db)
 
-    worker_pool = job_queue.source >> pass_job >> thread_pool(
-        *repeat(worker, n_threads), results=result_queue)
-    job_front_end = job_logger >> job_queue.sink
-    result_front_end = worker_pool >> pass_result >> result_logger
+        worker_pool = job_queue.source >> pass_job >> thread_pool(
+            *repeat(worker, n_threads), results=result_queue)
+        job_front_end = job_logger >> job_queue.sink
+        result_front_end = worker_pool >> pass_result >> result_logger
 
-    scheduler = Scheduler(job_keeper=db)
-    parallel_sqlite_worker = Connection(result_front_end, job_front_end)
+        scheduler = Scheduler(job_keeper=db)
+        parallel_sqlite_worker = Connection(result_front_end, job_front_end)
 
-    return scheduler.run(parallel_sqlite_worker, get_workflow(workflow))
+        return scheduler.run(parallel_sqlite_worker, get_workflow(workflow))
