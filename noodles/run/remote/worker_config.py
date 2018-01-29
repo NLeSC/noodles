@@ -58,7 +58,7 @@ class WorkerConfig(object):
 
         arguments = [
             '-m', 'noodles.pilot_job',
-            'online', '-name', self.name,
+            '-name', self.name,
             '-registry', object_name(self.registry)]
 
         if self.init:

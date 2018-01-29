@@ -31,14 +31,10 @@ from contextlib import redirect_stdout
 
 import time
 import os
+
+from noodles import __version__
 from .lib import (look_up)
 from .run.messages import (EndOfWork)
-
-try:
-    import msgpack  # noqa
-    has_msgpack = True
-except ImportError:
-    has_msgpack = False
 
 from .run.worker import (
     run_job)
@@ -51,11 +47,17 @@ from .run.remote.io import (
     JSONObjectReader, JSONObjectWriter)
 
 
-def run_batch_mode(args):
-    print("Batch mode is not yet implemented")
-
-
 def run_online_mode(args):
+    """Run jobs.
+
+    :param args: arguments resulting from program ArgumentParser.
+    :return: None
+
+    This reads messages containing job descriptions from standard input,
+    and writes messages to standard output containing the result.
+
+    Messages can be encoded as either JSON or MessagePack.
+    """
     print("\033[47;30m Netherlands\033[48;2;0;174;239;37m▌"
           "\033[38;2;255;255;255me\u20d2Science\u20d2\033[37m▐"
           "\033[47;30mcenter \033[m Noodles worker", file=sys.stderr)
@@ -142,55 +144,36 @@ if __name__ == "__main__":
                     "jobs remotely.")
 
     parser.add_argument(
-        "-version", action="version", version="Noodles 0.1.0-alpha1")
-
-    subparsers = parser.add_subparsers(
-        title="Execution models",
-        description="Noodles can execute jobs one at a time, or "
-                    "streaming on stdin/stdout.")
-
-    batch_parser = subparsers.add_parser(
-        "batch", help="run a single job")
-    batch_parser.add_argument(
-        "-persist",
-        help="keep going until a value, not another workflow, comes out.",
-        default=False, action='store_true')
-    batch_parser.set_defaults(func=run_batch_mode)
-
-    online_parser = subparsers.add_parser(
-        "online", help="stream jobs from standard input.")
-    online_parser.add_argument(
+        "-version", action="version", version="Noodles {}".format(__version__))
+    parser.add_argument(
         "-registry", type=str,
         help="the serial registry")
-    online_parser.add_argument(
+    parser.add_argument(
         "-n", type=int,
         help="the number of threads.", default=1)
-    online_parser.add_argument(
+    parser.add_argument(
         "-verbose",
         help="output information to stderr for debugging",
         default=False, action='store_true')
-    online_parser.add_argument(
+    parser.add_argument(
         "-jobdirs",
         help="create a directory for each job to run in",
         default=False, action='store_true')
-    online_parser.add_argument(
+    parser.add_argument(
         "-msgpack",
         help="use MessagePack for serialisation.",
         default=False, action='store_true')
-    online_parser.add_argument(
+    parser.add_argument(
         "-name", type=str,
         help="worker identity",
         default="worker-" + str(uuid.uuid4()))
-    online_parser.add_argument(
+    parser.add_argument(
         "-init", type=str,
         help="an init function will be send before other jobs",
         default=None)
-    online_parser.add_argument(
+    parser.add_argument(
         "-finish", type=str,
         help="a finish function will be send before other jobs",
         default=None)
 
-    online_parser.set_defaults(func=run_online_mode)
-
-    args = parser.parse_args()
-    args.func(args)
+    run_online_mode(parser.parse_args())

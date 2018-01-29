@@ -1,24 +1,30 @@
+"""
+Test the use of init and finish functions.
+"""
+
 from noodles import schedule, run_process, serial
 
 
-# @schedule
 def init():
-    global s
-    s = "This global variable needs to be here!"
+    """Creates a global variable ``s``, and returns True."""
+    global S
+    S = "This global variable needs to be here!"
     return True
 
 
-# @schedule
 def finish():
+    """Just print a message."""
     return "Finish functino was run!"
 
 
 @schedule
 def checker():
-    return s == "This global variable needs to be here!"
+    """Check if global variable ``s`` exists."""
+    return S == "This global variable needs to be here!"
 
 
 def test_globals():
+    """Test init and finish functions on ``run_process``."""
     a = checker()
     result = run_process(a, n_processes=1, registry=serial.base,
                          init=init, finish=finish)

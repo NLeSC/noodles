@@ -31,7 +31,7 @@ def process_worker(registry, verbose=False, jobdirs=False,
                    init=None, finish=None, status=True, use_msgpack=False):
     name = "process-" + str(uuid.uuid4())
 
-    cmd = [sys.prefix + "/bin/python", "-m", "noodles.pilot_job", "online",
+    cmd = [sys.prefix + "/bin/python", "-m", "noodles.pilot_job",
            "-name", name, "-registry", object_name(registry)]
     if use_msgpack:
         assert has_msgpack
