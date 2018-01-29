@@ -1,3 +1,5 @@
 {
     "python.pythonPath": "/usr/bin/python3",
+    "python.linting.pylintArgs": ["--disable=W0613,W0703,C0103"]
+    // ["--errors-only"]
 }

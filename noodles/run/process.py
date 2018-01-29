@@ -1,3 +1,10 @@
+"""
+Process backend
+===============
+
+Run jobs using a process backend.
+"""
+
 import sys
 import uuid
 from subprocess import Popen, PIPE
@@ -20,21 +27,15 @@ from .remote.io import (
     MsgPackObjectReader, MsgPackObjectWriter,
     JSONObjectReader, JSONObjectWriter)
 
-try:
-    import msgpack  # noqa
-    has_msgpack = True
-except ImportError:
-    has_msgpack = False
-
 
 def process_worker(registry, verbose=False, jobdirs=False,
                    init=None, finish=None, status=True, use_msgpack=False):
+    """Process worker"""
     name = "process-" + str(uuid.uuid4())
 
     cmd = [sys.prefix + "/bin/python", "-m", "noodles.pilot_job",
            "-name", name, "-registry", object_name(registry)]
     if use_msgpack:
-        assert has_msgpack
         cmd.append("-msgpack")
     if verbose:
         cmd.append("-verbose")
@@ -47,27 +48,28 @@ def process_worker(registry, verbose=False, jobdirs=False,
     if finish:
         cmd.extend(["-finish", object_name(finish)])
 
-    p = Popen(
+    remote = Popen(
         cmd,
         stdin=PIPE, stdout=PIPE, stderr=PIPE, universal_newlines=True)
 
     def read_stderr():
-        logger = logging.getLogger('noodles')
-        for line in p.stderr:
+        """Read stderr of remote process and sends lines to logger."""
+        logger = logging.getLogger('noodles').getChild(name)
+        for line in remote.stderr:
             logger.info(name + ": " + line.rstrip())
 
-    t = threading.Thread(target=read_stderr)
-    t.daemon = True
-    t.start()
+    stderr_reader_thread = threading.Thread(target=read_stderr, daemon=True)
+    stderr_reader_thread.start()
 
     @push
     def send_job():
+        """Coroutine, sends jobs to remote worker over standard input."""
         reg = registry()
 
         if use_msgpack:
-            sink = MsgPackObjectWriter(reg, p.stdin.buffer)
+            sink = MsgPackObjectWriter(reg, remote.stdin.buffer)
         else:
-            sink = JSONObjectWriter(reg, p.stdin)
+            sink = JSONObjectWriter(reg, remote.stdin)
 
         while True:
             msg = yield
@@ -77,8 +79,8 @@ def process_worker(registry, verbose=False, jobdirs=False,
                 except StopIteration:
                     pass
 
-                p.wait()
-                t.join()
+                remote.wait()
+                stderr_reader_thread.join()
 
                 return
 
@@ -89,26 +91,27 @@ def process_worker(registry, verbose=False, jobdirs=False,
 
     @pull
     def get_result():
+        """Generator, reading results from process standard output."""
         reg = registry()
         if use_msgpack:
-            newin = os.fdopen(p.stdout.fileno(), 'rb', buffering=0)
+            newin = os.fdopen(remote.stdout.fileno(), 'rb', buffering=0)
             yield from MsgPackObjectReader(reg, newin)
         else:
-            yield from JSONObjectReader(reg, p.stdout)
+            yield from JSONObjectReader(reg, remote.stdout)
 
     return Connection(get_result, send_job)
 
 
-def run_process(wf, n_processes, registry,
+def run_process(workflow, *, n_processes, registry,
                 verbose=False, jobdirs=False,
                 init=None, finish=None, deref=False, use_msgpack=False):
     """Run the workflow using a number of new python processes. Use this
     runner to test the workflow in a situation where data serial
     is needed.
 
-    :param wf:
+    :param workflow:
         The workflow.
-    :type wf: `Workflow` or `PromisedObject`
+    :type workflow: `Workflow` or `PromisedObject`
 
     :param n_processes:
         Number of processes to start.
@@ -146,15 +149,16 @@ def run_process(wf, n_processes, registry,
 
     worker_names = list(workers.keys())
 
-    def random_selector(job):
+    def random_selector(_):
+        """Selects a worker to send a job to at random."""
         return random.choice(worker_names)
 
     master_worker = hybrid_threaded_worker(random_selector, workers)
-    result = Scheduler().run(master_worker, get_workflow(wf))
+    result = Scheduler().run(master_worker, get_workflow(workflow))
 
-    for w in workers.values():
+    for worker in workers.values():
         try:
-            w.sink().send(EndOfQueue)
+            worker.sink().send(EndOfQueue)
         except StopIteration:
             pass
 
