@@ -49,7 +49,7 @@ def run_parallel(workflow, *, n_threads, registry, db_file):
                 else:
                     yield message
 
-        job_logger = make_logger("incoming-jobs", push_map, db)
+        job_logger = make_logger("worker", push_map, db)
 
         @pull
         def pass_result(worker_source):
@@ -63,7 +63,7 @@ def run_parallel(workflow, *, n_threads, registry, db_file):
                 yield from (ResultMessage(key, 'attached', result.value, None)
                             for key in attached)
 
-        result_logger = make_logger("outgoing-results", pull_map, db)
+        result_logger = make_logger("worker", pull_map, db)
 
         worker_pool = job_queue.source >> pass_job >> thread_pool(
             *repeat(worker, n_threads), results=result_queue)

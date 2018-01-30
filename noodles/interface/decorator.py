@@ -48,7 +48,7 @@ def schedule(f, **hints):
     """Decorator; schedule calls to function `f` into a workflow, in stead of
     running them at once. The decorated function returns a
     :class:`PromisedObject`."""
-    return scheduled_function(f, **hints)
+    return scheduled_function(f, hints=hints)
 
 
 def has_scheduled_methods(cls):

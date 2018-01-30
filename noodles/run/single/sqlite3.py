@@ -8,7 +8,7 @@ from ...prov.sqlite import (JobDB)
 from ...lib import (Queue, pull, pull_map, push_map, Connection)
 
 
-def run_single(workflow, registry, db_file):
+def run_single(workflow, *, registry, db_file):
     """"Run workflow in a single thread, storing results in a Sqlite3
     database.
 
@@ -19,8 +19,8 @@ def run_single(workflow, registry, db_file):
     :return: Evaluated result.
     """
     with JobDB(db_file, registry) as db:
-        job_logger = make_logger("incoming-jobs", push_map, db)
-        result_logger = make_logger("outgoing-results", pull_map, db)
+        job_logger = make_logger("worker", push_map, db)
+        result_logger = make_logger("worker", pull_map, db)
 
         @pull
         def pass_job(source):

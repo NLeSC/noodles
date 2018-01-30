@@ -185,6 +185,7 @@ class JobDB:
                             'select * from "jobs" where "id" = ?',
                             (rec.link,))
                         rec = self.cur.fetchone()
+                        rec = JobEntry(*rec) if rec is not None else None
                     else:
                         self.attached[rec.id].append(key)
                         return 'attached', None

@@ -1,4 +1,5 @@
 from ..lib import (EndOfQueue)
+from ..workflow import (is_workflow)
 from .messages import (JobMessage, ResultMessage)
 import logging
 
@@ -30,13 +31,19 @@ def make_logger(name, stream_type, jobs):
 
         elif isinstance(message, JobMessage):
             logger.info(
-                "job %s: %s", message.key, message.node)
+                "job    %10s: %s", message.key, message.node)
 
         elif isinstance(message, ResultMessage):
             job = jobs[message.key]
-            logger.info(
-                "result %s [%s]: %s %s", message.key, job.node,
-                message.status, message.value)
+            if is_workflow(message.value):
+                logger.info(
+                    "result %10s [%s]: %s -> workflow %x", message.key, job.node,
+                    message.status, id(message.value))
+            else:
+                value_string = repr(message.value)
+                logger.info(
+                    "result %10s [%s]: %s -> %s", message.key, job.node,
+                    message.status, value_string)
 
         else:
             logger.info(

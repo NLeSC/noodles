@@ -72,6 +72,17 @@ class SerNamedTuple(Serialiser):
         return cls(**data)
 
 
+class SerSlice(Serialiser):
+    def __init__(self):
+        super(SerSlice, self).__init__(slice)
+
+    def encode(self, obj, make_rec):
+        return make_rec([obj.start, obj.stop, obj.step])
+
+    def decode(self, cls, data):
+        return slice(*data)
+
+
 def _remap_links(remap, links):
     return [{'node': remap[source],
              'to': [{'node': remap[node],
@@ -184,6 +195,7 @@ def registry():
             dict: SerDict(),
             tuple: SerTuple(),
             bytes: SerBytes(),
+            slice: SerSlice(),
             Reasonable: SerReasonableObject(Reasonable),
             ArgumentKind: SerEnum(ArgumentKind),
             FunctionNode: SerNode(),

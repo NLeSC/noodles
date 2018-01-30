@@ -48,6 +48,8 @@ class FunctionNode:
         def _str(x):
             if x is Empty:
                 return '-'
+            elif isinstance(x, str):
+                return repr(x)
             else:
                 return str(x)
 

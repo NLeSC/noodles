@@ -197,7 +197,7 @@ def lift(obj, memo=None):
 
     actions = {
         list:  (lambda x: x, make_list),
-        dict:  (lambda x: x.items(), make_dict),
+        dict:  (lambda x: list(x.items()), make_dict),
         tuple: (lambda x: x, make_tuple),
         set:   (lambda x: x, make_set)
     }
