@@ -153,6 +153,7 @@ def run_and_print_log(workflow, highlight=None):
     logger.setLevel(logging.INFO)
     logger.handlers = [log_handler]
 
-    result = run_parallel(workflow, n_threads=4, registry=serial.base, db_file='tutorial.db')
+    result = run_parallel(
+        workflow, n_threads=4, registry=serial.base, db_file='tutorial.db')
     highlight_lines(log.getvalue(), highlight or [])
     return result

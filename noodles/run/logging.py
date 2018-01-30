@@ -37,8 +37,8 @@ def make_logger(name, stream_type, jobs):
             job = jobs[message.key]
             if is_workflow(message.value):
                 logger.info(
-                    "result %10s [%s]: %s -> workflow %x", message.key, job.node,
-                    message.status, id(message.value))
+                    "result %10s [%s]: %s -> workflow %x", message.key,
+                    job.node, message.status, id(message.value))
             else:
                 value_string = repr(message.value)
                 logger.info(
