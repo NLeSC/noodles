@@ -30,7 +30,7 @@ setup(
         'Intended Audience :: Science/Research',
         'Environment :: Console',
         'Development Status :: 4 - Beta',
-        'Programming Language :: Python :: 3.5',
+        'Programming Language :: Python :: 3.6',
         'Topic :: System :: Distributed Computing'],
 
     install_requires=['graphviz', 'ujson'],
