@@ -29,10 +29,7 @@ backends = {
         n_threads=4, db_file=':memory:', registry=registry),
     'processes-2': backend_factory(
         run_process, supports=['remote'], n_processes=2, registry=registry,
-        verbose=True),
-    'processes-2-msgpack': backend_factory(
-        run_process, supports=['remote'], n_processes=2, registry=registry,
-        use_msgpack=True)
+        verbose=True)
 }
 
 __all__ = ['backends']

@@ -11,8 +11,6 @@ from subprocess import Popen, PIPE
 import threading
 import logging
 
-
-import os
 import random
 from ..workflow import get_workflow
 # from ..logger import log
@@ -23,20 +21,16 @@ from .hybrid import hybrid_threaded_worker
 from ..lib import (pull, push, Connection, object_name, EndOfQueue, FlushQueue)
 from .messages import (EndOfWork)
 
-from .remote.io import (
-    MsgPackObjectReader, MsgPackObjectWriter,
-    JSONObjectReader, JSONObjectWriter)
+from .remote.io import (JSONObjectReader, JSONObjectWriter)
 
 
 def process_worker(registry, verbose=False, jobdirs=False,
-                   init=None, finish=None, status=True, use_msgpack=False):
+                   init=None, finish=None, status=True):
     """Process worker"""
     name = "process-" + str(uuid.uuid4())
 
     cmd = [sys.prefix + "/bin/python", "-m", "noodles.pilot_job",
            "-name", name, "-registry", object_name(registry)]
-    if use_msgpack:
-        cmd.append("-msgpack")
     if verbose:
         cmd.append("-verbose")
     if jobdirs:
@@ -66,10 +60,7 @@ def process_worker(registry, verbose=False, jobdirs=False,
         """Coroutine, sends jobs to remote worker over standard input."""
         reg = registry()
 
-        if use_msgpack:
-            sink = MsgPackObjectWriter(reg, remote.stdin.buffer)
-        else:
-            sink = JSONObjectWriter(reg, remote.stdin)
+        sink = JSONObjectWriter(reg, remote.stdin)
 
         while True:
             msg = yield
@@ -93,18 +84,14 @@ def process_worker(registry, verbose=False, jobdirs=False,
     def get_result():
         """Generator, reading results from process standard output."""
         reg = registry()
-        if use_msgpack:
-            newin = os.fdopen(remote.stdout.fileno(), 'rb', buffering=0)
-            yield from MsgPackObjectReader(reg, newin)
-        else:
-            yield from JSONObjectReader(reg, remote.stdout)
+        yield from JSONObjectReader(reg, remote.stdout)
 
     return Connection(get_result, send_job)
 
 
 def run_process(workflow, *, n_processes, registry,
                 verbose=False, jobdirs=False,
-                init=None, finish=None, deref=False, use_msgpack=False):
+                init=None, finish=None, deref=False):
     """Run the workflow using a number of new python processes. Use this
     runner to test the workflow in a situation where data serial
     is needed.
@@ -143,8 +130,7 @@ def run_process(workflow, *, n_processes, registry,
     """
     workers = {}
     for i in range(n_processes):
-        new_worker = process_worker(registry, verbose, jobdirs, init, finish,
-                                    use_msgpack=use_msgpack)
+        new_worker = process_worker(registry, verbose, jobdirs, init, finish)
         workers['worker {0:2}'.format(i)] = new_worker
 
     worker_names = list(workers.keys())
