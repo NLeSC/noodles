@@ -33,13 +33,12 @@ setup(
         'Programming Language :: Python :: 3.5',
         'Topic :: System :: Distributed Computing'],
 
-    install_requires=['graphviz'],
+    install_requires=['graphviz', 'ujson'],
     extras_require={
-        'doc': ['sphinx', 'sphinx_rtd_theme', 'nbsphinx'],
-        'prov': ['tinydb', 'ujson'],
         'xenon': ['pyxenon'],
-        'numpy': ['numpy', 'h5py', 'msgpack-python', 'filelock'],
-        'test': ['pytest', 'pytest-cov', 'codacy-coverage',
-                 'pyflakes', 'pep8', 'docker-py', 'numpy', 'tox']
+        'numpy': ['numpy', 'h5py', 'filelock'],
+        'develop': [
+            'pytest', 'pytest', 'coverage', 'pep8', 'numpy', 'tox',
+            'sphinx', 'sphinx_rtd_theme', 'nbsphinx'],
     },
 )

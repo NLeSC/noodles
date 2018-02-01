@@ -32,9 +32,7 @@ from .run.worker import (
 from .run.messages import (
     JobMessage)
 
-from .run.remote.io import (
-    MsgPackObjectReader, MsgPackObjectWriter,
-    JSONObjectReader, JSONObjectWriter)
+from .run.remote.io import (JSONObjectReader, JSONObjectWriter)
 
 
 def run_online_mode(args):
@@ -56,18 +54,10 @@ def run_online_mode(args):
         registry = look_up(args.registry)()
         finish = None
 
-        if args.msgpack:
-            newin = os.fdopen(sys.stdin.fileno(), 'rb', buffering=0)
-            input_stream = MsgPackObjectReader(
-                registry, newin, deref=True)
-            output_stream = MsgPackObjectWriter(
-                registry, sys.stdout.buffer, host=args.name)
-        else:
-            input_stream = JSONObjectReader(
-                registry, sys.stdin, deref=True)
-            output_stream = JSONObjectWriter(
-                registry, sys.stdout, host=args.name)
-
+        input_stream = JSONObjectReader(
+            registry, sys.stdin, deref=True)
+        output_stream = JSONObjectWriter(
+            registry, sys.stdout, host=args.name)
         sys.stdout.flush()
 
         # run the init function if it is given
@@ -148,10 +138,6 @@ if __name__ == "__main__":
     parser.add_argument(
         "-jobdirs",
         help="create a directory for each job to run in",
-        default=False, action='store_true')
-    parser.add_argument(
-        "-msgpack",
-        help="use MessagePack for serialisation.",
         default=False, action='store_true')
     parser.add_argument(
         "-name", type=str,
