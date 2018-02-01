@@ -1,3 +1,7 @@
+"""
+Implements single-threaded worker with Sqlite3 support.
+"""
+
 from ..scheduler import (Scheduler)
 from ..messages import (ResultMessage)
 from ..worker import (run_job)
@@ -24,6 +28,7 @@ def run_single(workflow, *, registry, db_file):
 
         @pull
         def pass_job(source):
+            """Receives jobs from source, passes back results."""
             for msg in source():
                 key, job = msg
                 status, retrieved_result = db.add_job_to_db(key, job)

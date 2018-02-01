@@ -18,4 +18,11 @@ cache*
 .coverage.*
 htmlcov
 coverage.xml
+
+# vscode
 .vscode/.ropeproject
+.vscode/tags
+
+# local testing
+local
+snippets

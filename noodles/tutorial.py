@@ -10,31 +10,31 @@ from . import schedule, schedule_hint, get_workflow
 
 @schedule
 def add(x, y):
-    """(schedule) add `x` and `y`."""
+    """add `x` and `y`."""
     return x + y
 
 
 @schedule_hint(display="{a} + {b}", confirm=True)
 def log_add(a, b):
-    """(scheduled) add `a` and `b` and send message to logger."""
+    """add `a` and `b` and send message to logger."""
     return a + b
 
 
 @schedule
 def sub(x, y):
-    """(scheduled) subtract `y` from `x`."""
+    """subtract `y` from `x`."""
     return x - y
 
 
 @schedule
 def mul(x, y):
-    """(scheduled) multiply `x` and `y`."""
+    """multiply `x` and `y`."""
     return x*y
 
 
 @schedule
 def accumulate(lst, start=0):
-    """(scheduled) compute sum of `lst`."""
+    """compute sum of `lst`."""
     return sum(lst, start)
 
 
@@ -47,13 +47,22 @@ def _format_arg_list(args, variadic=False):
     :param v: tell if the function accepts variadic arguments
     :type v: bool
     """
+    def sugar(s):
+        """Shorten strings that are too long for decency."""
+        s = s.replace("{", "{{").replace("}", "}}")
+        if len(s) > 50:
+            return s[:20] + " ... " + s[-20:]
+        else:
+            return s
+
     def arg_to_str(arg):
+        """Convert argument to a string."""
         if isinstance(arg, str):
-            return repr(arg)
+            return sugar(repr(arg))
         elif arg is Parameter.empty:
             return '\u2014'
         else:
-            return str(arg)
+            return sugar(str(arg))
 
     if not args:
         if variadic:
@@ -61,18 +70,7 @@ def _format_arg_list(args, variadic=False):
         else:
             return "()"
 
-    result = "("
-    for arg in args[:-1]:
-        result += arg_to_str(arg)
-        result += ", "
-
-    if variadic:
-        result += "\u2026"
-    else:
-        result += arg_to_str(args[-1])
-
-    result += ")"
-    return result
+    return "(" + ", ".join(map(arg_to_str, args)) + ")"
 
 
 def get_workflow_graph(promise):
@@ -80,7 +78,6 @@ def get_workflow_graph(promise):
     workflow = get_workflow(promise)
 
     dot = Digraph()
-    dot
     for i, n in workflow.nodes.items():
         dot.node(str(i), label="{0} \n {1}".format(
             n.foo.__name__,
@@ -103,6 +100,7 @@ def display_workflows(prefix, **kwargs):
     from IPython.display import display, Markdown
 
     def create_svg(name, workflow):
+        """Create an SVG file with rendered graph from a workflow."""
         filename = '{}-{}.svg'.format(prefix, name)
         dot = get_workflow_graph(workflow)
         dot.attr('graph', bgcolor='transparent')
@@ -122,8 +120,18 @@ def display_workflows(prefix, **kwargs):
     display(Markdown(markdown_table))
 
 
-def highlight_lines(text, lines):
+def highlight_lines(text, lines=None):
+    """In a Jupyter notebook, takes a multi-line string, displays these lines
+    in '<pre></pre>' block HTML. A list of lines may be provided that should
+    be highlighted in the result. A highlight gives a gray background and bold
+    font.
+
+    :param text: string
+    :param lines: list of lines to be highlighted.
+    """
     from IPython.display import display, HTML
+
+    lines = lines or []
     style = [
         'font-size: 9pt; margin: 0pt',
         'background: #eeeeee; font-weight: bold; font-size: 9pt; margin: 0pt']

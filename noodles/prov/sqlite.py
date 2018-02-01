@@ -23,9 +23,9 @@ once a non-workflow result is known.
 
 import sqlite3
 from threading import Lock
-from collections import (namedtuple, defaultdict)
-# from ..utility import on
-import time
+from collections import (defaultdict)
+from typing import NamedTuple
+import datetime
 import sys
 from ..run.messages import (JobMessage, ResultMessage)
 from ..workflow import (is_workflow, get_workflow)
@@ -65,23 +65,33 @@ schema = '''
         "what"      text );
 '''
 
-JobEntry = namedtuple(
-        'JobEntry',
-        ['id', 'session', 'name', 'prov',
-         'version', 'function', 'arguments', 'result',
-         'is_workflow', 'link'])
 
-SessionEntry = namedtuple(
-        'SessionEntry',
-        ['id', 'time', 'info'])
+class JobEntry(NamedTuple):
+    """Python tuple reflection of Job entry in database."""
+    id: int
+    session: int
+    name: str
+    prov: str
+    version: str
+    function: str
+    arguments: str
+    result: str
+    is_workflow: int
+    link: int
 
-TimestampEntry = namedtuple(
-        'TimestampEntry',
-        ['job', 'time', 'what'])
+
+class SessionEntry(NamedTuple):
+    """Python tuple reflection of Session entry in database."""
+    id: int
+    time: datetime.datetime
+    info: str
 
 
-def time_stamp():
-    return time.strftime('%Y-%m-%dT%H:%M:%SZ', time.gmtime(time.time()))
+class TimestampEntry(NamedTuple):
+    """Python tuple reflection of Timestamp entry in database."""
+    job: int
+    time: datetime.datetime
+    what: str
 
 
 class JobDB:
@@ -203,12 +213,14 @@ class JobDB:
             return 'initialized', None
 
     def job_exists(self, prov):
+        """Check if a job exists in the database."""
         with self.lock:
             self.cur.execute('select * from "jobs" where "prov" = ?;', (prov,))
             rec = self.cur.fetchone()
             return rec is not None
 
     def store_result_in_db(self, result):
+        """Store a result in the database."""
         result_value_msg = self.registry.to_json(result.value)
         with self.lock:
             self.cur.execute(
@@ -255,6 +267,7 @@ class JobDB:
             return attached_keys
 
     def add_time_stamp(self, db_id, name):
+        """Add a timestamp to the database."""
         with self.lock:
             self.cur.execute(
                 'insert into "timestamps" ("job", "what")'

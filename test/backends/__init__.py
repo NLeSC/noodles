@@ -1,3 +1,7 @@
+"""
+Defines backends for the test matrix.
+"""
+
 from noodles import run_single
 from noodles import run_parallel
 from noodles import run_process, serial
@@ -8,6 +12,7 @@ from .backend_factory import backend_factory
 
 
 def registry():
+    """Serialisation registry for matrix testing backends."""
     return serial.pickle() + serial.base() + arrays_to_string()
 
 
