@@ -1,13 +1,15 @@
 #!/usr/bin/env python
 
-from setuptools import setup
-from os import path
-from codecs import open
+"""
+Setup script for Noodles.
+"""
 
-here = path.abspath(path.dirname(__file__))
+from pathlib import Path
+from setuptools import setup
 
 # Get the long description from the README file
-with open(path.join(here, 'README.rst'), encoding='utf-8') as f:
+here = Path(__file__).parent.absolute()
+with (here / 'README.rst').open(encoding='utf-8') as f:
     long_description = f.read()
 
 setup(
