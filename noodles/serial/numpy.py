@@ -1,16 +1,22 @@
-from .registry import (Serialiser, Registry)
-from ..lib import look_up
-import numpy
+"""
+Implements serialisers for Numpy objects.
+"""
+
 import uuid
 import io
 import base64
+import hashlib
+
 import filelock
 import h5py
-import msgpack
-import hashlib
+import numpy
+
+from .registry import (Serialiser, Registry)
+from ..lib import look_up
 
 
 class SerNumpyArray(Serialiser):
+    """Serialise Numpy array as a Base64 file."""
     def __init__(self):
         super(SerNumpyArray, self).__init__(numpy.ndarray)
 
@@ -25,6 +31,7 @@ class SerNumpyArray(Serialiser):
 
 
 class SerNumpyScalar(Serialiser):
+    """Serialises a Numpy scalar by storing bytes."""
     def __init__(self):
         super(SerNumpyScalar, self).__init__('<numpy-scalar>')
 
@@ -38,6 +45,7 @@ class SerNumpyScalar(Serialiser):
 
 
 class SerNumpyArrayToFile(Serialiser):
+    """Serialises a Numpy array to a .npy file."""
     def __init__(self, file_prefix=None):
         super(SerNumpyArrayToFile, self).__init__(numpy.ndarray)
         self.file_prefix = file_prefix if file_prefix else ''
@@ -47,22 +55,23 @@ class SerNumpyArrayToFile(Serialiser):
         numpy.save(filename, obj)
         return make_rec(filename, ref=True, files=[filename])
 
-    def decode(self, cls, filename):
-        return numpy.load(filename)
+    def decode(self, cls, data):
+        return numpy.load(data)
 
 
 def array_sha256(a):
-    dtype = msgpack.dumps(str(a.dtype), use_bin_type=True)
-    shape = msgpack.dumps(a.shape, use_bin_type=True)
-    bdata = a.flatten().view(numpy.uint8)
+    """Create a SHA256 hash from a Numpy array."""
+    dtype = str(a.dtype).encode()
+    shape = numpy.array(a.shape)
     sha = hashlib.sha256()
     sha.update(dtype)
     sha.update(shape)
-    sha.update(bdata)
+    sha.update(a.tobytes())
     return sha.hexdigest()
 
 
 class SerNumpyArrayToHDF5(Serialiser):
+    """Serialises Numpy array to HDF5 file."""
     def __init__(self, filename, lockfile):
         super(SerNumpyArrayToHDF5, self).__init__(numpy.ndarray)
         self.filename = filename
@@ -84,9 +93,9 @@ class SerNumpyArrayToHDF5(Serialiser):
                 f.close()
 
         return make_rec({
-                "filename": self.filename,
-                "path": path
-            }, files=[self.filename], ref=True)
+            "filename": self.filename,
+            "path": path
+        }, files=[self.filename], ref=True)
 
     def decode(self, cls, data):
         with self.lock:
@@ -98,6 +107,7 @@ class SerNumpyArrayToHDF5(Serialiser):
 
 
 class SerUFunc(Serialiser):
+    """Serialiser for Numpy UFuncs."""
     def __init__(self):
         super(SerUFunc, self).__init__(None)
 
@@ -109,6 +119,7 @@ class SerUFunc(Serialiser):
 
 
 def _numpy_hook(obj):
+    """If an object is a ufunc, return '<ufunc>'"""
     if isinstance(obj, numpy.ufunc):
         return '<ufunc>'
 
@@ -131,6 +142,7 @@ def arrays_to_file(file_prefix=None):
 
 
 def arrays_to_string(file_prefix=None):
+    """Returns registry for serialising arrays as a Base64 string."""
     return Registry(
         types={
             numpy.ndarray: SerNumpyArray(),
@@ -144,6 +156,7 @@ def arrays_to_string(file_prefix=None):
 
 
 def arrays_to_hdf5(filename="cache.hdf5"):
+    """Returns registry for serialising arrays to a HDF5 reference."""
     return Registry(
         types={
             numpy.ndarray: SerNumpyArrayToHDF5(filename, "cache.lock")
