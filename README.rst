@@ -138,6 +138,7 @@ Resulting in the graph:
 .. image:: examples/callgraph.png?raw=true
 
 .. |travis| image:: https://travis-ci.org/NLeSC/noodles.svg?branch=master
+  :target: https://travis-ci.org/NLeSC/noodles
   :alt: Travis
 .. |zenodo| image:: https://zenodo.org/badge/45391130.svg
   :target: https://zenodo.org/badge/latestdoi/45391130
