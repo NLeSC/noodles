@@ -167,11 +167,13 @@ class Registry(object):
             return obj.rec
 
         hook = self._hook(obj) if self._hook else None
-        typename = hook if hook else object_name(type(obj))
+        typename = hook if hook else '<object>'
+        classname = object_name(type(obj))
 
         def make_rec(data, ref=None, files=None):
             rec = {'_noodles': noodles.__version__,
                    'type': typename,
+                   'class': classname,
                    'data': data}
 
             if ref is not None:
@@ -216,11 +218,17 @@ class Registry(object):
             return RefObject(rec)
 
         typename = rec['type']
-        if typename[0] == '<' and typename[-1] == '>':
-            return self._sers[typename].decode(None, rec['data'])
+        classname = rec['class']
+        try:
+            cls = look_up(classname) if classname else None
+        except AttributeError:
+            cls = None
 
-        cls = look_up(typename)
-        return self[cls].decode(cls, rec['data'])
+        if typename == '<object>':
+            assert cls is not None
+            return self[cls].decode(cls, rec['data'])
+        else:
+            return self._sers[typename].decode(cls, rec['data'])
 
     def deep_encode(self, obj, host=None):
         return deep_map(lambda o: self.encode(o, host), obj)

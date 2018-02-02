@@ -15,6 +15,17 @@ import base64
 # import sys
 
 
+class SerAuto(Serialiser):
+    def __init__(self):
+        super(SerAuto, self).__init__('<auto>')
+
+    def encode(self, obj, make_rec):
+        return obj.__serialize__(make_rec)
+
+    def decode(self, cls, data):
+        return cls.__construct__(data)
+
+
 class SerDict(Serialiser):
     def __init__(self):
         super(SerDict, self).__init__(dict)
@@ -185,6 +196,9 @@ def _noodles_hook(obj):
     if isfunction(obj):
         return '<importable>'
 
+    if hasattr(obj, '__serialize__') and hasattr(type(obj), '__construct__'):
+        return '<auto>'
+
     return None
 
 
@@ -208,6 +222,7 @@ def registry():
             '<method>': SerMethod(),
             '<boundmethod>': SerBoundMethod(),
             '<importable>': SerImportable(),
+            '<auto>': SerAuto()
         },
         hook_fn=_noodles_hook,
         default=Serialiser(object),
