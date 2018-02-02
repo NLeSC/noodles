@@ -19,6 +19,13 @@ class Ref:
     def __deepcopy__(self, memo):
         return self
 
+    def __serialize__(self, pack):
+        return pack(self._obj)
+
+    @classmethod
+    def __construct__(cls, data):
+        return Ref(data)
+
 
 def ref(value):
     return Ref(value)

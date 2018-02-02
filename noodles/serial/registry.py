@@ -251,11 +251,6 @@ class Registry(object):
         else:
             return json.dumps(deep_map(lambda o: self.encode(o, host), obj))
 
-    def to_msgpack(self, obj, host=None):
-        return msgpack.packb(
-                deep_map(lambda o: self.encode(o, host), obj),
-                use_bin_type=True)
-
     def from_json(self, data, deref=False):
         """Decode the string from JSON to return the original object (if
         `deref` is true. Uses the `json.loads` function with `self.decode`
@@ -271,15 +266,10 @@ class Registry(object):
         # return self.deep_decode(json.loads(data), deref)
         return json.loads(data, object_hook=lambda o: self.decode(o, deref))
 
-    def from_msgpack(self, data, deref=False):
-        return msgpack.unpackb(
-            data,
-            object_hook=lambda o: self.decode(o, deref))
-
-    def dereference(self, data, host):
+    def dereference(self, data, host=None):
         """Dereferences RefObjects stuck in the hierarchy. This is a bit
         of an ugly hack."""
-        return self.from_json(self.to_json(data, host), deref=True)
+        return self.deep_decode(self.deep_encode(data, host), deref=True)
 
 
 class Serialiser(object):

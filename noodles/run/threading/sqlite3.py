@@ -93,4 +93,7 @@ def run_parallel(workflow, *, n_threads, registry, db_file):
         scheduler = Scheduler(job_keeper=db)
         parallel_sqlite_worker = Connection(result_front_end, job_front_end)
 
-        return scheduler.run(parallel_sqlite_worker, get_workflow(workflow))
+        result = scheduler.run(parallel_sqlite_worker, get_workflow(workflow))
+
+    # return result
+    return registry().dereference(result)
