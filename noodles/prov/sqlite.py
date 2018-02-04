@@ -201,7 +201,7 @@ class JobDB:
                         return 'attached', None
 
                 if rec.result is not None:
-                    result_value = self.registry.from_json(rec.result)
+                    result_value = self.registry.from_json(rec.result, deref=True)
                     result = ResultMessage(
                         key, 'retrieved', result_value, None)
                     return 'retrieved', result

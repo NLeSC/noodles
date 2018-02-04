@@ -225,7 +225,7 @@ class Registry(object):
             cls = None
 
         if typename == '<object>':
-            assert cls is not None
+            assert cls is not None, "could not lookup class '{}'".format(classname)
             return self[cls].decode(cls, rec['data'])
         else:
             return self._sers[typename].decode(cls, rec['data'])

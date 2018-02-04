@@ -3,6 +3,7 @@ Implements parallel worker with Sqlite database.
 """
 
 from itertools import repeat
+import logging
 
 from ..scheduler import (Scheduler)
 from ..messages import (ResultMessage)
@@ -67,7 +68,7 @@ def pass_result(db: JobDB):
     return pass_result_stream
 
 
-def run_parallel(workflow, *, n_threads, registry, db_file):
+def run_parallel(workflow, *, n_threads, registry, db_file, echo_log=True):
     """Run a workflow in parallel threads, storing results in a Sqlite3
     database.
 
@@ -78,6 +79,9 @@ def run_parallel(workflow, *, n_threads, registry, db_file):
         keep the database in memory only.
     :return: Evaluated result.
     """
+    if echo_log:
+        logging.getLogger('noodles').setLevel(logging.DEBUG)
+
     with JobDB(db_file, registry) as db:
         job_queue = Queue()
         result_queue = Queue()

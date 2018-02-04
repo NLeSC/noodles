@@ -23,6 +23,7 @@ def make_logger(name, stream_type, jobs):
     or |ResultMessage| a meaningful message is composed otherwise the
     string representation of the object is passed."""
     logger = logging.getLogger('noodles').getChild(name)
+    logger.setLevel(logging.DEBUG)
 
     @stream_type
     def log_message(message):
