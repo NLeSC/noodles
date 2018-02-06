@@ -12,7 +12,7 @@ from ...prov.sqlite import (JobDB)
 from ...lib import (Queue, pull, pull_map, push_map, Connection)
 
 
-def run_single(workflow, *, registry, db_file):
+def run_single(workflow, *, registry, db_file, always_cache=True):
     """"Run workflow in a single thread, storing results in a Sqlite3
     database.
 
@@ -20,6 +20,7 @@ def run_single(workflow, *, registry, db_file):
     :param registry: serialization Registry function.
     :param db_file: filename of Sqlite3 database, give `':memory:'` to
         keep the database in memory only.
+    :param always_cache: Currently ignored. always_cache is true.
     :return: Evaluated result.
     """
     with JobDB(db_file, registry) as db:
@@ -41,7 +42,7 @@ def run_single(workflow, *, registry, db_file):
                     continue
 
                 result = run_job(key, job)
-                attached = db.store_result_in_db(result)
+                attached = db.store_result_in_db(result, always_cache=True)
 
                 yield result
                 yield from (ResultMessage(key, 'attached', result.value, None)

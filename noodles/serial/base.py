@@ -1,23 +1,21 @@
-from .registry import (Registry, Serialiser)
-from .reasonable import (Reasonable, SerReasonableObject)
+from inspect import isfunction, ismethod
+from itertools import count
+from pathlib import Path
+import base64
+
 from ..interface import (PromisedObject, Quote)
 from ..lib import (object_name, look_up, importable)
 from ..workflow import (Workflow, NodeData, FunctionNode, ArgumentAddress,
                         ArgumentKind, reset_workflow, get_workflow)
 
-# from .as_dict import (AsDict)
-# from enum import Enum
-from inspect import isfunction, ismethod
-# from collections import namedtuple
-from itertools import count
-import base64
-# import json
-# import sys
+from .registry import (Registry, Serialiser, SerUnknown)
+from .reasonable import (Reasonable, SerReasonableObject)
+from .path import (SerPath)
 
 
 class SerAuto(Serialiser):
     def __init__(self):
-        super(SerAuto, self).__init__('<auto>')
+        super(SerAuto, self).__init__('<automagic>')
 
     def encode(self, obj, make_rec):
         return obj.__serialize__(make_rec)
@@ -197,7 +195,7 @@ def _noodles_hook(obj):
         return '<importable>'
 
     if hasattr(obj, '__serialize__') and hasattr(type(obj), '__construct__'):
-        return '<auto>'
+        return '<automagic>'
 
     return None
 
@@ -216,14 +214,15 @@ def registry():
             ArgumentAddress: SerNamedTuple(ArgumentAddress),
             Workflow: SerWorkflow(),
             PromisedObject: SerPromisedObject(),
-            Quote: SerReasonableObject(Quote)
+            Quote: SerReasonableObject(Quote),
+            Path: SerPath()
         },
         hooks={
             '<method>': SerMethod(),
             '<boundmethod>': SerBoundMethod(),
             '<importable>': SerImportable(),
-            '<auto>': SerAuto()
+            '<automagic>': SerAuto()
         },
         hook_fn=_noodles_hook,
-        default=Serialiser(object),
+        default=SerUnknown(),
     )

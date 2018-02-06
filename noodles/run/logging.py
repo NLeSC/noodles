@@ -1,7 +1,22 @@
+"""
+Provides logging facilities that can be inserted at any place in a system
+of streams.
+"""
+
+import logging
+
 from ..lib import (EndOfQueue)
 from ..workflow import (is_workflow)
 from .messages import (JobMessage, ResultMessage)
-import logging
+
+
+def _sugar(s):
+    """Shorten strings that are too long for decency."""
+    # s = s.replace("{", "{{").replace("}", "}}")
+    if len(s) > 50:
+        return s[:20] + " ... " + s[-20:]
+    else:
+        return s
 
 
 def make_logger(name, stream_type, jobs):
@@ -44,7 +59,7 @@ def make_logger(name, stream_type, jobs):
                 value_string = repr(message.value)
                 logger.info(
                     "result %10s [%s]: %s -> %s", message.key, job.node,
-                    message.status, value_string)
+                    message.status, _sugar(value_string))
 
         else:
             logger.info(

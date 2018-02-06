@@ -1,19 +1,14 @@
+from abc import (ABC, abstractmethod)
 from queue import Queue
 from ..lib import (
     object_name, look_up, deep_map, inverse_deep_map)
 
 import noodles
 
-# try:
-#    import ujson as json
-# except ImportError:
-import json
-
 try:
-    import msgpack
-    has_msgpack = True
+    import ujson as json
 except ImportError:
-    has_msgpack = False
+    import json
 
 
 def _chain_fn(a, b):
@@ -93,7 +88,7 @@ class Registry(object):
 
         self.default = default if default \
             else parent.default if parent \
-            else Serialiser(object)
+            else SerUnknown()
 
         if hook_fn and parent and parent._hook:
             self._hook = _chain_fn(hook_fn, parent._hook)
@@ -225,7 +220,8 @@ class Registry(object):
             cls = None
 
         if typename == '<object>':
-            assert cls is not None, "could not lookup class '{}'".format(classname)
+            assert cls is not None, "could not lookup class '{}'".format(
+                classname)
             return self[cls].decode(cls, rec['data'])
         else:
             return self._sers[typename].decode(cls, rec['data'])
@@ -263,8 +259,8 @@ class Registry(object):
         :param deref:
             Whether to decode records that gave `ref=True` at encoding.
         :type deref: bool"""
-        # return self.deep_decode(json.loads(data), deref)
-        return json.loads(data, object_hook=lambda o: self.decode(o, deref))
+        return self.deep_decode(json.loads(data), deref)
+        # return json.loads(data, object_hook=lambda o: self.decode(o, deref))
 
     def dereference(self, data, host=None):
         """Dereferences RefObjects stuck in the hierarchy. This is a bit
@@ -272,7 +268,7 @@ class Registry(object):
         return self.deep_decode(self.deep_encode(data, host), deref=True)
 
 
-class Serialiser(object):
+class Serialiser(ABC):
     """Serialiser base class.
 
     Serialisation classes should derive from `Serialiser` and overload the
@@ -284,7 +280,7 @@ class Serialiser(object):
         was derived from `base`. The supposed base-class is kept here for
         reference but serves no immediate purpose.
     :type base: type"""
-    def __init__(self, name):
+    def __init__(self, name='<unknown>'):
         if isinstance(name, str):
             self.name = name
         else:
@@ -293,6 +289,7 @@ class Serialiser(object):
             except AttributeError:
                 self.name = '<unknown>'
 
+    @abstractmethod
     def encode(self, obj, make_rec):
         """Should encode an object of type `self.base` (or derived).
 
@@ -320,19 +317,10 @@ class Serialiser(object):
 
         :param make_rec:
             Function used to pack the encoded data with some meta-data."""
-        if obj is None:
-            raise RuntimeError("Object None should not reach encoder.")
+        pass
 
-        if hasattr(obj, '__serialize__'):
-            return obj.__serialize__(make_rec)
-
-        msg = "Cannot encode {}: encoder for type `{}` is not implemented." \
-            .format(obj, type(obj).__name__)
-
-        raise NotImplementedError(msg)
-
-    @staticmethod
-    def decode(cls, data):
+    @abstractmethod
+    def decode(self, cls, data):
         """Should decode the data to an object of type 'cls'.
 
         :param cls:
@@ -343,11 +331,16 @@ class Serialiser(object):
         :param data:
             The data is the record that was passed to `make_rec` by
             the encoder."""
+        pass
 
-        if hasattr(cls, '__construct__'):
-            return cls.__construct__(data)
 
+class SerUnknown(Serialiser):
+    def encode(self, obj, make_rec):
+        msg = "Cannot encode {}: encoder for type `{}` is not implemented." \
+            .format(obj, type(obj).__name__)
+        raise NotImplementedError(msg)
+
+    def decode(self, cls, data):
         msg = "Decoder for type `{}` is not implemented." \
             .format(cls.__name__)
-
         raise NotImplementedError(msg)

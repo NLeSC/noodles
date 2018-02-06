@@ -8,6 +8,25 @@ NodeData = namedtuple(
     ['function', 'arguments', 'hints'])
 
 
+def _sugar(s):
+    """Shorten strings that are too long for decency."""
+    # s = s.replace("{", "{{").replace("}", "}}")
+    if len(s) > 30:
+        return s[:10] + " ... " + s[-10:]
+    else:
+        return s
+
+
+def _arg_to_str(arg):
+    """Convert argument to a string."""
+    if isinstance(arg, str):
+        return _sugar(repr(arg))
+    elif arg is Empty:
+        return '\u2014'
+    else:
+        return _sugar(str(arg))
+
+
 class FunctionNode:
     """Captures a function call as a combination of function and arguments.
     Some of these arguments may be set to :py:obj:`Empty`, these need to be
@@ -45,18 +64,10 @@ class FunctionNode:
             self.foo, get_arguments(self.bound_args), self.hints)
 
     def __str__(self):
-        def _str(x):
-            if x is Empty:
-                return '-'
-            elif isinstance(x, str):
-                return repr(x)
-            else:
-                return str(x)
-
         s = self.foo.__name__ + '(' + \
-            ", ".join(map(_str, self.bound_args.args)) + ')'
+            ", ".join(map(_arg_to_str, self.bound_args.args)) + ')'
         if self.result != Empty:
-            s += ' -> ' + str(self.result)
+            s += ' -> ' + _sugar(str(self.result))
         return s
 
 
