@@ -5,7 +5,7 @@ Setup script for Noodles.
 """
 
 from pathlib import Path
-from setuptools import setup
+from setuptools import setup, find_packages
 
 # Get the long description from the README file
 here = Path(__file__).parent.absolute()
@@ -19,13 +19,7 @@ setup(
     long_description=long_description,
     author='Johan Hidding',
     url='https://github.com/NLeSC/noodles',
-    packages=[
-        'noodles', 'noodles.serial', 'noodles.run', 'noodles.run.xenon',
-        'noodles.run.remote',
-        'noodles.display',
-        'noodles.patterns',
-        'noodles.interface', 'noodles.workflow',
-        'noodles.prov', 'noodles.draw_workflow'],
+    packages=find_packages(exclude=['test*']),
     classifiers=[
         'License :: OSI Approved :: Apache Software License',
         'Intended Audience :: Developers',
