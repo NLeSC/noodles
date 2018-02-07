@@ -1,4 +1,4 @@
-from inspect import isfunction, ismethod
+from inspect import ismethod
 from itertools import count
 from pathlib import Path
 import base64

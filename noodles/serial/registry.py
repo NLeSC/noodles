@@ -339,12 +339,6 @@ class SerUnknown(Serialiser):
     def encode(self, obj, make_rec):
         msg = "Cannot encode {}: encoder for type `{}` is not implemented." \
             .format(obj, type(obj).__name__)
-        try:
-            print(obj)
-            print(object_name(obj))
-            print(look_up(object_name(obj)))
-        except:
-            print("no name found")
         raise NotImplementedError(msg)
 
     def decode(self, cls, data):

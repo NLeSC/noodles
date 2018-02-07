@@ -20,5 +20,5 @@ def test_encode_dictlike():
     assert isinstance(decoded, A)
     assert decoded['value'] == 42
     deref = reg.dereference(a)
-    assert isinstance(decoded, A)
-    assert decoded['value'] == 42
+    assert isinstance(deref, A)
+    assert deref['value'] == 42
