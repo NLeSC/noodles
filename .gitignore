@@ -20,8 +20,7 @@ htmlcov
 coverage.xml
 
 # vscode
-.vscode/.ropeproject
-.vscode/tags
+.vscode
 
 # local testing
 local

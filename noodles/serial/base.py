@@ -1,18 +1,41 @@
-from .registry import (Registry, Serialiser)
-from .reasonable import (Reasonable, SerReasonableObject)
+from inspect import ismethod
+from itertools import count
+from pathlib import Path
+import base64
+
 from ..interface import (PromisedObject, Quote)
-from ..lib import (object_name, look_up, importable)
+from ..lib import (object_name, look_up, importable, unwrap, is_unwrapped)
 from ..workflow import (Workflow, NodeData, FunctionNode, ArgumentAddress,
                         ArgumentKind, reset_workflow, get_workflow)
 
-# from .as_dict import (AsDict)
-# from enum import Enum
-from inspect import isfunction, ismethod
-# from collections import namedtuple
-from itertools import count
-import base64
-# import json
-# import sys
+from .registry import (Registry, Serialiser, SerUnknown)
+from .reasonable import (Reasonable, SerReasonableObject)
+from .path import (SerPath)
+
+
+class SerAuto(Serialiser):
+    def __init__(self):
+        super(SerAuto, self).__init__('<automagic>')
+
+    def encode(self, obj, make_rec):
+        return obj.__serialize__(make_rec)
+
+    def decode(self, cls, data):
+        return cls.__construct__(data)
+
+
+class SerByMembers(Serialiser):
+    def __init__(self, cls, members):
+        super().__init__(cls)
+        self.members = members
+
+    def encode(self, obj, make_rec):
+        return make_rec({
+            m: getattr(obj, m) for m in self.members
+        })
+
+    def decode(self, cls, data):
+        return cls(**data)
 
 
 class SerDict(Serialiser):
@@ -37,11 +60,11 @@ class SerBytes(Serialiser):
         return base64.b64decode(data.encode())
 
 
-class SerTuple(Serialiser):
+class SerSequence(Serialiser):
     """Tuples get converted to lists during serialisation.
     We want to get tuples back, so make this explicit."""
-    def __init__(self):
-        super(SerTuple, self).__init__(tuple)
+    def __init__(self, cls):
+        super().__init__(cls)
 
     def encode(self, obj, make_rec):
         return make_rec(list(obj))
@@ -134,7 +157,7 @@ class SerMethod(Serialiser):
 
     def decode(self, cls, data):
         cls = look_up(data['class'])
-        return getattr(cls, data['method'])
+        return unwrap(getattr(cls, data['method']))
 
 
 class SerBoundMethod(Serialiser):
@@ -182,10 +205,24 @@ def _noodles_hook(obj):
     if ismethod(obj):
         return '<boundmethod>'
 
-    if isfunction(obj):
-        return '<importable>'
+    if is_unwrapped(obj):
+        return '<unwrapped>'
+
+    if hasattr(obj, '__serialize__') and hasattr(type(obj), '__construct__'):
+        return '<automagic>'
 
     return None
+
+
+class SerUnwrapped(Serialiser):
+    def __init__(self):
+        return super().__init__('<unwrapped>')
+
+    def encode(self, obj, make_rec):
+        return make_rec(object_name(obj))
+
+    def decode(self, cls, data):
+        return unwrap(look_up(data))
 
 
 def registry():
@@ -193,22 +230,27 @@ def registry():
     return Registry(
         types={
             dict: SerDict(),
-            tuple: SerTuple(),
+            tuple: SerSequence(tuple),
+            set: SerSequence(set),
             bytes: SerBytes(),
             slice: SerSlice(),
+            complex: SerByMembers(complex, ['real', 'imag']),
             Reasonable: SerReasonableObject(Reasonable),
             ArgumentKind: SerEnum(ArgumentKind),
             FunctionNode: SerNode(),
             ArgumentAddress: SerNamedTuple(ArgumentAddress),
             Workflow: SerWorkflow(),
             PromisedObject: SerPromisedObject(),
-            Quote: SerReasonableObject(Quote)
+            Quote: SerReasonableObject(Quote),
+            Path: SerPath()
         },
         hooks={
             '<method>': SerMethod(),
             '<boundmethod>': SerBoundMethod(),
             '<importable>': SerImportable(),
+            '<automagic>': SerAuto(),
+            '<unwrapped>': SerUnwrapped()
         },
         hook_fn=_noodles_hook,
-        default=Serialiser(object),
+        default=SerUnknown(),
     )

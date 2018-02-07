@@ -5,24 +5,23 @@ try:
     from numpy import (random, fft, exp)
     from noodles.serial.numpy import arrays_to_hdf5
 
-    from noodles.run.run_with_prov import (
-        run_parallel_opt)
+    from noodles.run.threading.sqlite3 import (
+        run_parallel
+    )
 
 except ImportError:
     has_numpy = False
-
 else:
     has_numpy = True
 
-from noodles.display import (NCDisplay)
-from noodles import schedule, serial, schedule_hint
+from noodles import schedule, serial
 
 
 def registry():
     return serial.base() + arrays_to_hdf5()
 
 
-@schedule_hint(display="fft", confirm=True, store=True)
+@schedule(display="fft", confirm=True, store=True)
 def do_fft(a):
     return fft.fft(a)
 
@@ -32,7 +31,7 @@ def make_kernel(n, sigma):
     return exp(-fft.fftfreq(n)**2 * sigma**2)
 
 
-@schedule_hint(display="ifft", confirm=True, store=True)
+@schedule(display="ifft", confirm=True, store=True)
 def do_ifft(a):
     return fft.ifft(a).real
 
@@ -42,17 +41,16 @@ def apply_filter(a, b):
     return a * b
 
 
-@schedule_hint(display="make noise {seed}", confirm=True, store=True)
+@schedule(display="make noise {seed}", confirm=True, store=True)
 def make_noise(n, seed=0):
     random.seed(seed)
     return random.normal(0, 1, n)
 
 
 def run(wf):
-    with NCDisplay() as display:
-        result = run_parallel_opt(
-            wf, 2, registry, "cache.json", display=display)
-
+    result = run_parallel(
+        wf, n_threads=2, registry=registry, db_file=':memory:',
+        always_cache=False)
     return result
 
 

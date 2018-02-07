@@ -23,6 +23,10 @@ class JobMessage(Reasonable):
     def __iter__(self):
         return iter((self.key, self.node))
 
+    @property
+    def hints(self):
+        return self.node.hints
+
 
 class ResultMessage(Reasonable):
     def __init__(self, key, status, value, msg):

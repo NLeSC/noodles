@@ -4,14 +4,21 @@ from noodles import (
 
 
 @has_scheduled_methods
-class A:
+class A(object):
     def __init__(self, x):
-        super(A, self).__init__()
+        super().__init__()
         self.x = x
 
     @schedule
     def __call__(self, y):
         return self.x * y
+
+    def __serialize__(self, pack):
+        return pack(self.x)
+
+    @classmethod
+    def __construct__(cls, data):
+        return cls(data)
 
 
 @workflow_factory(result=42)

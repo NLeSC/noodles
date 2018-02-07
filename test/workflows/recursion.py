@@ -27,7 +27,7 @@ def recursion():
     return floor_log(factorial(50.0))
 
 
-@noodles.schedule
+@noodles.schedule(store=True)
 def fibonacci(n):
     if n < 2:
         return 1

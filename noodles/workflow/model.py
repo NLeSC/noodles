@@ -1,11 +1,29 @@
 from collections import namedtuple
-from ..lib import (unwrap)
 from .arguments import (bind_arguments, get_arguments, ref_argument,
                         serialize_arguments, Empty)
 
 NodeData = namedtuple(
     'NodeData',
     ['function', 'arguments', 'hints'])
+
+
+def _sugar(s):
+    """Shorten strings that are too long for decency."""
+    # s = s.replace("{", "{{").replace("}", "}}")
+    if len(s) > 30:
+        return s[:10] + " ... " + s[-10:]
+    else:
+        return s
+
+
+def _arg_to_str(arg):
+    """Convert argument to a string."""
+    if isinstance(arg, str):
+        return _sugar(repr(arg))
+    elif arg is Empty:
+        return '\u2014'
+    else:
+        return _sugar(str(arg))
 
 
 class FunctionNode:
@@ -24,7 +42,7 @@ class FunctionNode:
     """
     @staticmethod
     def from_node_data(data):
-        foo = unwrap(data.function)
+        foo = data.function
         bound_args = bind_arguments(foo, data.arguments)
         return FunctionNode(foo, bound_args, data.hints)
 
@@ -45,18 +63,10 @@ class FunctionNode:
             self.foo, get_arguments(self.bound_args), self.hints)
 
     def __str__(self):
-        def _str(x):
-            if x is Empty:
-                return '-'
-            elif isinstance(x, str):
-                return repr(x)
-            else:
-                return str(x)
-
         s = self.foo.__name__ + '(' + \
-            ", ".join(map(_str, self.bound_args.args)) + ')'
+            ", ".join(map(_arg_to_str, self.bound_args.args)) + ')'
         if self.result != Empty:
-            s += ' -> ' + str(self.result)
+            s += ' -> ' + _sugar(str(self.result))
         return s
 
 

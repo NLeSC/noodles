@@ -23,7 +23,7 @@ def object_name(obj):
     :py:exc:`AttributeError`.
 
     .. |object_name| replace:: :py:func:`object_name`"""
-    return obj.__module__ + '.' + obj.__name__
+    return obj.__module__ + '.' + obj.__qualname__
 
 
 def look_up(name):
@@ -48,7 +48,7 @@ def importable(obj):
     .. |importable| replace:: :py:func:`importable`"""
     try:
         return look_up(object_name(obj)) is obj
-    except (AttributeError, TypeError):
+    except (AttributeError, TypeError, ImportError):
         return False
 
 
@@ -73,6 +73,18 @@ def unwrap(f):
         return f.__wrapped__
     except AttributeError:
         return f
+
+
+def is_unwrapped(f):
+    """If `f` was imported and then unwrapped, this function might return True.
+
+    .. |is_unwrapped| replace:: :py:func:`is_unwrapped`"""
+    try:
+        g = look_up(object_name(f))
+        return g != f and unwrap(g) == f
+
+    except (AttributeError, TypeError, ImportError):
+        return False
 
 
 def deep_map(f, root):

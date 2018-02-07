@@ -23,6 +23,14 @@ class Job:
     def name(self):
         return self.node.foo.__name__
 
+    @property
+    def hints(self):
+        return self.node.hints
+
+    @property
+    def is_root_node(self):
+        return self.node_id == self.workflow.root
+
 
 class DynamicLink:
     def __init__(self, source, target, node):
