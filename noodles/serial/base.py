@@ -24,6 +24,20 @@ class SerAuto(Serialiser):
         return cls.__construct__(data)
 
 
+class SerByMembers(Serialiser):
+    def __init__(self, cls, members):
+        super().__init__(cls)
+        self.members = members
+
+    def encode(self, obj, make_rec):
+        return make_rec({
+            m: getattr(obj, m) for m in self.members
+        })
+
+    def decode(self, cls, data):
+        return cls(**data)
+
+
 class SerDict(Serialiser):
     def __init__(self):
         super(SerDict, self).__init__(dict)
@@ -220,6 +234,7 @@ def registry():
             set: SerSequence(set),
             bytes: SerBytes(),
             slice: SerSlice(),
+            complex: SerByMembers(complex, ['real', 'imag']),
             Reasonable: SerReasonableObject(Reasonable),
             ArgumentKind: SerEnum(ArgumentKind),
             FunctionNode: SerNode(),
