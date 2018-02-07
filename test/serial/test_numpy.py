@@ -49,7 +49,8 @@ def make_noise(n, seed=0):
 
 def run(wf):
     result = run_parallel(
-        wf, n_threads=2, registry=registry, db_file=':memory:')
+        wf, n_threads=2, registry=registry, db_file=':memory:',
+        always_cache=False)
     return result
 
 

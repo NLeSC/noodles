@@ -1,5 +1,4 @@
 from collections import namedtuple
-from ..lib import (unwrap)
 from .arguments import (bind_arguments, get_arguments, ref_argument,
                         serialize_arguments, Empty)
 
@@ -43,7 +42,7 @@ class FunctionNode:
     """
     @staticmethod
     def from_node_data(data):
-        foo = unwrap(data.function)
+        foo = data.function
         bound_args = bind_arguments(foo, data.arguments)
         return FunctionNode(foo, bound_args, data.hints)
 

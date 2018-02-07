@@ -135,7 +135,8 @@ from .thread_pool import (
     thread_counter, thread_pool)
 
 from .utility import (
-    object_name, look_up, importable, deep_map, inverse_deep_map, unwrap)
+    object_name, look_up, importable, deep_map, inverse_deep_map, unwrap,
+    is_unwrapped)
 
 __all__ = [
     'decorator', 'coroutine',
@@ -144,4 +145,4 @@ __all__ = [
     'Connection', 'Queue', 'EndOfQueue', 'FlushQueue',
     'thread_pool', 'thread_counter',
     'object_name', 'look_up', 'importable', 'deep_map', 'inverse_deep_map',
-    'unwrap']
+    'unwrap', 'is_unwrapped']

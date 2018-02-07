@@ -18,12 +18,12 @@ def registry():
 
 backends = {
     'single': backend_factory(
-        run_single, supports=['local']),
+        run_single, supports=['local', 'nocache']),
     'single-sqlite': backend_factory(
         run_single_sqlite, supports=['local', 'prov'],
         db_file=':memory:', registry=registry, always_cache=True),
     'threads-4': backend_factory(
-        run_parallel, supports=['local'], n_threads=4),
+        run_parallel, supports=['local', 'nocache'], n_threads=4),
     'threads-4-sqlite': backend_factory(
         run_parallel_sqlite, supports=['local', 'prov'],
         n_threads=4, db_file=':memory:', registry=registry, always_cache=True),

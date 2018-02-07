@@ -216,12 +216,13 @@ class Registry(object):
         classname = rec['class']
         try:
             cls = look_up(classname) if classname else None
-        except AttributeError:
+        except (AttributeError, ImportError):
             cls = None
 
         if typename == '<object>':
-            assert cls is not None, "could not lookup class '{}'".format(
-                classname)
+            assert cls is not None, \
+                "could not lookup class '{}', decoding '{}'".format(
+                    classname, rec)
             return self[cls].decode(cls, rec['data'])
         else:
             return self._sers[typename].decode(cls, rec['data'])
@@ -338,6 +339,12 @@ class SerUnknown(Serialiser):
     def encode(self, obj, make_rec):
         msg = "Cannot encode {}: encoder for type `{}` is not implemented." \
             .format(obj, type(obj).__name__)
+        try:
+            print(obj)
+            print(object_name(obj))
+            print(look_up(object_name(obj)))
+        except:
+            print("no name found")
         raise NotImplementedError(msg)
 
     def decode(self, cls, data):

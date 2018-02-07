@@ -4,7 +4,7 @@ from pathlib import Path
 import base64
 
 from ..interface import (PromisedObject, Quote)
-from ..lib import (object_name, look_up, importable)
+from ..lib import (object_name, look_up, importable, unwrap, is_unwrapped)
 from ..workflow import (Workflow, NodeData, FunctionNode, ArgumentAddress,
                         ArgumentKind, reset_workflow, get_workflow)
 
@@ -46,11 +46,11 @@ class SerBytes(Serialiser):
         return base64.b64decode(data.encode())
 
 
-class SerTuple(Serialiser):
+class SerSequence(Serialiser):
     """Tuples get converted to lists during serialisation.
     We want to get tuples back, so make this explicit."""
-    def __init__(self):
-        super(SerTuple, self).__init__(tuple)
+    def __init__(self, cls):
+        super().__init__(cls)
 
     def encode(self, obj, make_rec):
         return make_rec(list(obj))
@@ -143,7 +143,7 @@ class SerMethod(Serialiser):
 
     def decode(self, cls, data):
         cls = look_up(data['class'])
-        return getattr(cls, data['method'])
+        return unwrap(getattr(cls, data['method']))
 
 
 class SerBoundMethod(Serialiser):
@@ -191,8 +191,8 @@ def _noodles_hook(obj):
     if ismethod(obj):
         return '<boundmethod>'
 
-    if isfunction(obj):
-        return '<importable>'
+    if is_unwrapped(obj):
+        return '<unwrapped>'
 
     if hasattr(obj, '__serialize__') and hasattr(type(obj), '__construct__'):
         return '<automagic>'
@@ -200,12 +200,24 @@ def _noodles_hook(obj):
     return None
 
 
+class SerUnwrapped(Serialiser):
+    def __init__(self):
+        return super().__init__('<unwrapped>')
+
+    def encode(self, obj, make_rec):
+        return make_rec(object_name(obj))
+
+    def decode(self, cls, data):
+        return unwrap(look_up(data))
+
+
 def registry():
     """Returns the Noodles base serialisation registry."""
     return Registry(
         types={
             dict: SerDict(),
-            tuple: SerTuple(),
+            tuple: SerSequence(tuple),
+            set: SerSequence(set),
             bytes: SerBytes(),
             slice: SerSlice(),
             Reasonable: SerReasonableObject(Reasonable),
@@ -221,7 +233,8 @@ def registry():
             '<method>': SerMethod(),
             '<boundmethod>': SerBoundMethod(),
             '<importable>': SerImportable(),
-            '<automagic>': SerAuto()
+            '<automagic>': SerAuto(),
+            '<unwrapped>': SerUnwrapped()
         },
         hook_fn=_noodles_hook,
         default=SerUnknown(),
