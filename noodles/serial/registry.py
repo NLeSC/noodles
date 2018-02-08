@@ -172,7 +172,7 @@ class Registry(object):
                    'data': data}
 
             if ref is not None:
-                rec['ref'] = ref,
+                rec['ref'] = ref
 
             if files:
                 rec['host'] = host

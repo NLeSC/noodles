@@ -121,14 +121,15 @@ def display_workflows(prefix, **kwargs):
     display(Markdown(markdown_table))
 
 
-def snip_line(line, max_width):
+def snip_line(line, max_width, split_at):
     """Shorten a line to a maximum length."""
     if len(line) < max_width:
         return line
-    return line[:max_width - 10] + " … " + line[-7:]
+    return line[:split_at] + " … " \
+        + line[-(max_width - split_at - 3):]
 
-    
-def highlight_lines(text, lines=None, max_width=80):
+
+def display_text(text, highlight=None, max_width=80, split_at=None):
     """In a Jupyter notebook, takes a multi-line string, displays these lines
     in '<pre></pre>' block HTML. A list of lines may be provided that should
     be highlighted in the result. A highlight gives a gray background and bold
@@ -139,14 +140,19 @@ def highlight_lines(text, lines=None, max_width=80):
     """
     from IPython.display import display, HTML
 
-    lines = lines or []
+    if not isinstance(text, str):
+        text = str(text)
+
+    highlight = highlight or []
+    split_at = split_at or max_width - 10
     style = [
         'font-size: 9pt; margin: 0pt',
         'background: #eeeeee; color: black;'
         'font-weight: bold; font-size: 9pt; margin: 0pt']
     display(HTML('\n'.join(
-        '<pre style="{}">{}</pre>'.format(style[i in lines],
-                                          html.escape(snip_line(line, max_width)))
+        '<pre style="{}">{}</pre>'.format(
+            style[i in highlight],
+            html.escape(snip_line(line, max_width, split_at)))
         for i, line in enumerate(text.splitlines()))))
 
 
@@ -172,6 +178,7 @@ def run_and_print_log(workflow, highlight=None):
     logger.handlers = [log_handler]
 
     result = run_parallel(
-        workflow, n_threads=4, registry=serial.base, db_file='tutorial.db')
-    highlight_lines(log.getvalue(), highlight or [])
+        workflow, n_threads=4, registry=serial.base, db_file='tutorial.db',
+        always_cache=True, echo_log=False)
+    display_text(log.getvalue(), highlight or [], split_at=40)
     return result
