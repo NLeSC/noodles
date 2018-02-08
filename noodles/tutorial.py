@@ -121,7 +121,14 @@ def display_workflows(prefix, **kwargs):
     display(Markdown(markdown_table))
 
 
-def highlight_lines(text, lines=None):
+def snip_line(line, max_width):
+    """Shorten a line to a maximum length."""
+    if len(line) < max_width:
+        return line
+    return line[:max_width - 10] + " … " + line[-7:]
+
+    
+def highlight_lines(text, lines=None, max_width=80):
     """In a Jupyter notebook, takes a multi-line string, displays these lines
     in '<pre></pre>' block HTML. A list of lines may be provided that should
     be highlighted in the result. A highlight gives a gray background and bold
@@ -139,7 +146,7 @@ def highlight_lines(text, lines=None):
         'font-weight: bold; font-size: 9pt; margin: 0pt']
     display(HTML('\n'.join(
         '<pre style="{}">{}</pre>'.format(style[i in lines],
-                                          html.escape(line))
+                                          html.escape(snip_line(line, max_width)))
         for i, line in enumerate(text.splitlines()))))
 
 
