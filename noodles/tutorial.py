@@ -4,6 +4,7 @@ Functions useful for tutorial work and unit testing.
 
 from inspect import Parameter
 from graphviz import Digraph
+import html
 
 from . import schedule, schedule_hint, get_workflow
 
@@ -113,7 +114,7 @@ def display_workflows(prefix, **kwargs):
                   for name, workflow in kwargs.items())}
 
     markdown_table = \
-        '| ' + ' | '.join(svg_files.keys()) + ' |\n'\
+        '| ' + ' | '.join(svg_files.keys()) + ' |\n' + \
         '| ' + ' | '.join('---' for _ in svg_files) + ' |\n' + \
         '| ' + ' | '.join('![workflow {}]({})'.format(name, svg)
                           for name, svg in svg_files.items()) + ' |'
@@ -134,9 +135,11 @@ def highlight_lines(text, lines=None):
     lines = lines or []
     style = [
         'font-size: 9pt; margin: 0pt',
-        'background: #eeeeee; font-weight: bold; font-size: 9pt; margin: 0pt']
+        'background: #eeeeee; color: black;'
+        'font-weight: bold; font-size: 9pt; margin: 0pt']
     display(HTML('\n'.join(
-        '<pre style="{}">{}</pre>'.format(style[i in lines], line)
+        '<pre style="{}">{}</pre>'.format(style[i in lines],
+                                          html.escape(line))
         for i, line in enumerate(text.splitlines()))))
 
 
