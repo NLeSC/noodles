@@ -51,7 +51,7 @@ class Fail:
     def __str__(self):
         msg = "Fail: " + " -> ".join(self.trace + [self.name])
         if self.exception is not None:
-            msg += "\n* exception: "
+            msg += "\n* {}: ".format(type(self.exception).__name__)
             msg += "\n    ".join(l for l in str(self.exception).split('\n'))
         elif self.fails:
             msg += "\n* failed arguments:\n    "

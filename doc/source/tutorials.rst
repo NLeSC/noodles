@@ -8,4 +8,5 @@ Tutorials
     poetry_tutorial
     boil_tutorial
     prime_numbers
+    errors
     serialisation
