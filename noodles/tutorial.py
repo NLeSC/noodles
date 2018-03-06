@@ -102,6 +102,7 @@ def display_workflows(prefix, **kwargs):
 
     def create_svg(name, workflow):
         """Create an SVG file with rendered graph from a workflow."""
+        name = name.replace('_', '-')
         filename = '{}-{}.svg'.format(prefix, name)
         dot = get_workflow_graph(workflow)
         dot.attr('graph', bgcolor='transparent')
