@@ -10,6 +10,12 @@ from . import schedule, schedule_hint, get_workflow
 
 
 @schedule
+def echo_add(x, y):
+    print('adding', x, 'and', y)
+    return x + y
+
+
+@schedule
 def add(x, y):
     """add `x` and `y`."""
     return x + y
