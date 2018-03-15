@@ -5,13 +5,14 @@ Functions useful for tutorial work and unit testing.
 from inspect import Parameter
 from graphviz import Digraph
 import html
+import sys
 
 from . import schedule, schedule_hint, get_workflow
 
 
 @schedule
 def echo_add(x, y):
-    print('adding', x, 'and', y)
+    print('adding', x, 'and', y, file=sys.stderr)
     return x + y
 
 

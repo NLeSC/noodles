@@ -3,7 +3,7 @@ from ...lib import (
     thread_counter)
 
 from ..messages import (
-    ResultMessage, EndOfWork)
+    JobMessage, ResultMessage, EndOfWork)
 
 import threading
 import sys
@@ -35,7 +35,14 @@ def xenon_interactive_worker(
     @pull_map
     def serialise(obj):
         """Serialise incoming objects, yielding strings."""
+        if isinstance(obj, JobMessage):
+            print('serializing:', str(obj.node), file=sys.stderr)
         return (registry.to_json(obj, host='scheduler') + '\n').encode()
+
+    @pull_map
+    def echo(line):
+        print('{} input: {}'.format(worker_config.name, line), file=sys.stderr)
+        return line
 
     def do_iterate(source):
         for x in source():
@@ -46,7 +53,7 @@ def xenon_interactive_worker(
 
     job, output_stream = machine.scheduler.submit_interactive_job(
         worker_config.xenon_job_description,
-        serialise(lambda: do_iterate(input_queue.source)))
+        echo(lambda: serialise(lambda: do_iterate(input_queue.source))))
 
     @sink_map
     def echo_stderr(text):
