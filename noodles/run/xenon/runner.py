@@ -22,7 +22,7 @@ def run_xenon_simple(workflow, machine, worker_config):
 
 
 def run_xenon(
-        workflow, *, machine, worker_config, n_processes, deref=False):
+        workflow, *, machine, worker_config, n_processes, deref=False, verbose=False):
     """Run the workflow using a number of online Xenon workers.
 
     :param workflow: |Workflow| or |PromisedObject| to evaluate.
@@ -42,7 +42,7 @@ def run_xenon(
         dynamic_pool.add_xenon_worker(cfg)
 
     job_keeper = JobKeeper()
-    S = Scheduler(job_keeper=job_keeper)
+    S = Scheduler(job_keeper=job_keeper, verbose=verbose)
 
     result = S.run(
         dynamic_pool, get_workflow(workflow)
