@@ -9,7 +9,7 @@ import sys
 import uuid
 from subprocess import Popen, PIPE
 import threading
-import logging
+# import logging
 
 import random
 from ..workflow import get_workflow
@@ -48,9 +48,8 @@ def process_worker(registry, verbose=False, jobdirs=False,
 
     def read_stderr():
         """Read stderr of remote process and sends lines to logger."""
-        logger = logging.getLogger('noodles').getChild(name)
         for line in remote.stderr:
-            logger.info(name + ": " + line.rstrip())
+            print(name + ": " + line.rstrip())
 
     stderr_reader_thread = threading.Thread(target=read_stderr, daemon=True)
     stderr_reader_thread.start()

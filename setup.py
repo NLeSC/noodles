@@ -35,6 +35,6 @@ setup(
         'numpy': ['numpy', 'h5py', 'filelock'],
         'develop': [
             'pytest', 'pytest', 'coverage', 'pep8', 'numpy', 'tox',
-            'sphinx', 'sphinx_rtd_theme', 'nbsphinx'],
+            'sphinx', 'sphinx_rtd_theme', 'nbsphinx', 'flake8'],
     },
 )

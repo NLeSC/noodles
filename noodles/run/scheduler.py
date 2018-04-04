@@ -110,6 +110,7 @@ class Scheduler:
                 print("Flushing queue and waiting for threads to close.",
                       file=sys.stderr, flush=True)
                 graceful_exit = True
+                errors.append(err_msg)
                 try:
                     sink.send(FlushQueue)
                 except StopIteration:
@@ -122,6 +123,9 @@ class Scheduler:
 
             del self.jobs[job_key]
             if len(self.jobs) == 0 and graceful_exit:
+                for error in errors:
+                    print("Exception of type", type(error), ":")
+                    print(error)
                 raise errors[0]
 
             # if this result is the root of a workflow, pop to parent

@@ -3,13 +3,14 @@ from ...lib import (
     thread_counter)
 
 from ..messages import (
-    ResultMessage, EndOfWork)
+    JobMessage, ResultMessage, EndOfWork)
 
 import threading
 import sys
 from collections import namedtuple
 
 from .xenon import (Machine)
+import grpc
 
 
 def xenon_interactive_worker(
@@ -34,7 +35,14 @@ def xenon_interactive_worker(
     @pull_map
     def serialise(obj):
         """Serialise incoming objects, yielding strings."""
+        if isinstance(obj, JobMessage):
+            print('serializing:', str(obj.node), file=sys.stderr)
         return (registry.to_json(obj, host='scheduler') + '\n').encode()
+
+    @pull_map
+    def echo(line):
+        print('{} input: {}'.format(worker_config.name, line), file=sys.stderr)
+        return line
 
     def do_iterate(source):
         for x in source():
@@ -45,7 +53,7 @@ def xenon_interactive_worker(
 
     job, output_stream = machine.scheduler.submit_interactive_job(
         worker_config.xenon_job_description,
-        serialise(lambda: do_iterate(input_queue.source)))
+        echo(lambda: serialise(lambda: do_iterate(input_queue.source))))
 
     @sink_map
     def echo_stderr(text):
@@ -61,34 +69,38 @@ def xenon_interactive_worker(
         """Handle output from job, sending stderr data to given
         `stderr_sink`, passing on lines from stdout."""
         line_buffer = ""
-        for chunk in source():
-            if chunk.stdout:
-                lines = chunk.stdout.decode().splitlines(keepends=True)
+        try:
+            for chunk in source():
+                if chunk.stdout:
+                    lines = chunk.stdout.decode().splitlines(keepends=True)
 
-                if not lines:
-                    continue
+                    if not lines:
+                        continue
 
-                if lines[0][-1] == '\n':
-                    yield line_buffer + lines[0]
-                    line_buffer = ""
-                else:
-                    line_buffer += lines[0]
+                    if lines[0][-1] == '\n':
+                        yield line_buffer + lines[0]
+                        line_buffer = ""
+                    else:
+                        line_buffer += lines[0]
 
-                if len(lines) == 1:
-                    continue
+                    if len(lines) == 1:
+                        continue
 
-                yield from lines[1:-1]
+                    yield from lines[1:-1]
 
-                if lines[-1][-1] == '\n':
-                    yield lines[-1]
-                else:
-                    line_buffer = lines[-1]
+                    if lines[-1][-1] == '\n':
+                        yield lines[-1]
+                    else:
+                        line_buffer = lines[-1]
 
-            if chunk.stderr:
-                for line in chunk.stderr.decode().split('\n'):
-                    stripped_line = line.strip()
-                    if stripped_line != '':
-                        stderr_sink.send(stripped_line)
+                if chunk.stderr:
+                    for line in chunk.stderr.decode().split('\n'):
+                        stripped_line = line.strip()
+                        if stripped_line != '':
+                            stderr_sink.send(stripped_line)
+
+        except grpc.RpcError as e:
+            return
 
     @pull_map
     def deserialise(line):
