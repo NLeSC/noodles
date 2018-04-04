@@ -22,7 +22,8 @@ def run_xenon_simple(workflow, machine, worker_config):
 
 
 def run_xenon(
-        workflow, *, machine, worker_config, n_processes, deref=False, verbose=False):
+        workflow, *, machine, worker_config, n_processes, deref=False,
+        verbose=False):
     """Run the workflow using a number of online Xenon workers.
 
     :param workflow: |Workflow| or |PromisedObject| to evaluate.

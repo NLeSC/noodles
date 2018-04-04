@@ -9,7 +9,7 @@ import sys
 import uuid
 from subprocess import Popen, PIPE
 import threading
-import logging
+# import logging
 
 import random
 from ..workflow import get_workflow
