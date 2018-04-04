@@ -126,6 +126,7 @@ class Scheduler:
                 for error in errors:
                     print("Exception of type", type(error), ":")
                     print(error)
+                raise errors[0]
 
             # if this result is the root of a workflow, pop to parent
             # we do this before scheduling a child workflow, as to

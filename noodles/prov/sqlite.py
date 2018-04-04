@@ -24,7 +24,8 @@ once a non-workflow result is known.
 import sqlite3
 from threading import Lock
 from collections import (defaultdict)
-from typing import NamedTuple
+# from typing import NamedTuple
+from collections import (namedtuple)
 import datetime
 import sys
 from enum import IntEnum
@@ -81,32 +82,41 @@ schema = '''
 '''
 
 
-class JobEntry(NamedTuple):
-    """Python tuple reflection of Job entry in database."""
-    id: int
-    session: int
-    name: str
-    status: int
-    prov: str
-    version: str
-    function: str
-    arguments: str
-    result: str
-    link: int
+JobEntry = namedtuple('JobEntry', [
+    'id', 'session', 'name', 'status', 'prov', 'version', 'function',
+    'arguments', 'result', 'link'])
 
 
-class SessionEntry(NamedTuple):
-    """Python tuple reflection of Session entry in database."""
-    id: int
-    time: datetime.datetime
-    info: str
+# class JobEntry(NamedTuple):
+#     """Python tuple reflection of Job entry in database."""
+#     id: int
+#     session: int
+#     name: str
+#     status: int
+#     prov: str
+#     version: str
+#     function: str
+#     arguments: str
+#     result: str
+#     link: int
 
+SessionEntry = namedtuple('SessionEntry', [
+    'id', 'time', 'info'])
 
-class TimestampEntry(NamedTuple):
-    """Python tuple reflection of Timestamp entry in database."""
-    job: int
-    time: datetime.datetime
-    what: str
+# class SessionEntry(NamedTuple):
+#     """Python tuple reflection of Session entry in database."""
+#     id: int
+#     time: datetime.datetime
+#     info: str
+
+TimestampEntry = namedtuple('TimestampEntry', [
+    'job', 'time', 'what'])
+
+# class TimestampEntry(NamedTuple):
+#     """Python tuple reflection of Timestamp entry in database."""
+#     job: int
+#     time: datetime.datetime
+#     what: str
 
 
 class Status(IntEnum):
