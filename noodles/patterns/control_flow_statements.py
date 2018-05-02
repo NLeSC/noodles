@@ -2,7 +2,7 @@ from noodles import (schedule, quote, unquote)
 from typing import Any
 
 
-def if_predicate(
+def conditional(
         b: bool,
         branch_true: Any,
         branch_false: Any=None) -> Any:
