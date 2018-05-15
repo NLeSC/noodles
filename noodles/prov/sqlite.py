@@ -24,13 +24,14 @@ once a non-workflow result is known.
 import sqlite3
 from threading import Lock
 from collections import (defaultdict)
-from typing import NamedTuple
-import datetime
+# from typing import NamedTuple
+from collections import (namedtuple)
+# import datetime
 import sys
 from enum import IntEnum
 
 from ..run.messages import (JobMessage, ResultMessage)
-from ..workflow import (is_workflow, get_workflow)
+from ..workflow import (is_workflow, get_workflow, FunctionNode, NodeData)
 from .key import (prov_key)
 
 try:
@@ -81,32 +82,41 @@ schema = '''
 '''
 
 
-class JobEntry(NamedTuple):
-    """Python tuple reflection of Job entry in database."""
-    id: int
-    session: int
-    name: str
-    status: int
-    prov: str
-    version: str
-    function: str
-    arguments: str
-    result: str
-    link: int
+JobEntry = namedtuple('JobEntry', [
+    'id', 'session', 'name', 'status', 'prov', 'version', 'function',
+    'arguments', 'result', 'link'])
 
 
-class SessionEntry(NamedTuple):
-    """Python tuple reflection of Session entry in database."""
-    id: int
-    time: datetime.datetime
-    info: str
+# class JobEntry(NamedTuple):
+#     """Python tuple reflection of Job entry in database."""
+#     id: int
+#     session: int
+#     name: str
+#     status: int
+#     prov: str
+#     version: str
+#     function: str
+#     arguments: str
+#     result: str
+#     link: int
 
+SessionEntry = namedtuple('SessionEntry', [
+    'id', 'time', 'info'])
 
-class TimestampEntry(NamedTuple):
-    """Python tuple reflection of Timestamp entry in database."""
-    job: int
-    time: datetime.datetime
-    what: str
+# class SessionEntry(NamedTuple):
+#     """Python tuple reflection of Session entry in database."""
+#     id: int
+#     time: datetime.datetime
+#     info: str
+
+TimestampEntry = namedtuple('TimestampEntry', [
+    'job', 'time', 'what'])
+
+# class TimestampEntry(NamedTuple):
+#     """Python tuple reflection of Timestamp entry in database."""
+#     job: int
+#     time: datetime.datetime
+#     what: str
 
 
 class Status(IntEnum):
@@ -185,6 +195,46 @@ class JobDB:
             job.node.result = value
 
     # --------- database interface ---------------------
+    def list_jobs(self):
+        with self.lock:
+            self.cur.execute(
+                'select "id", "function", "arguments" from "jobs"')
+            return {
+                x[0]: FunctionNode.from_node_data(NodeData(
+                    self.registry.from_json(x[1]),
+                    self.registry.from_json(x[2]),
+                    {}
+                )) for x in self.cur.fetchall()}
+
+    def get_result(self, db_id):
+        with self.lock:
+            self.cur.execute(
+                'select * from "jobs" where "id" = ?',
+                (db_id,))
+            rec = self.cur.fetchone()
+            if rec is None:
+                raise ValueError("No record found with id %s", db_id)
+            rec = JobEntry(*rec)
+
+            if rec.result is not None and rec.status == Status.WORKFLOW:
+                # the found duplicate returned a workflow
+                if rec.link is not None:
+                    # link is set, so result is fully realized
+                    self.cur.execute(
+                        'select * from "jobs" where "id" = ?',
+                        (rec.link,))
+                    rec = self.cur.fetchone()
+                    assert rec is not None, "database integrity violation"
+                    rec = JobEntry(*rec)
+
+                else:
+                    # link is not set, the result is still waited upon
+                    raise ValueError("Result for this job is not available.")
+
+            assert rec.result is not None, "no result found"
+            # result is found! return it
+            result_value = self.registry.from_json(rec.result, deref=True)
+            return result_value
 
     def add_job_to_db(self, key, job):
         """Add job info to the database."""

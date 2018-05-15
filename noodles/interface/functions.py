@@ -239,11 +239,15 @@ def lift(obj, memo=None):
         memo[id(obj)] = rv
         return rv
 
-    members = lift(obj.__dict__, memo)
-    if isinstance(members, PromisedObject):
-        rv = create_object(obj.__class__, members)
-    else:
-        rv = obj
+    try:
+        members = lift(obj.__dict__, memo)
+        if isinstance(members, PromisedObject):
+            rv = create_object(obj.__class__, members)
+        else:
+            rv = obj
+    except AttributeError:
+        memo[id(obj)] = obj
+        return obj
 
     memo[id(obj)] = rv
     return rv
