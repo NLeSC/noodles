@@ -93,7 +93,7 @@ installed as well.
 Documentation
 -------------
 
-All the latest documentation is available on `Read the Docs <https://noodles.rtfd.io/>_`.
+All the latest documentation is available on `Read the Docs <https://noodles.rtfd.io/>`_.
 
 .. |travis| image:: https://travis-ci.org/NLeSC/noodles.svg?branch=master
   :target: https://travis-ci.org/NLeSC/noodles
