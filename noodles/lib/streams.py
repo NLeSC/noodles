@@ -159,8 +159,11 @@ class push_map(push):
         sink = sink()
 
         while True:
-            x = yield
-            sink.send(self.f(x))
+            try:
+                x = yield
+                sink.send(self.f(x))
+            except StopIteration:
+                return
 
 
 def sink_map(f):
