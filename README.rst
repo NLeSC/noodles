@@ -1,4 +1,4 @@
-|travis| |zenodo| |codecov|
+|rtfd| |travis| |zenodo| |codecov|
 
 Noodles - easy parallel programming for Python
 ==============================================
@@ -40,10 +40,19 @@ big compute node in a cluster computer.
 
 Installation
 ------------
-Install the following in a virtualenv:
+
+Install the latest version from PyPI:
 
 .. code:: bash
 
+    pip install noodles
+
+Or, if you clone this repository,
+
+.. code:: bash
+
+    git clone git@github.com:NLeSC/noodles.git
+    cd noodles
     pip install .
 
 To enable Xenon for remote execution, Java must be installed, and Xenon
@@ -75,67 +84,16 @@ To run unit tests, run
 .. code:: bash
 
     pip install '.[test]'
-    nosetests test
+    tox
 
 Some tests depend on the optional modules being installed. Those are skipped if
 if imports fail. If you want to test everything, make sure you have NumPy
 installed as well.
 
-The prototype
+Documentation
 -------------
-The prototype is very simple. It should support the definition of function
-objects that are manageable in the workflow engine and give output of the
-workflow as a graph. The only dependency of this prototype should be the
-graph plotting library: `pygraphviz`. To keep the interface clean, we avoid the
-use of Fireworks specific functionality at this point. The abstract concepts
-in this context are: workflow, node, link.
 
-Developers interface
---------------------
-Questions:
-
--   What does a developer adding functionality to the workflow engine need to
-    know?
--   How do we specify the surrounding context of functions in terms of types
-    and monadic context?
-
-User interface
---------------
-The user should have it easy. From the spirit of wishful programming, we may
-give here some examples of how the user would use the workflow engine.
-
-Prototype example
------------------
-The developer has prepared some nice functions for the user:
-
-.. code:: python
-
-    @schedule
-    def f(a, b):
-        return a+b
-
-    @schedule
-    def g(a, b):
-        return a-b
-
-    @schedule
-    def h(a, b):
-        return a*b
-
-The user then uses these in a workflow:
-
-.. code:: python
-
-    u = f(5, 4)
-    v = g(u, 3)
-    w = g(u, 2)
-    x = h(v, w)
-
-    draw_graph("graph-example1.svg", x)
-
-Resulting in the graph:
-
-.. image:: examples/callgraph.png?raw=true
+All the latest documentation is available on `Read the Docs <https://noodles.rtfd.io/>`_.
 
 .. |travis| image:: https://travis-ci.org/NLeSC/noodles.svg?branch=master
   :target: https://travis-ci.org/NLeSC/noodles
@@ -145,3 +103,6 @@ Resulting in the graph:
   :alt: DOI
 .. |codecov| image:: https://codecov.io/gh/NLeSC/noodles/branch/master/graph/badge.svg
   :target: https://codecov.io/gh/NLeSC/noodles
+.. |rtfd| image:: https://readthedocs.org/projects/noodles/badge/?version=latest
+  :target: https://noodles.readthedocs.io/en/latest/?badge=latest
+  :alt: Documentation Status
