@@ -14,9 +14,10 @@ with (here / 'README.rst').open(encoding='utf-8') as f:
 
 setup(
     name='Noodles',
-    version='0.3.1',
+    version='0.3.2',
     description='Workflow Engine',
     long_description=long_description,
+    long_description_content_type='text/markdown',
     author='Johan Hidding',
     url='https://github.com/NLeSC/noodles',
     packages=find_packages(exclude=['test*']),
@@ -26,7 +27,7 @@ setup(
         'Intended Audience :: Science/Research',
         'Environment :: Console',
         'Development Status :: 4 - Beta',
-        'Programming Language :: Python :: 3.6',
+        'Programming Language :: Python :: 3.7',
         'Topic :: System :: Distributed Computing'],
 
     install_requires=['graphviz', 'ujson'],
