@@ -14,7 +14,7 @@ with (here / 'README.rst').open(encoding='utf-8') as f:
 
 setup(
     name='Noodles',
-    version='0.3.2',
+    version='0.3.3',
     description='Workflow Engine',
     long_description=long_description,
     long_description_content_type='text/markdown',
