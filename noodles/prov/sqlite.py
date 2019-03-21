@@ -140,7 +140,7 @@ class JobDB:
             path = Path(path)
         path.parent.mkdir(exist_ok=True)
 
-        self.connection = sqlite3.connect(path, check_same_thread=False)
+        self.connection = sqlite3.connect(path.as_posix(), check_same_thread=False)
         self.jobs = {}
         self.links = defaultdict(list)
         self.registry = registry()
