@@ -9,7 +9,7 @@ from setuptools import setup, find_packages
 
 # Get the long description from the README file
 here = Path(__file__).parent.absolute()
-with (here / 'README.rst').open(encoding='utf-8') as f:
+with (here / 'README.md').open(encoding='utf-8') as f:
     long_description = f.read()
 
 setup(
