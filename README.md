@@ -1,6 +1,5 @@
 ---
-title: Noodles
-author: Johan Hidding
+title: Noodles - parallel programming in Python
 ---
 
 [![Travis](https://travis-ci.org/NLeSC/noodles.svg?branch=master)](https://travis-ci.org/NLeSC/noodles)
@@ -8,15 +7,18 @@ author: Johan Hidding
 [![Code coverage](https://codecov.io/gh/NLeSC/noodles/branch/master/graph/badge.svg)](https://codecov.io/gh/NLeSC/noodles)
 [![Documentation](https://readthedocs.org/projects/noodles/badge/?version=latest)](https://noodles.readthedocs.io/en/latest/?badge=latest)
 
+::: {.splash}
 * Write readable code
 * Parallelise with a dash of Noodle sauce!
-* Scale your applications from laptop to HPC
+* Scale your applications from laptop to HPC using Xenon
+    + [Learn more about Xenon](https://xenon-middleware.github.io/xenon)
 * Read our [documentation](https://noodles.rtfd.io/), including tutorials on:
     + [Creating parallel programs](https://noodles.readthedocs.io/en/latest/poetry_tutorial.html)
     + [Circumventing the global interpreter lock](https://noodles.readthedocs.io/en/latest/prime_numbers.html)
     + [Handling errors in a meaningful way](https://noodles.readthedocs.io/en/latest/errors.html)
     + [Serialising your data](https://noodles.readthedocs.io/en/latest/serialisation.html)
     + [Functional programming and flow control](https://noodles.readthedocs.io/en/latest/control_your_flow.html)
+:::
 
 # What is Noodles?
 Noodles is easy parallel programming for Python.
