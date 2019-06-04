@@ -21,7 +21,7 @@ def _format_arg_list(a, v):
     for i in a[:-1]:
         s = s.format(
             _sugar(str(i))
-            if i != Parameter.empty
+            if i is not Parameter.empty
             else "\u2014", ", {0}{1}")
 
     if v:
@@ -29,11 +29,29 @@ def _format_arg_list(a, v):
 
     return s.format(
         _sugar(str(a[-1]))
-        if a[-1] != Parameter.empty
+        if a[-1] is not Parameter.empty
         else "\u2014", "")
 
 
-def draw_workflow(filename, workflow):
+def draw_workflow(filename, workflow, paint=None):
+    dot = AGraph(directed=True)  # (comment="Computing scheme")
+    dot.node_attr['style'] = 'filled'
+    for i, n in workflow.nodes.items():
+        dot.add_node(i, label="{0} \n {1}".format(
+            n.foo.__name__, _format_arg_list(n.bound_args.args, None)))
+        x = dot.get_node(i)
+        if paint:
+            paint(x, n.foo.__name__)
+
+    for i in workflow.links:
+        for j in workflow.links[i]:
+            dot.add_edge(i, j[0])
+    dot.layout(prog='dot')
+
+    dot.draw(filename)
+
+
+def graph(workflow):
     dot = AGraph(directed=True)  # (comment="Computing scheme")
     for i, n in workflow.nodes.items():
         dot.add_node(i, label="{0} \n {1}".format(
@@ -43,5 +61,4 @@ def draw_workflow(filename, workflow):
         for j in workflow.links[i]:
             dot.add_edge(i, j[0])
     dot.layout(prog='dot')
-
-    dot.draw(filename)
+    return dot

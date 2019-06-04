@@ -99,7 +99,7 @@ def xenon_interactive_worker(
                         if stripped_line != '':
                             stderr_sink.send(stripped_line)
 
-        except grpc.RpcError as e:
+        except grpc.RpcError:
             return
 
     @pull_map
@@ -182,9 +182,12 @@ class DynamicPool(Connection):
                 for w in self.workers.values():
                     with w.lock:  # Worker lock ~~~~~~~~~~~~~~~~~~~~~
                         if len(w.jobs) < w.max:
-                            w.sink.send(msg)
-                            w.jobs.append(msg.key)
-                            break
+                            try:
+                                w.sink.send(msg)
+                                w.jobs.append(msg.key)
+                                break
+                            except StopIteration:
+                                return
                     # lock end ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
                 else:
                     job_sink.send(msg)

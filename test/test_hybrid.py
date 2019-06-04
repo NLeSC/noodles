@@ -1,6 +1,6 @@
 import time
 
-from noodles import schedule, schedule_hint, gather
+from noodles import schedule, gather
 from noodles.workflow import get_workflow
 from noodles.run.scheduler import Scheduler
 from noodles.run.worker import run_job
@@ -20,12 +20,12 @@ def threaded_worker(n_threads):
     return Queue() >> thread_pool(*repeat(worker, n_threads))
 
 
-@schedule_hint(n=1)
+@schedule(n=1)
 def f(x):
     return 2*x
 
 
-@schedule_hint(n=2)
+@schedule(n=2)
 def g(x):
     return 3*x
 
@@ -42,7 +42,7 @@ def selector(job):
         return None
 
 
-@schedule_hint(n=1)
+@schedule(n=1)
 def delayed(a, dt):
     time.sleep(dt)
     return a

@@ -3,6 +3,7 @@ from copy import deepcopy
 import hashlib
 import sys
 import inspect
+import operator
 
 from ..workflow import (from_call, get_workflow)
 from .maybe import (maybe)
@@ -72,12 +73,12 @@ def schedule_hint(**hints):
 
 @schedule
 @maybe
-def _getitem(obj, ix):
+def getitem(obj, ix):
     return obj[ix]
 
 
 @schedule
-def _setitem(obj, attr, value):
+def setitem(obj, attr, value):
     try:
         obj = deepcopy(obj)
         obj[attr] = value
@@ -209,14 +210,17 @@ class PromisedObject:
     # def __abs__(self):
     #     return schedule(operator.abs)(self)
 
-    # def __sub__(self, other):
-    #     return schedule(operator.sub)(self, other)
+    def __sub__(self, other):
+        return schedule(operator.sub)(self, other)
 
-    # def __add__(self, other):
-    #     return schedule(operator.add)(self, other)
+    def __add__(self, other):
+        return schedule(operator.add)(self, other)
 
-    # def __mul__(self, other):
-    #     return schedule(operator.mul)(self, other)
+    def __mul__(self, other):
+        return schedule(operator.mul)(self, other)
+
+    def __rmul__(self, other):
+        return schedule(operator.mul)(other, self)
 
     # def __truediv__(self, other):
     #     return schedule(operator.truediv)(self, other)
@@ -266,11 +270,11 @@ class PromisedObject:
     #    return schedule(operator.contains)(self, item)
 
     def __getitem__(self, name):
-        return _getitem(self, name)
+        return getitem(self, name)
 
     def __setitem__(self, attr, value):
         self._workflow = get_workflow(
-            _setitem(self, attr, value))
+            setitem(self, attr, value))
 
     def __iter__(self):
         raise TypeError(

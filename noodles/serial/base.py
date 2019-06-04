@@ -1,4 +1,4 @@
-from inspect import ismethod
+import inspect
 from itertools import count
 from pathlib import Path
 import base64
@@ -11,6 +11,15 @@ from ..workflow import (Workflow, NodeData, FunctionNode, ArgumentAddress,
 from .registry import (Registry, Serialiser, SerUnknown)
 from .reasonable import (Reasonable, SerReasonableObject)
 from .path import (SerPath)
+
+
+def ismethod(x):
+    if inspect.ismethod(x):
+        return True
+    if type(x).__name__ == 'builtin_function_or_method' \
+            and hasattr(x, '__self__'):
+        return True
+    return False
 
 
 class SerAuto(Serialiser):
