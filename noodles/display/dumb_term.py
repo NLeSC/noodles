@@ -1,4 +1,5 @@
 from .pretty_term import OutStream
+from ..workflow import FunctionNode
 from inspect import Parameter
 import sys
 
@@ -67,7 +68,8 @@ class DumbDisplay:
 
     def __call__(self, msg):
         key, status, data, err = msg
-        if hasattr(data, 'hints'):
+
+        if isinstance(data, FunctionNode) and hasattr(data, 'hints'):
             job = data
             if job.hints and 'display' in job.hints:
                 msg = job.hints['display'].format(**job.bound_args.arguments)

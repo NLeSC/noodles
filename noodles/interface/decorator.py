@@ -184,31 +184,31 @@ class PromisedObject:
         return self._workflow.root_node.result
 
     # predicates
-    # def __lt__(self, other):
-    #     return schedule(operator.lt)(self, other)
+    def __lt__(self, other):
+        return schedule(operator.lt)(self, other)
 
-    # def __gt__(self, other):
-    #     return schedule(operator.gt)(self, other)
+    def __gt__(self, other):
+        return schedule(operator.gt)(self, other)
 
-    # def __eq__(self, other):
-    #     return schedule(operator.eq)(self, other)
+    def __eq__(self, other):
+        return schedule(operator.eq)(self, other)
 
-    # def __ne__(self, other):
-    #     return schedule(operator.ne)(self, other)
+    def __ne__(self, other):
+        return schedule(operator.ne)(self, other)
 
-    # def __ge__(self, other):
-    #     return schedule(operator.ge)(self, other)
+    def __ge__(self, other):
+        return schedule(operator.ge)(self, other)
 
-    # def __le__(self, other):
-    #     return schedule(operator.le)(self, other)
+    def __le__(self, other):
+        return schedule(operator.le)(self, other)
 
     #  boolean operations
-    # def __bool__(self):
-    #     return schedule(operator.truth)(self)
+    def __bool__(self):
+        return schedule(operator.truth)(self)
 
     # numerical operations
-    # def __abs__(self):
-    #     return schedule(operator.abs)(self)
+    def __abs__(self):
+        return schedule(operator.abs)(self)
 
     def __sub__(self, other):
         return schedule(operator.sub)(self, other)
@@ -222,52 +222,52 @@ class PromisedObject:
     def __rmul__(self, other):
         return schedule(operator.mul)(other, self)
 
-    # def __truediv__(self, other):
-    #     return schedule(operator.truediv)(self, other)
+    def __truediv__(self, other):
+        return schedule(operator.truediv)(self, other)
 
-    # def __floordiv__(self, other):
-    #     return schedule(operator.floordiv)(self, other)
+    def __floordiv__(self, other):
+        return schedule(operator.floordiv)(self, other)
 
-    # def __mod__(self, other):
-    #     return schedule(operator.mod)(self, other)
+    def __mod__(self, other):
+        return schedule(operator.mod)(self, other)
 
-    # def __pow__(self, other):
-    #     return schedule(operator.pow)(self, other)
+    def __pow__(self, other):
+        return schedule(operator.pow)(self, other)
 
-    # def __pos__(self):
-    #     return schedule(operator.pos)(self)
+    def __pos__(self):
+        return schedule(operator.pos)(self)
 
-    # def __neg__(self):
-    #     return schedule(operator.neg)(self)
+    def __neg__(self):
+        return schedule(operator.neg)(self)
 
-    # def __matmul__(self, other):
-    #     return schedule(operator.matmul)(self, other)
+    def __matmul__(self, other):
+        return schedule(operator.matmul)(self, other)
 
-    # def __index__(self):
-    #     return schedule(operator.index)(self)
+    def __index__(self):
+        return schedule(operator.index)(self)
 
     # bit operations
-    # def __inv__(self):
-    #     return schedule(operator.inv)(self)
+    def __inv__(self):
+        return schedule(operator.inv)(self)
 
-    # def __lshift__(self, n):
-    #     return schedule(operator.lshift)(self, n)
+    def __lshift__(self, n):
+        return schedule(operator.lshift)(self, n)
 
-    # def __rshift__(self, n):
-    #     return schedule(operator.rshift)(self, n)
+    def __rshift__(self, n):
+        return schedule(operator.rshift)(self, n)
 
-    # def __and__(self, other):
-    #     return schedule(operator.and_)(self, other)
+    def __and__(self, other):
+        return schedule(operator.and_)(self, other)
 
-    # def __or__(self, other):
-    #     return schedule(operator.or_)(self, other)
+    def __or__(self, other):
+        return schedule(operator.or_)(self, other)
 
-    # def __xor__(self, other):
-    #     return schedule(operator.xor)(self, other)
+    def __xor__(self, other):
+        return schedule(operator.xor)(self, other)
 
     # container operations
-    # def __contains__(self, item):
-    #    return schedule(operator.contains)(self, item)
+    def __contains__(self, item):
+        return schedule(operator.contains)(self, item)
 
     def __getitem__(self, name):
         return getitem(self, name)
