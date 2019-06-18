@@ -1,3 +1,7 @@
 *.db
 tutorial.h5
 tutorial.lock
+mprofile_*.dat
+test-recursion.py
+test-tail-recursion.py
+

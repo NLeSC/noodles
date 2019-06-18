@@ -48,12 +48,7 @@
 </ul>
 </div>
 <h2 id="what-is-noodles">What is Noodles?</h2>
-<p>Noodles is easy parallel programming for Python.</p>
-<p>Often, a computer program can be sped up by executing parts of its code <em>in parallel</em> (simultaneously), as opposed to <em>synchronously</em> (one part after another).</p>
-<p>A simple example may be where you assign two variables, as follows <code>a = 2 * i</code> and <code>b = 3 * i</code>. Either statement is only dependent on <code>i</code>, but whether you assign <code>a</code> before <code>b</code> or vice versa, does not matter for how your program works. Whenever this is the case, there is potential to speed up a program, because the assignment of <code>a</code> and <code>b</code> could be done in parallel, using multiple cores on your computer’s CPU. Obviously, for simple assignments like <code>a = 2 * i</code>, there is not much time to be gained, but what if <code>a</code> is the result of a time-consuming function, e.g. <code>a = very_difficult_function(i)</code>? And what if your program makes many calls to that function, e.g. <code>list_of_a = [very_difficult_function(i) for i in list_of_i]</code>? The potential speed-up could be tremendous.</p>
-<p>So, parallel execution of computer programs is great for improving performance, but how do you tell the computer which parts should be executed in parallel, and which parts should be executed synchronously? How do you identify the order in which to execute each part, since the optimal order may be different from the order in which the parts appear in your program. These questions quickly become nearly impossible to answer as your program grows and changes during development. Because of this, many developers accept the slow execution of their program only because it saves them from the headaches associated with keeping track of which parts of their program depend on which other parts.</p>
-<p>Enter Noodles.</p>
-<p>Noodles is a Python package that can automatically construct a <em>callgraph</em> for a given Python program, listing exactly which parts depend on which parts. Moreover, Noodles can subsequently use the callgraph to execute code in parallel on your local machine using multiple cores. If you so choose, you can even configure Noodles such that it will execute the code remotely, for example on a big compute node in a cluster computer.</p>
+<p>Noodles is a task-based parallel programming model in Python that offers the same intuitive interface when running complex workflows on your laptop or on large computer clusters.</p>
 <h2 id="installation">Installation</h2>
 <p>To install the latest version from PyPI:</p>
 <pre><code>pip install noodles</code></pre>
