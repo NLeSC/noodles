@@ -19,16 +19,26 @@ def _format_arg_list(a, v):
 
     s = "({0}{1})"
     for i in a[:-1]:
+        if isinstance(i, float):
+            istr = "{:.6}".format(i)
+        else:
+            istr = str(i)
+
         s = s.format(
-            _sugar(str(i))
+            _sugar(istr)
             if i is not Parameter.empty
             else "\u2014", ", {0}{1}")
 
     if v:
         return s.format("\u2026", "")
 
+    if isinstance(a[-1], float):
+        istr = "{:.6}".format(a[-1])
+    else:
+        istr = str(a[-1])
+
     return s.format(
-        _sugar(str(a[-1]))
+        _sugar(istr)
         if a[-1] is not Parameter.empty
         else "\u2014", "")
 

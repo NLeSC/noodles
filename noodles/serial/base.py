@@ -3,6 +3,15 @@ from itertools import count
 from pathlib import Path
 import base64
 
+try:
+    import dataclasses
+    from .dataclass import SerDataClass
+except ImportError:
+    use_dataclasses = False
+    SerDataClass = None
+else:
+    use_dataclasses = True
+
 from ..interface import (Fail, PromisedObject, Quote)
 from ..lib import (object_name, look_up, importable, unwrap, is_unwrapped)
 from ..workflow import (Workflow, NodeData, FunctionNode, ArgumentAddress,
@@ -208,6 +217,10 @@ def _noodles_hook(obj):
     if '__member_of__' in dir(obj) and obj.__member_of__:
         return '<method>'
 
+    if use_dataclasses and \
+            dataclasses.is_dataclass(obj) and not isinstance(obj, type):
+        return '<dataclass>'
+
     if importable(obj):
         return '<importable>'
 
@@ -259,7 +272,8 @@ def registry():
             '<boundmethod>': SerBoundMethod(),
             '<importable>': SerImportable(),
             '<automagic>': SerAuto(),
-            '<unwrapped>': SerUnwrapped()
+            '<unwrapped>': SerUnwrapped(),
+            '<dataclass>': SerDataClass()
         },
         hook_fn=_noodles_hook,
         default=SerUnknown(),
