@@ -4,7 +4,7 @@ from pathlib import Path
 import base64
 
 try:
-    import dataclasses
+    import dataclasses  # noqa
     from .dataclass import SerDataClass
 except ImportError:
     use_dataclasses = False
@@ -217,10 +217,6 @@ def _noodles_hook(obj):
     if '__member_of__' in dir(obj) and obj.__member_of__:
         return '<method>'
 
-    if use_dataclasses and \
-            dataclasses.is_dataclass(obj) and not isinstance(obj, type):
-        return '<dataclass>'
-
     if importable(obj):
         return '<importable>'
 
@@ -232,6 +228,11 @@ def _noodles_hook(obj):
 
     if hasattr(obj, '__serialize__') and hasattr(type(obj), '__construct__'):
         return '<automagic>'
+
+    # if use_dataclasses and \
+    #         dataclasses.is_dataclass(obj) and not isinstance(obj, type):
+    #     print(obj)
+    #     return '<dataclass>'
 
     return None
 

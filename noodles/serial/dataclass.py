@@ -1,4 +1,3 @@
-import dataclasses
 from .registry import Serialiser
 
 
