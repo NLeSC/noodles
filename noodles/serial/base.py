@@ -8,7 +8,7 @@ try:
     from .dataclass import SerDataClass
 except ImportError:
     use_dataclasses = False
-    SerDataClass = None
+    SerDataClass = lambda: None  # noqa
 else:
     use_dataclasses = True
 
