@@ -4,13 +4,14 @@ from pathlib import Path
 import base64
 
 try:
-    import dataclasses  # noqa
+    from dataclasses import is_dataclass  # noqa
     from .dataclass import SerDataClass
 except ImportError:
-    use_dataclasses = False
-    SerDataClass = lambda: None  # noqa
-else:
-    use_dataclasses = True
+    def is_dataclass(x):
+        return False
+
+    def SerDataClass():
+        return None
 
 from ..interface import (Fail, PromisedObject, Quote)
 from ..lib import (object_name, look_up, importable, unwrap, is_unwrapped)
@@ -229,10 +230,8 @@ def _noodles_hook(obj):
     if hasattr(obj, '__serialize__') and hasattr(type(obj), '__construct__'):
         return '<automagic>'
 
-    # if use_dataclasses and \
-    #         dataclasses.is_dataclass(obj) and not isinstance(obj, type):
-    #     print(obj)
-    #     return '<dataclass>'
+    if is_dataclass(type(obj)) and not isinstance(obj, type):
+        return '<dataclass>'
 
     return None
 

@@ -156,7 +156,7 @@ def result(obj):
     return obj.__result__()
 
 
-class PromisedObject:
+class PromisedObject(object):
     """
     Wraps a :py:class:`Workflow`. The workflow represents the future promise
     of a Python object. By wrapping the workflow, we can mock the behaviour of
