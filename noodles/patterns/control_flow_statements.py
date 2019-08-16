@@ -5,7 +5,7 @@ from typing import Any
 def conditional(
         b: bool,
         branch_true: Any,
-        branch_false: Any=None) -> Any:
+        branch_false: Any = None) -> Any:
     """
     Control statement to follow a branch
     in workflow. Equivalent to the `if` statement

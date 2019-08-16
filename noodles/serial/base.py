@@ -1,9 +1,9 @@
-from inspect import ismethod
+import inspect
 from itertools import count
 from pathlib import Path
 import base64
 
-from ..interface import (PromisedObject, Quote)
+from ..interface import (Fail, PromisedObject, Quote)
 from ..lib import (object_name, look_up, importable, unwrap, is_unwrapped)
 from ..workflow import (Workflow, NodeData, FunctionNode, ArgumentAddress,
                         ArgumentKind, reset_workflow, get_workflow)
@@ -11,6 +11,15 @@ from ..workflow import (Workflow, NodeData, FunctionNode, ArgumentAddress,
 from .registry import (Registry, Serialiser, SerUnknown)
 from .reasonable import (Reasonable, SerReasonableObject)
 from .path import (SerPath)
+
+
+def ismethod(x):
+    if inspect.ismethod(x):
+        return True
+    if type(x).__name__ == 'builtin_function_or_method' \
+            and hasattr(x, '__self__'):
+        return True
+    return False
 
 
 class SerAuto(Serialiser):
@@ -242,7 +251,8 @@ def registry():
             Workflow: SerWorkflow(),
             PromisedObject: SerPromisedObject(),
             Quote: SerReasonableObject(Quote),
-            Path: SerPath()
+            Path: SerPath(),
+            Fail: SerReasonableObject(Fail)
         },
         hooks={
             '<method>': SerMethod(),

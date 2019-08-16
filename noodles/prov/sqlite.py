@@ -22,6 +22,7 @@ once a non-workflow result is known.
 """
 
 import sqlite3
+from pathlib import Path
 from threading import Lock
 from collections import (defaultdict)
 # from typing import NamedTuple
@@ -134,7 +135,13 @@ class JobDB:
     """
     def __init__(self, path, registry, info=None):
         self.attached = defaultdict(list)
-        self.connection = sqlite3.connect(path, check_same_thread=False)
+
+        if isinstance(path, str):
+            path = Path(path)
+        path.parent.mkdir(exist_ok=True)
+
+        self.connection = sqlite3.connect(
+            path.as_posix(), check_same_thread=False)
         self.jobs = {}
         self.links = defaultdict(list)
         self.registry = registry()

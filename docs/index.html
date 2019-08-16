@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="" xml:lang="">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+  <title>Noodles - parallel programming in Python</title>
+  <style>
+      code{white-space: pre-wrap;}
+      span.smallcaps{font-variant: small-caps;}
+      span.underline{text-decoration: underline;}
+      div.column{display: inline-block; vertical-align: top; width: 50%;}
+  </style>
+  <link rel="stylesheet" href="style.css" />
+  <!--[if lt IE 9]>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/html5shiv/3.7.3/html5shiv-printshiv.min.js"></script>
+  <![endif]-->
+  <link href="https://fonts.googleapis.com/css?family=Dosis" rel="stylesheet">
+</head>
+<body>
+<header id="title-block-header">
+<h1 class="title">Noodles - parallel programming in Python</h1>
+</header>
+<nav id="TOC" role="doc-toc">
+<ul>
+<li><a href="#what-is-noodles">What is Noodles?</a></li>
+<li><a href="#installation">Installation</a></li>
+<li><a href="#documentation">Documentation</a></li>
+</ul>
+</nav>
+<p><a href="https://travis-ci.org/NLeSC/noodles"><img src="https://travis-ci.org/NLeSC/noodles.svg?branch=master" alt="Travis" /></a> <a href="https://zenodo.org/badge/latestdoi/45391130"><img src="https://zenodo.org/badge/45391130.svg" alt="Zenodo DOI" /></a> <a href="https://codecov.io/gh/NLeSC/noodles"><img src="https://codecov.io/gh/NLeSC/noodles/branch/master/graph/badge.svg" alt="Code coverage" /></a> <a href="https://noodles.readthedocs.io/en/latest/?badge=latest"><img src="https://readthedocs.org/projects/noodles/badge/?version=latest" alt="Documentation" /></a></p>
+<div class="splash">
+<ul>
+<li>Write readable code</li>
+<li>Parallelise with a dash of Noodle sauce!</li>
+<li>Scale your applications from laptop to HPC using Xenon
+<ul>
+<li><a href="https://xenon-middleware.github.io/xenon">Learn more about Xenon</a></li>
+</ul></li>
+<li>Read our <a href="https://noodles.rtfd.io/">documentation</a>, including tutorials on:
+<ul>
+<li><a href="https://noodles.readthedocs.io/en/latest/poetry_tutorial.html">Creating parallel programs</a></li>
+<li><a href="https://noodles.readthedocs.io/en/latest/prime_numbers.html">Circumventing the global interpreter lock</a></li>
+<li><a href="https://noodles.readthedocs.io/en/latest/errors.html">Handling errors in a meaningful way</a></li>
+<li><a href="https://noodles.readthedocs.io/en/latest/serialisation.html">Serialising your data</a></li>
+<li><a href="https://noodles.readthedocs.io/en/latest/control_your_flow.html">Functional programming and flow control</a></li>
+</ul></li>
+</ul>
+</div>
+<h2 id="what-is-noodles">What is Noodles?</h2>
+<p>Noodles is a task-based parallel programming model in Python that offers the same intuitive interface when running complex workflows on your laptop or on large computer clusters.</p>
+<h2 id="installation">Installation</h2>
+<p>To install the latest version from PyPI:</p>
+<pre><code>pip install noodles</code></pre>
+<p>To enable the Xenon backend for remote job execution,</p>
+<pre><code>pip install noodles[xenon]</code></pre>
+<p>This requires a Java Runtime to be installed, you may check this by running</p>
+<pre><code>java --version</code></pre>
+<p>which should print the version of the currently installed JRE.</p>
+<h2 id="documentation">Documentation</h2>
+<p>All the latest documentation is available on <a href="https://noodles.rtfd.io/">Read the Docs</a>.</p>
+</body>
+</html>
