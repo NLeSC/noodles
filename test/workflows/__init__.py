@@ -1,6 +1,6 @@
 from . import (
     gather, conditionals, class_methods, unpack, lift, dict_likes,
-    recursion, nesting, capture_output, patterns, setters, operators )
+    recursion, nesting, capture_output, patterns, setters, operators)
 from .workflow_factory import workflow_factory
 from itertools import chain
 from noodles.lib import unwrap

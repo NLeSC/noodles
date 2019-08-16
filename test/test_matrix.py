@@ -5,6 +5,7 @@ Test available runners on a variety of workflows.
 import pytest
 import sys
 
+
 def test_run(workflow, backend):
     if not backend.supports(workflow.requires):
         pytest.skip("Workflow not supported on this backend.")
