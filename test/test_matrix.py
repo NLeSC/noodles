@@ -11,7 +11,7 @@ def test_run(workflow, backend):
         pytest.skip("Workflow not supported on this backend.")
 
     if workflow.python_version is not None and \
-            not sys.version_info >= workflow.python_version:
+            sys.version_info < workflow.python_version:
         required = ".".join(map(str, workflow.python_version))
         running = ".".join(map(str, sys.version_info[0:3]))
         pytest.skip("Workflow requires Python >= {}, running Python {}."

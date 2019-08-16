@@ -21,4 +21,4 @@ def test_arguments():
     assert run(named_arg(1, 2, 3)) == [1, 2, 3]
     assert run(variadic_arg(1, 2, 3)) == [1, 2, 3]
     assert run(variadic_arg()) == []
-    assert run(keyword_arg(a=1, b=2, c=3)) == [1, 2, 3]
+    assert sorted(run(keyword_arg(a=1, b=2, c=3))) == [1, 2, 3]
