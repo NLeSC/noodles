@@ -92,8 +92,8 @@ class Workflow:
         self.nodes = nodes
         self.links = links
 
-    def __iter__(self):
-        return iter((self.root, self.nodes, self.links))
+    # def __iter__(self):
+    #     return iter((self.root, self.nodes, self.links))
 
     @property
     def root_node(self):

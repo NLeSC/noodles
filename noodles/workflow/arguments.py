@@ -80,27 +80,27 @@ def set_argument(bound_args, address, value):
         return
 
     if address.kind == ArgumentKind.variadic:
-        if address.name not in bound_args.arguments:
-            bound_args.arguments[address.name] = []
+        # if address.name not in bound_args.arguments:
+        #     bound_args.arguments[address.name] = []
 
         n_args = len(bound_args.arguments[address.name])
         if address.key >= n_args:
             bound_args.arguments[address.name].extend(
                 repeat(Empty, address.key - n_args + 1))
 
-    if address.kind == ArgumentKind.keyword:
-        if address.name not in bound_args.arguments:
-            bound_args.arguments[address.name] = {}
+    # if address.kind == ArgumentKind.keyword:
+    #     if address.name not in bound_args.arguments:
+    #         bound_args.arguments[address.name] = {}
 
     bound_args.arguments[address.name][address.key] = value
 
 
-def format_address(address):
-    """Formats an ArgumentAddress for human reading."""
-    if address.kind == ArgumentKind.regular:
-        return address.name
+# def format_address(address):
+#     """Formats an ArgumentAddress for human reading."""
+#     if address.kind == ArgumentKind.regular:
+#         return address.name
 
-    return "{0}[{1}]".format(address.name, address.key)
+#     return "{0}[{1}]".format(address.name, address.key)
 
 
 def get_arguments(bound_args):

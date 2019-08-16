@@ -72,11 +72,11 @@ def from_call(foo, args, kwargs, hints, call_by_value=True):
     # variadic arguments. Since we need to modify them,
     # we have to replace the tuple with a list. This works, for now...
     if variadic:
-        if variadic not in bound_args.arguments:
-            bound_args.arguments[variadic] = []
-        else:
-            bound_args.arguments[variadic] = \
-                list(bound_args.arguments[variadic])
+        # if variadic not in bound_args.arguments:
+        #     bound_args.arguments[variadic] = []
+        # else:
+        bound_args.arguments[variadic] = \
+            list(bound_args.arguments[variadic])
 
     # create the node and initialise hash key
     node = FunctionNode(foo, bound_args, hints)

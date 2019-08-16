@@ -18,6 +18,7 @@ cache*
 .coverage.*
 htmlcov
 coverage.xml
+*.done
 
 # vscode
 .vscode
