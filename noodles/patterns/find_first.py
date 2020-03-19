@@ -1,37 +1,47 @@
+from typing import (Iterable, Callable, TypeVar, Optional)
+
 from noodles import (schedule, quote, unquote)
 
+T = TypeVar('T')
+Predicate = Callable[[T], bool]
 
-def find_first(pred, lst):
-    """Find the first result of a list of promises `lst` that satisfies a
+
+def find_first(pred: Predicate, lst: Iterable[T]) -> Optional[T]:
+    """Find the first result of an iterable of promises `lst` that satisfies a
     predicate `pred`.
 
     :param pred: a function of one argument returning `True` or `False`.
-    :param lst: a list of promises or values.
+    :param lst: an iterable of promises or values.
     :return: a promise of a value or `None`.
 
-    This is a wrapper around :func:`s_find_first`. The first item on the list
-    is passed *as is*, forcing evalutation. The tail of the list is quoted, and
+    This is a wrapper around :func:`s_find_first`. The first item in the iterable
+    is passed *as is*, forcing evalutation. The tail of the iterable is quoted, and
     only unquoted if the predicate fails on the result of the first promise.
 
-    If the input list is empty, `None` is returned."""
-    if lst:
-        return s_find_first(pred, lst[0], [quote(l) for l in lst[1:]])
-    else:
+    If the input iterable is empty, `None` is returned."""
+    try:
+        head, *tail = lst
+    except ValueError:  # i.e. lst is too short
         return None
+    else:
+        return s_find_first(pred, head, [quote(l) for l in tail])
 
 
 @schedule
-def s_find_first(pred, first, lst):
+def s_find_first(pred: Predicate, first: T, lst: Iterable[T]) -> Optional[T]:
     """Evaluate `first`; if predicate `pred` succeeds on the result of `first`,
     return the result; otherwise recur on the first element of `lst`.
 
     :param pred: a predicate.
     :param first: a promise.
-    :param lst: a list of quoted promises.
+    :param lst: an iterable of quoted promises.
     :return: the first element for which predicate is true."""
     if pred(first):
         return first
-    elif lst:
-        return s_find_first(pred, unquote(lst[0]), lst[1:])
-    else:
+
+    try:
+        head, *tail = lst
+    except ValueError:  # i.e. lst is too short
         return None
+    else:
+        return s_find_first(pred, unquote(head), tail)
