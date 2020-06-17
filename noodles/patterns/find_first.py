@@ -6,7 +6,7 @@ T = TypeVar('T')
 Predicate = Callable[[T], bool]
 
 
-def find_first(pred: Predicate, lst: Iterable[T]) -> Optional[T]:
+def find_first(pred: Predicate[T], lst: Iterable[T]) -> Optional[T]:
     """Find the first result of an iterable of promises `lst` that satisfies a
     predicate `pred`.
 
@@ -28,7 +28,7 @@ def find_first(pred: Predicate, lst: Iterable[T]) -> Optional[T]:
 
 
 @schedule
-def s_find_first(pred: Predicate, first: T, lst: Iterable[T]) -> Optional[T]:
+def s_find_first(pred: Predicate[T], first: T, lst: Iterable[T]) -> Optional[T]:
     """Evaluate `first`; if predicate `pred` succeeds on the result of `first`,
     return the result; otherwise recur on the first element of `lst`.
 
