@@ -80,7 +80,7 @@ class SerNumpyArrayToHDF5(Serialiser):
     def encode(self, obj, make_rec):
         key = array_sha256(obj)
         with self.lock:
-            f = h5py.File(self.filename)
+            f = h5py.File(self.filename, 'a')
             path = next(
                 (ds for ds in f if f[ds].attrs.get('hash') == key),
                 False)
@@ -99,7 +99,7 @@ class SerNumpyArrayToHDF5(Serialiser):
 
     def decode(self, cls, data):
         with self.lock:
-            f = h5py.File(self.filename)
+            f = h5py.File(self.filename, 'r')
             obj = f[data["path"]].value
             f.close()
 
