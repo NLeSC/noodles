@@ -100,7 +100,7 @@ class SerNumpyArrayToHDF5(Serialiser):
     def decode(self, cls, data):
         with self.lock:
             f = h5py.File(self.filename, 'r')
-            obj = f[data["path"]].value
+            obj = f[data["path"]][:]
             f.close()
 
         return obj

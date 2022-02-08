@@ -6,7 +6,7 @@ from ..remote.worker_config import WorkerConfig
 
 class XenonJobConfig(WorkerConfig):
     def __init__(
-            self, *, queue_name=None, environment=None, options=None,
+            self, *, queue_name=None, environment=None,
             time_out=1000, scheduler_arguments=None, **kwargs):
         super(XenonJobConfig, self).__init__(**kwargs)
         self.time_out = time_out
@@ -18,8 +18,7 @@ class XenonJobConfig(WorkerConfig):
             working_directory=str(self.working_dir),
             queue_name=queue_name,
             environment=environment,
-            scheduler_arguments=scheduler_arguments,
-            options=options)
+            scheduler_arguments=scheduler_arguments)
 
 
 class Machine(object):

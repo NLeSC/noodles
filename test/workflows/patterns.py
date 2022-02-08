@@ -34,7 +34,7 @@ def zip_with():
 
 @workflow_factory(result=True, requires=['local', 'nocache'])
 def map_any():
-    arr = np.pi * np.arange(10., dtype=np.float)
+    arr = np.pi * np.arange(10., dtype=np.float64)
     xs = patterns.map(math.cos, arr)
 
     return patterns.any(lambda x: x < 0, xs)
