@@ -1,3 +1,4 @@
+import logging
 import uuid
 import time
 import json
@@ -6,6 +7,8 @@ import sys
 from threading import Lock
 from ..lib import (coroutine, EndOfQueue)
 from .messages import (JobMessage, EndOfWork)
+
+logger = logging.getLogger("noodles")
 
 
 class JobKeeper(dict):
@@ -34,8 +37,8 @@ class JobKeeper(dict):
             return
 
         if key not in self:
-            print("WARNING: store_result called but job not in registry:\n"
-                  "   race condition? Not doing anything.\n", file=sys.stderr)
+            logger.warning("store_result called but job not in registry:\n"
+                           "   race condition? Not doing anything.\n")
             return
 
         with self.lock:
@@ -50,8 +53,7 @@ class JobKeeper(dict):
             if msg is EndOfQueue:
                 return
             if msg is None:
-                print("Warning: `None` received where not expected.",
-                      file=sys.stderr)
+                logger.warning("`None` received where not expected.")
                 return
 
             key, status, value, err = msg

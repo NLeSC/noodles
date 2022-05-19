@@ -1,3 +1,4 @@
+import logging
 from ..lib import (Connection, FlushQueue, EndOfQueue)
 from .job_keeper import (JobKeeper)
 
@@ -5,6 +6,8 @@ from ..workflow import (
     is_workflow, get_workflow, insert_result,
     Workflow, is_node_ready)
 import sys
+
+logger = logging.getLogger("noodles")
 
 
 class Job:
@@ -99,16 +102,17 @@ class Scheduler:
                 except StopIteration:
                     pass
 
-                print("Uncaught error running job: {}, {}".format(n, err_msg),
-                      file=sys.stderr)
-                print("Flushing queue and waiting for threads to close.",
-                      file=sys.stderr, flush=True)
+                logger.error(f"Uncaught error running job {n}", exc_info=err_msg)
+                logger.info("Flushing queue and waiting for threads to close.")
+                for handler in logger.handlers:
+                    handler.flush()
 
             if status == 'aborted':
-                print("Job {} got aborted: {}".format(n, err_msg),
-                      file=sys.stderr)
-                print("Flushing queue and waiting for threads to close.",
-                      file=sys.stderr, flush=True)
+                logger.info(f"Job {n} got aborted", exc_info=err_msg)
+                logger.info("Flushing queue and waiting for threads to close.")
+                for handler in logger.handlers:
+                    handler.flush()
+
                 graceful_exit = True
                 errors.append(err_msg)
                 try:
@@ -117,15 +121,12 @@ class Scheduler:
                     pass
 
             if self.verbose:
-                print("sched result [{0}]: ".format(self.key_map[job_key]),
-                      result,
-                      file=sys.stderr, flush=True)
+                logger.info("sched result [{0}]: {1}".format(self.key_map[job_key], result))
+                for handler in logger.handlers:
+                    handler.flush()
 
             del self.jobs[job_key]
             if len(self.jobs) == 0 and graceful_exit:
-                for error in errors:
-                    print("Exception of type", type(error), ":")
-                    print(error)
                 raise errors[0]
 
             # if this result is the root of a workflow, pop to parent

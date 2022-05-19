@@ -3,11 +3,33 @@ Provides logging facilities that can be inserted at any place in a system
 of streams.
 """
 
+import sys
 import logging
 
 from ..lib import (EndOfQueue)
 from ..workflow import (is_workflow)
 from .messages import (JobMessage, ResultMessage)
+
+__all__ = ["make_logger", "logger"]
+
+
+def _initialize_logger() -> logging.Logger:
+    """Initialize the ``noodles`` logger and set its stream handlers."""
+    logger = logging.getLogger("noodles")
+    logger.setLevel(logging.INFO)
+
+    stream_handler = logging.StreamHandler()
+    stream_handler.setLevel(logging.INFO)
+    stream_handler.setFormatter(logging.Formatter(
+        fmt="[%(asctime)s] %(levelname)s: %(message)s",
+        datefmt="%H:%M:%S",
+    ))
+
+    logger.addHandler(stream_handler)
+    return logger
+
+
+logger = _initialize_logger()
 
 
 def _sugar(s):

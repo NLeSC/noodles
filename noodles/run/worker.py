@@ -1,6 +1,9 @@
+import logging
 from ..lib import (pull_map, EndOfQueue)
 from .messages import (ResultMessage, JobMessage)
 import sys
+
+logger = logging.getLogger("noodles")
 
 
 @pull_map
@@ -15,8 +18,7 @@ def worker(job):
         return
 
     if not isinstance(job, JobMessage):
-        print("Warning: Job should be communicated using `JobMessage`.",
-              file=sys.stderr)
+        logger.warning("Job should be communicated using `JobMessage`.")
 
     key, node = job
     return run_job(key, node)

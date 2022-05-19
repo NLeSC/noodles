@@ -14,6 +14,7 @@ stdout.
         > python3 -m noodles.worker -online [-use <worker>]
 """
 
+import logging
 import argparse
 import sys
 import uuid
@@ -34,6 +35,8 @@ from .run.messages import (
 
 from .run.remote.io import (JSONObjectReader, JSONObjectWriter)
 
+logger = logging.getLogger("noodles")
+
 
 def run_online_mode(args):
     """Run jobs.
@@ -46,9 +49,9 @@ def run_online_mode(args):
 
     Messages can be encoded as either JSON or MessagePack.
     """
-    print("\033[47;30m Netherlands\033[48;2;0;174;239;37m▌"
-          "\033[38;2;255;255;255me\u20d2Science\u20d2\033[37m▐"
-          "\033[47;30mcenter \033[m Noodles worker", file=sys.stderr)
+    logger.info("\033[47;30m Netherlands\033[48;2;0;174;239;37m▌"
+                "\033[38;2;255;255;255me\u20d2Science\u20d2\033[37m▐"
+                "\033[47;30mcenter \033[m Noodles worker")
 
     if args.n == 1:
         registry = look_up(args.registry)()
@@ -72,7 +75,7 @@ def run_online_mode(args):
             if isinstance(msg, JobMessage):
                 key, job = msg
             elif msg is EndOfWork:
-                print("received EndOfWork, bye", file=sys.stderr)
+                logger.info("received EndOfWork, bye")
                 sys.exit(0)
             elif isinstance(msg, tuple):
                 key, job = msg
@@ -88,17 +91,19 @@ def run_online_mode(args):
                 os.chdir("noodles-{0}".format(key.hex))
 
             if args.verbose:
-                print("worker: ",
-                      job.foo.__name__,
-                      job.bound_args.args,
-                      job.bound_args.kwargs,
-                      file=sys.stderr, flush=True)
+                logger.info(
+                    f"worker: {job.foo.__name__} {job.bound_args.args} {job.bound_args.kwarg}"
+                )
+                for handler in logger.handlers:
+                    handler.flush()
 
             with redirect_stdout(sys.stderr):
                 result = run_job(key, job)
 
             if args.verbose:
-                print("result: ", result.value, file=sys.stderr, flush=True)
+                logger.info(f"result: {result.value}")
+                for handler in logger.handlers:
+                    handler.flush()
 
             if args.jobdirs:
                 # parent directory

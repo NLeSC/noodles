@@ -1,6 +1,9 @@
+import logging
 import configparser
 from typing import (List)
 from ..lib import (look_up)
+
+logger = logging.getLogger("noodles")
 
 
 runners = [
@@ -145,7 +148,7 @@ def run_with_config(config_file, workflow, machine=None):
 
     machine = config.get('default', 'machine', fallback=machine)
     if machine is None:
-        print("No machine given, running local in single thread.")
+        logger.info("No machine given, running local in single thread.")
         runner = find_runner(name='single', features=[])
         settings = {}
 

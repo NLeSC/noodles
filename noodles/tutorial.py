@@ -2,6 +2,7 @@
 Functions useful for tutorial work and unit testing.
 """
 
+import logging
 from inspect import Parameter
 from graphviz import Digraph
 import html
@@ -9,10 +10,12 @@ import sys
 
 from . import schedule, schedule_hint, get_workflow
 
+logger = logging.getLogger("noodles")
+
 
 @schedule
 def echo_add(x, y):
-    print('adding', x, 'and', y, file=sys.stderr)
+    logger.info(f'adding {x} and {y}')
     return x + y
 
 

@@ -21,6 +21,7 @@ of that workflow with that of the original job. In that case we add a "link"
 once a non-workflow result is known.
 """
 
+import logging
 import sqlite3
 from pathlib import Path
 from threading import Lock
@@ -39,6 +40,8 @@ try:
     import ujson as json
 except ImportError:
     import json
+
+logger = logging.getLogger("noodles")
 
 
 schema = '''
@@ -193,8 +196,8 @@ class JobDB:
             return
 
         if key not in self.jobs:
-            print("WARNING: store_result called but job not in registry:\n"
-                  "   race condition? Not doing anything.\n", file=sys.stderr)
+            logger.warnings("store_result called but job not in registry:\n"
+                            "   race condition? Not doing anything.\n")
             return
 
         with self.lock:

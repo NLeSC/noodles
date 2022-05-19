@@ -5,12 +5,15 @@ from ...lib import (
 from ..messages import (
     JobMessage, ResultMessage, EndOfWork)
 
+import logging
 import threading
 import sys
 from collections import namedtuple
 
 from .xenon import (Machine)
 import grpc
+
+logger = logging.getLogger("noodles")
 
 
 def xenon_interactive_worker(
@@ -36,12 +39,12 @@ def xenon_interactive_worker(
     def serialise(obj):
         """Serialise incoming objects, yielding strings."""
         if isinstance(obj, JobMessage):
-            print('serializing:', str(obj.node), file=sys.stderr)
+            logger.info(f'serializing: {obj.node}')
         return (registry.to_json(obj, host='scheduler') + '\n').encode()
 
     @pull_map
     def echo(line):
-        print('{} input: {}'.format(worker_config.name, line), file=sys.stderr)
+        logger.info('{} input: {}'.format(worker_config.name, line))
         return line
 
     def do_iterate(source):
@@ -59,7 +62,7 @@ def xenon_interactive_worker(
     def echo_stderr(text):
         """Print lines."""
         for line in text.split('\n'):
-            print("{}: {}".format(worker_config.name, line), file=sys.stderr)
+            logger.info("{}: {}".format(worker_config.name, line))
 
     if stderr_sink is None:
         stderr_sink = echo_stderr()

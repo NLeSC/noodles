@@ -1,4 +1,7 @@
 # from .termapp import TermApp
+import logging
+
+logger = logging.getLogger("noodles")
 
 
 class Display:
@@ -26,8 +29,10 @@ class Display:
             if exc_type is SystemExit:
                 return False
 
-            print("Internal error encountered. Contact the developers: \n",
-                  exc_type, exc_val)
+            logger.critical(
+                "Internal error encountered. Contact the developers",
+                exc_info=exc_val,
+            )
             return False
 
         self.report()

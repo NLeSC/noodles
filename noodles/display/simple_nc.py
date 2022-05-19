@@ -1,5 +1,8 @@
 from .pretty_term import OutStream
 import sys
+import logging
+
+logger = logging.getLogger("noodles")
 
 
 class Display:
@@ -115,16 +118,15 @@ class Display:
                 self.out << "There were warnings: \n\n"
 
                 for job, w in self.messages:
-                    msg = 'WARNING '
                     if job.hints and 'display' in job.hints:
-                        msg += job.hints['display'].format(
+                        msg = job.hints['display'].format(
                             **job.bound_args.arguments)
                     else:
-                        msg += 'calling {} with {}'.format(
+                        msg = 'calling {} with {}'.format(
                             job.foo.__name__, dict(job.bound_args.arguments)
                         )
-                    print(msg)
-                    print(w)
+                    logger.warning(msg)
+                    logger.warning(w)
 
         else:
             self.out << self.chars['line-bl'] << self.chars['line-hor'] \
@@ -132,17 +134,16 @@ class Display:
                      << ['reset'] << ")\n\n"
 
             for job, e in self.errors:
-                msg = 'ERROR '
                 if job.hints and 'display' in job.hints:
-                    msg += job.hints['display'].format(
+                    msg = job.hints['display'].format(
                         **job.bound_args.arguments)
                 else:
-                    msg += 'calling {} with {}'.format(
+                    msg = 'calling {} with {}'.format(
                         job.foo.__name__, dict(job.bound_args.arguments)
                     )
 
-                print(msg)
-                print(e)
+                logger.error(msg)
+                logger.error(e)
 
     def __call__(self, msg):
         key, status, data, err_msg = msg
@@ -164,8 +165,10 @@ class Display:
             if exc_type is SystemExit:
                 return False
 
-            print("Internal error encountered. Contact the developers: \n",
-                  exc_type, exc_val)
+            logger.critical(
+                f"Internal error encountered. Contact the developers.",
+                exc_info=exc_val,
+            )
             return False
 
         self.report()
