@@ -1,6 +1,10 @@
 from .pretty_term import OutStream
 import sys
 
+import logging
+
+logger = logging.getLogger("noodles")
+
 
 class Display:
     """A modest display to track jobs being run. The message being printed
@@ -62,37 +66,35 @@ class Display:
                 self.out << "There were warnings: \n\n"
 
                 for job, w in self.messages:
-                    msg = 'WARNING '
                     if job.hints and 'display' in job.hints:
-                        msg += job.hints['display'].format(
+                        msg = job.hints['display'].format(
                             **job.bound_args.arguments)
                     else:
-                        msg += 'calling {} with {}'.format(
+                        msg = 'calling {} with {}'.format(
                             job.foo.__name__, dict(job.bound_args.arguments)
                         )
-                    print(msg)
-                    print(w)
+                    logger.warning(msg)
+                    logger.warning(w)
 
         else:
             self.out << "╰─(" << ['fg', 240, 100, 60] << "ERROR!" \
                      << ['reset'] << ")\n\n"
 
             for job, e in self.errors:
-                msg = 'ERROR '
                 if job.hints and 'display' in job.hints:
-                    msg += job.hints['display'].format(
+                    msg = job.hints['display'].format(
                         **job.bound_args.arguments)
                 else:
-                    msg += 'calling {} with {}'.format(
+                    msg = 'calling {} with {}'.format(
                         job.foo.__name__, dict(job.bound_args.arguments)
                     )
 
-                print(msg)
+                logger.error(msg)
                 err_msg = self.error_filter(e)
                 if err_msg:
-                    print(err_msg)
+                    logger.error(err_msg)
                 else:
-                    print(e)
+                    logger.error(e)
 
     def __call__(self, q):
         self.q = q
@@ -112,7 +114,10 @@ class Display:
                          << ['reset']
                 return True
 
-            print("Internal error encountered. Contact the developers.")
+            logger.critical(
+                "Internal error encountered. Contact the developers.",
+                exc_info=exc_val,
+            )
             return False
 
         self.report()

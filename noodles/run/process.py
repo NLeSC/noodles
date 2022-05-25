@@ -5,6 +5,7 @@ Process backend
 Run jobs using a process backend.
 """
 
+import logging
 import sys
 import uuid
 from subprocess import Popen, PIPE
@@ -22,6 +23,8 @@ from ..lib import (pull, push, Connection, object_name, EndOfQueue, FlushQueue)
 from .messages import (EndOfWork)
 
 from .remote.io import (JSONObjectReader, JSONObjectWriter)
+
+logger = logging.getLogger("noodles")
 
 
 def process_worker(registry, verbose=False, jobdirs=False,
@@ -49,7 +52,7 @@ def process_worker(registry, verbose=False, jobdirs=False,
     def read_stderr():
         """Read stderr of remote process and sends lines to logger."""
         for line in remote.stderr:
-            print(name + ": " + line.rstrip())
+            logger.info(name + ": " + line.rstrip())
 
     stderr_reader_thread = threading.Thread(target=read_stderr, daemon=True)
     stderr_reader_thread.start()

@@ -1,7 +1,11 @@
+import logging
+
 from .pretty_term import OutStream
 from ..workflow import FunctionNode
 from inspect import Parameter
 import sys
+
+logger = logging.getLogger("noodles")
 
 
 def _format_arg_list(a, v):
@@ -32,9 +36,8 @@ class DumbDisplay:
 
     def print_message(self, key, msg):
         if key in self.jobs:
-            print("{1:12} | {2}".format(
-                    key, '['+msg.upper()+']', self.jobs[key]['name']),
-                  file=sys.stderr)
+            logger.info("{1:12} | {2}".format(
+                    key, '['+msg.upper()+']', self.jobs[key]['name']))
 
     def add_job(self, key, name):
         self.jobs[key] = {'name': name}
@@ -50,21 +53,20 @@ class DumbDisplay:
             self.out << "[ERROR!]\n\n"
 
             for job, e in self.errors:
-                msg = 'ERROR '
                 if 'display' in job.hints:
-                    msg += job.hints['display'].format(
+                    msg = job.hints['display'].format(
                         **job.bound_args.arguments)
                 else:
-                    msg += 'calling {} with {}'.format(
+                    msg = 'calling {} with {}'.format(
                         job.foo.__name__, dict(job.bound_args.arguments)
                     )
 
-                print(msg)
+                logger.error(msg)
                 err_msg = self.error_filter(e)
                 if err_msg:
-                    print(err_msg)
+                    logger.error(err_msg)
                 else:
-                    print(e)
+                    logger.error(e)
 
     def __call__(self, msg):
         key, status, data, err = msg
@@ -96,7 +98,10 @@ class DumbDisplay:
                 self.out << "\n" << "User interrupt detected, abnormal exit.\n"
                 return True
 
-            print("Internal error encountered. Contact the developers.")
+            logger.critical(
+                "Internal error encountered. Contact the developers.",
+                exc_info=exc_val,
+            )
             return False
 
         self.report()
